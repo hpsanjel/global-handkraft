@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  shortDescription String
+  description      String
+  material         String
+  categoryId       String
+  category         Category      @relation(fields: [categoryId], references: [id])
+  image            String
+  gallery          String[]
+  featured         Boolean       @default(false)
+  active           Boolean       @default(true)
+  rating           Float         @default(0)
+  reviewCount      Int           @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  variants         Variant[]
+  addons           Addon[]
+  orderItems       OrderItem[]
+  createdAt        DateTime      @default(now())
+}
+
+model Variant {
+  id         String      @id @default(cuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id])
+  name       String
+  price      Float
+  width      String
+  height     String
+  depth      String
+  weight     String
+  stock      Int
+  sku        String      @unique
+  orderItems OrderItem[]
+}
+
+model Addon {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  name        String
+  price       Float
+  description String
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  fullName    String
+  phone       String
+  email       String
+  country     String
+  address     String
+  postalCode  String
+  city        String
+  companyName String?
+  vatNumber   String?
+  notes       String?
+  orders      Order[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  status          String      @default("PENDING")
+  subtotal        Float
+  vat             Float
+  shipping        Float
+  total           Float
+  currency        String      @default("EUR")
+  paymentId       String?
+  invoiceNumber   String?
+  shippingCountry String
+  addressId       String
+  address         Address     @relation(fields: [addressId], references: [id])
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  variantId  String
+  variant    Variant  @relation(fields: [variantId], references: [id])
+  quantity   Int
+  unitPrice  Float
+  addonNames String[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  rating    Int
+  comment   String
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  discountPct Float
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model VATRate {
+  id        String   @id @default(cuid())
+  country   String   @unique
+  rate      Float
+  createdAt DateTime @default(now())
+}
+
+model ShippingZone {
+  id               String   @id @default(cuid())
+  country          String   @unique
+  shippingCost     Float
+  freeShippingFrom Float
+  createdAt        DateTime @default(now())
+}
+
+model SiteSettings {
+  id              String   @id @default(cuid())
+  siteName        String
+  contactEmail    String
+  whatsapp        String?
+  phone           String?
+  address         String?
+  heroTitle       String?
+  heroDescription String?
+  updatedAt       DateTime @updatedAt
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model GalleryImage {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  createdAt DateTime @default(now())
+}
