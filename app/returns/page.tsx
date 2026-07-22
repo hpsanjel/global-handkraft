@@ -2,7 +2,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-	title: "Return Policy | Global Handcraft",
+	title: "Return Policy | Global Handcrafts AS",
 	description: "Our return policy for online purchases.",
 };
 

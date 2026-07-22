@@ -16,7 +16,7 @@ export default async function AdminOrdersPage() {
 		<div className="min-h-screen bg-stone-50 text-stone-800">
 			<SiteHeader />
 			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-				<div className="flex items-center justify-between">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Admin</p>
 						<h1 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Review orders</h1>

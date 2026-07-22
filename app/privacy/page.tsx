@@ -2,8 +2,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-	title: "Privacy Policy | Global Handcraft",
-	description: "Privacy policy for Global Handcraft.",
+	title: "Privacy Policy | Global Handcrafts AS",
+	description: "Privacy policy for Global Handcrafts AS.",
 };
 
 export default function PrivacyPage() {

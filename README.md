@@ -1,37 +1,63 @@
-# Global Handcraft
+# Global Handcrafts AS
 
-A premium e-commerce experience for handcrafted wooden Hindu temples and sacred home pieces for Europe.
+Global Handcrafts AS is a premium e-commerce platform for authentic handcrafted products sourced from Nepal and South Asia and delivered across Europe.
 
-## Tech stack
+The product focus includes handcrafted wooden temples, pooja items, traditional clothing, festival collections, and custom mandap solutions.
 
-- Next.js 15 App Router
+## Project Scope
+
+The complete project scope, information architecture, feature matrix, content strategy, roadmap phases, and technical implementation plan are documented in [docs/project-scope.md](docs/project-scope.md).
+
+## Current Stack
+
+- Next.js 15 (App Router)
 - TypeScript
 - Tailwind CSS
-- Prisma + PostgreSQL
+- Prisma ORM + PostgreSQL
 - Stripe Checkout
-- Resend emails
+- Resend (transactional emails)
 
-## Getting started
+## Planned/Target Stack Additions
+
+- shadcn/ui
+- Framer Motion
+- Zustand
+- React Hook Form + Zod
+- TanStack Query
+- Supabase Authentication
+- Cloudinary image management
+- Vipps, Klarna, PayPal, Apple Pay, Google Pay
+
+## Getting Started
 
 1. Install dependencies
    ```bash
    npm install
    ```
-2. Copy the environment template
+2. Copy environment values
    ```bash
    cp .env.example .env.local
    ```
-3. Configure your PostgreSQL connection string and service keys.
-4. Run Prisma migrations
+3. Configure PostgreSQL and service credentials.
+4. Run database migrations
    ```bash
    npx prisma migrate dev --name init
    ```
-5. Start the app
+5. Start development server
    ```bash
    npm run dev
    ```
 
-## Notes
+## Product Seed Data
 
-- The storefront includes product browsing, a shop page, product detail view, and an admin dashboard shell.
-- The Prisma schema includes core models for products, variants, shipping, VAT, orders, reviews, and contact submissions.
+The seed catalog in [lib/data/products.ts](lib/data/products.ts) now includes broad sample products across:
+
+- Handcrafted Wooden Temples
+- Traditional Clothes
+- Pooja Items
+- Pooja Mandap
+- Gift Collection
+- New Arrivals
+- Festival Specials
+
+This sample data is intended for UI development and can be migrated to managed CMS or admin-driven catalog updates.

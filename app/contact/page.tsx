@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-	title: "Contact | Global Handcraft",
+	title: "Contact | Global Handcrafts AS",
 	description: "Reach out for bespoke orders, consultations, or support.",
 };
 

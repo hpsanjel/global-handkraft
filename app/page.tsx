@@ -2,76 +2,173 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { testimonials } from "@/lib/data/products";
+import { categories, testimonials } from "@/lib/data/products";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { useProductsCatalog } from "@/lib/products-catalog";
+import Image from "next/image";
+import { HomeCategoryProductsSection } from "@/components/home-category-products-section";
 
 export default function HomePage() {
 	const products = useProductsCatalog();
+	const featuredProducts = products.filter((product) => product.featured).slice(0, 4);
+	const highlightedCategories = categories.slice(0, 6);
+	const categoryProductMap: Record<string, string> = {
+		Temples: "Handcrafted Wooden Temples",
+		Clothes: "Traditional Clothes",
+		Pooja: "Pooja Items",
+		Mandap: "Pooja Mandap",
+	};
+	const dynamicCategorySections = highlightedCategories
+		.map((category) => {
+			const productCategory = categoryProductMap[category] ?? category;
+			return {
+				title: category,
+				href: `/shop?category=${encodeURIComponent(category)}`,
+				products: products.filter((product) => product.category === productCategory).slice(0, 4),
+			};
+		})
+		.filter((section) => section.products.length > 0);
+	const stats = [
+		{ label: "Happy Customers", value: "1000+" },
+		{ label: "Handmade Products", value: "500+" },
+		{ label: "Skilled Artisans", value: "20+" },
+		{ label: "Countries Served", value: "10+" },
+	];
+
 	return (
-		<div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_#f8f5f0_0%,_#ffffff_60%)] text-stone-800">
+		<div className="flex min-h-screen flex-col bg-stone-50 text-stone-800">
 			<SiteHeader />
 			<main className="flex-1">
-				<section className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
-					<div className="max-w-2xl">
-						<p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Handmade in Europe</p>
-						<h1 className="text-4xl font-semibold leading-tight text-stone-900 sm:text-5xl lg:text-6xl">Handcrafted Wooden Hindu Temples for Your Home</h1>
-						<p className="mt-6 text-lg leading-8 text-stone-600">Discover sculptural temples and ritual furniture designed with heirloom quality, warm wood tones, and a calm premium presence.</p>
-						<div className="mt-8 flex flex-wrap gap-4">
-							<Button asChild>
-								<Link href="/shop">Shop Now</Link>
-							</Button>
-							<Button asChild className="bg-white text-stone-900 ring-1 ring-stone-300 hover:bg-stone-100">
-								<Link href="/about">Our Craft</Link>
-							</Button>
+				<section className="hidden sm:relative overflow-hidden">
+					<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_#4CAF5020_0%,_transparent_42%),radial-gradient(circle_at_top_right,_#F7931E2E_0%,_transparent_44%),linear-gradient(180deg,_#FAFAF7_0%,_#ffffff_70%)]" />
+					<div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
+						<div className="max-w-2xl">
+							<p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-[#1B365D]">Global Handcrafts AS</p>
+							<h1 className="text-4xl font-semibold leading-tight text-stone-900 sm:text-5xl">Authentic Handcrafted Treasures Delivered Across Europe</h1>
+							<p className="mt-6 text-lg leading-8 text-stone-600">Premium handcrafted temples, pooja items, traditional clothing, and cultural products sourced directly from skilled artisans across Nepal and South Asia.</p>
+							<div className="mt-8 flex flex-wrap gap-4">
+								<Button asChild className="bg-[#1B365D] text-white hover:bg-[#152d4c]">
+									<Link href="/shop">Explore Products</Link>
+								</Button>
+							</div>
+							<div className="mt-10 flex flex-wrap gap-6 text-sm text-stone-700">
+								<span>• Authentic Craftsmanship</span>
+								<span>• Ethical Sourcing</span>
+								<span>• Secure Payments</span>
+								<span>• Europe-Wide Shipping</span>
+							</div>
 						</div>
-						<div className="mt-10 flex flex-wrap gap-6 text-sm text-stone-600">
-							<span>• Handmade</span>
-							<span>• Premium Wood</span>
-							<span>• Secure Payments</span>
-							<span>• Worldwide Shipping</span>
-						</div>
-					</div>
-					<div className="rounded-[2rem] border border-stone-200 bg-white p-3 shadow-[0_20px_80px_rgba(41,37,36,0.08)]">
-						<div className="rounded-[1.5rem] bg-stone-100 p-6">
-							<div className="aspect-[4/5] rounded-[1.25rem] bg-[url('/images/temple-main.webp')] bg-cover bg-center" />
-						</div>
+						<Image src="/images/temple-main.webp" alt="Handcrafted Temple" width={600} height={400} className="mt-4 rounded-[1.25rem] shadow-md w-full h-[400px]" />
 					</div>
 				</section>
 
-				<section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-					<div className="grid gap-6 md:grid-cols-3">
-						{products.slice(0, 3).map((product) => (
-							<article key={product.id} className="rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-sm">
-								<div className="aspect-[4/5] rounded-[1.25rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
-								<div className="mt-5 flex items-start justify-between gap-3">
-									<div>
-										<h3 className="text-lg font-semibold text-stone-900">{product.name}</h3>
-										<p className="mt-2 text-sm text-stone-600">{product.shortDescription}</p>
-									</div>
-									<p className="text-sm font-semibold text-stone-900">From €{product.variants[0].price}</p>
-								</div>
-							</article>
+				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+					<div className="flex items-end justify-between gap-4">
+						<div>
+							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Featured Categories</p>
+							<h2 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Collections curated for culture, prayer, and gifting</h2>
+						</div>
+						<Link href="/categories" className="hidden sm:block text-sm font-semibold text-[#1B365D] hover:text-[#152d4c]">
+							View all categories
+						</Link>
+					</div>
+					<div className="mt-8 flex gap-2 overflow-x-auto overflow-y-hidden pb-2 md:grid md:grid-cols-6 md:gap-32 md:overflow-visible md:pb-0">
+						{highlightedCategories.map((category, index) => (
+							<Link key={category} href={`/shop?category=${encodeURIComponent(category)}`} className="relative group grid aspect-square w-[36vw] max-w-[200px] min-w-[132px] shrink-0 grid-rows-[1fr_auto] rounded-2xl border border-stone-200 bg-white p-1 shadow-sm transition hover:shadow-md md:aspect-auto md:min-w-0 md:shrink md:overflow-hidden md:rounded-[1.5rem] md:border-stone-200 md:p-0 md:shadow-sm md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
+								<Image src="/images/temple-1.webp" alt={category} width={200} height={200} className="h-full w-full rounded-xl object-cover transition duration-300 group-hover:scale-[1.03] md:h-48 md:rounded-none md:group-hover:scale-105" />
+								<p className="absolute bottom-2 left-1/2 w-[60%] -translate-x-1/2 rounded-full bg-white px-2 py-1 text-center text-xs font-semibold text-stone-900 shadow-sm transition duration-300 group-hover:bg-stone-100 group-hover:text-[#1B365D] md:static md:mt-0 md:w-full md:translate-x-0 md:rounded-none md:bg-transparent md:px-5 md:pb-5 md:pt-4 md:text-left md:text-lg md:font-semibold md:shadow-none md:transition-none">{category}</p>
+							</Link>
 						))}
 					</div>
 				</section>
 
-				<section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-					<div className="rounded-[2rem] border border-stone-200 bg-stone-900 px-6 py-10 text-white shadow-sm sm:px-10">
+				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+					<div className="flex items-end justify-between gap-4">
+						<div>
+							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Featured Products</p>
+							<h2 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Best sellers and premium new arrivals</h2>
+						</div>
+						<Link href="/shop" className="hidden sm:block text-sm font-semibold text-[#1B365D] hover:text-[#152d4c]">
+							Shop all
+						</Link>
+					</div>
+					<div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
+						{featuredProducts.map((product) => (
+							<div key={product.id} className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
+								<Link href={`/product/${product.slug}`} className="block">
+									<div className="w-full aspect-5/6 bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
+									<div className="px-3 pt-3 sm:px-5 sm:pt-4">
+										<p className="text-sm font-semibold text-stone-900 sm:text-base">{product.name}</p>
+										{/* <p className="mt-2 overflow-hidden text-xs text-stone-600 sm:text-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">{product.shortDescription}</p> */}
+									</div>
+								</Link>
+								<div className="mt-auto flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-5 sm:pb-5">
+									<p className="text-sm font-semibold text-[#1B365D] sm:text-base">€{product.variants[0].price}</p>
+									<Button asChild className="rounded-full bg-[#F7931E] px-4 py-2 text-xs text-white hover:bg-[#d87810] sm:text-sm">
+										<Link href={`/product/${product.slug}`}>Buy</Link>
+									</Button>
+								</div>
+							</div>
+						))}
+					</div>
+				</section>
+
+				{dynamicCategorySections.map((section) => (
+					<HomeCategoryProductsSection key={section.title} title={section.title} href={section.href} products={section.products} />
+				))}
+
+				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+					<div className="rounded-[2rem] border border-stone-200 bg-gradient-to-r from-[#1B365D] via-[#2c4a70] to-[#4CAF50] px-6 py-10 text-white shadow-sm sm:px-10">
 						<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 							<div className="max-w-2xl">
-								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-400">Why collectors choose us</p>
-								<h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Premium quality, designed to last for generations.</h2>
+								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80">Artisan Story</p>
+								<h2 className="mt-3 text-3xl font-semibold sm:text-4xl">From artisan workshops to homes across Europe.</h2>
+								<p className="mt-4 text-sm leading-7 text-white/90">We partner with skilled makers to preserve traditional craft methods, source responsibly, and deliver heirloom-quality products with modern service standards.</p>
 							</div>
-							<Button asChild className="bg-white text-stone-900 hover:bg-stone-100">
-								<Link href="/shop">Explore Collection</Link>
+							<Button asChild className="bg-white text-[#1B365D] hover:bg-stone-100">
+								<Link href="/about">Our Journey</Link>
 							</Button>
 						</div>
 					</div>
 				</section>
 
-				<section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+					<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+						{stats.map((item) => (
+							<div key={item.label} className="rounded-[1.5rem] border border-stone-200 bg-white p-6 text-center shadow-sm">
+								<p className="text-3xl font-semibold text-[#1B365D]">{item.value}</p>
+								<p className="mt-2 text-sm text-stone-600">{item.label}</p>
+							</div>
+						))}
+					</div>
+				</section>
+
+				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+					<div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+						<div className="rounded-[1.75rem] border border-stone-200 bg-white p-7 shadow-sm">
+							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Our Craftsmanship</p>
+							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Built with care, detail, and durability.</h2>
+							<ul className="mt-5 space-y-3 text-sm leading-7 text-stone-600">
+								<li>Hand-finished woodwork and ritual-grade detailing</li>
+								<li>Fair trade-aligned artisan partnerships</li>
+								<li>Secure packaging and tracked cross-border shipping</li>
+								<li>Dedicated support for custom temple and mandap orders</li>
+							</ul>
+						</div>
+						<div className="rounded-[1.75rem] border border-stone-200 bg-white p-7 shadow-sm">
+							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Instagram Gallery</p>
+							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Daily inspiration from homes and temples</h2>
+							<div className="mt-5 grid grid-cols-3 gap-3">
+								{products.slice(0, 6).map((product) => (
+									<div key={`${product.id}-insta`} className="aspect-square rounded-2xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
+								))}
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
 						<div>
 							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Customer reviews</p>
@@ -80,10 +177,26 @@ export default function HomePage() {
 						<div className="grid gap-4 md:grid-cols-2">
 							{testimonials.map((item) => (
 								<div key={item.name} className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-									<p className="text-sm leading-7 text-stone-600">“{item.quote}”</p>
+									<p className="text-sm leading-7 text-stone-600">{item.quote}</p>
 									<p className="mt-4 font-semibold text-stone-900">{item.name}</p>
 								</div>
 							))}
+						</div>
+					</div>
+				</section>
+
+				<section className="mx-auto max-w-7xl px-4 pb-8 sm:pb-12 md:pb-16 sm:px-6 lg:px-8">
+					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-7 shadow-sm">
+						<div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+							<div>
+								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Newsletter</p>
+								<h2 className="mt-2 text-3xl font-semibold text-stone-900">Get festival drops and artisan stories first</h2>
+								<p className="mt-2 text-sm text-stone-600">Receive product launches, temple care guides, and exclusive seasonal offers.</p>
+							</div>
+							<div className="flex flex-col gap-3 sm:flex-row">
+								<input type="email" placeholder="Enter your email" className="w-full rounded-full border border-stone-300 bg-stone-50 px-5 py-3 text-sm text-stone-900 outline-none sm:w-80" />
+								<Button className="rounded-full bg-[#F7931E] px-6 text-white hover:bg-[#d87810]">Subscribe</Button>
+							</div>
 						</div>
 					</div>
 				</section>

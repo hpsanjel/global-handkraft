@@ -2,8 +2,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-	title: "About | Global Handcraft",
-	description: "Learn about the story, craft, and values behind Global Handcraft.",
+	title: "About | Global Handcrafts AS",
+	description: "Learn about the story, artisans, and values behind Global Handcrafts AS.",
 };
 
 export default function AboutPage() {
@@ -13,7 +13,7 @@ export default function AboutPage() {
 			<main className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
 				<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">About</p>
 				<h1 className="mt-3 text-4xl font-semibold text-stone-900 sm:text-5xl">Craftsmanship rooted in devotion and design.</h1>
-				<p className="mt-6 text-lg leading-8 text-stone-600">Global Handcraft creates sculptural wooden temples and sacred home pieces that balance ritual presence, premium materials, and contemporary interiors.</p>
+				<p className="mt-6 text-lg leading-8 text-stone-600">Global Handcrafts AS curates sculptural wooden temples and sacred home pieces that balance ritual presence, premium materials, and contemporary interiors.</p>
 				<div className="mt-10 grid gap-6 md:grid-cols-2">
 					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-8 shadow-sm">
 						<h2 className="text-xl font-semibold text-stone-900">Our process</h2>

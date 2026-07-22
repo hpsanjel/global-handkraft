@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const footerLinks = [
+	{ href: "/categories", label: "Categories" },
 	{ href: "/about", label: "About" },
 	{ href: "/contact", label: "Contact" },
 	{ href: "/privacy", label: "Privacy" },
@@ -14,8 +15,8 @@ export function SiteFooter() {
 		<footer className="border-t border-stone-200 bg-stone-50">
 			<div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:justify-between lg:px-8">
 				<div className="max-w-md">
-					<p className="text-lg font-semibold tracking-[0.2em] text-stone-900 uppercase">Global Handcraft</p>
-					<p className="mt-3 text-sm leading-7 text-stone-600">Premium handcrafted wooden temples and heirloom home pieces for modern spiritual interiors across Europe.</p>
+					<p className="text-lg font-semibold tracking-[0.2em] text-stone-900 uppercase">Global Handcrafts AS</p>
+					<p className="mt-3 text-sm leading-7 text-stone-600">Authentic handcrafted temples, pooja items, and traditional cultural products delivered across Norway and Europe.</p>
 				</div>
 				<div className="grid gap-6 sm:grid-cols-2">
 					<div>

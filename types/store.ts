@@ -8,6 +8,7 @@ export type ProductVariant = {
 	weight: string;
 	stock: number;
 	sku: string;
+	shippingNote?: string;
 };
 
 export type ProductAddon = {
@@ -15,6 +16,15 @@ export type ProductAddon = {
 	name: string;
 	price: number;
 	description: string;
+};
+
+export type ProductReview = {
+	id: string;
+	author: string;
+	rating: number;
+	title: string;
+	comment: string;
+	date: string;
 };
 
 export type Product = {
@@ -25,6 +35,10 @@ export type Product = {
 	description: string;
 	category: string;
 	material: string;
+	materials?: string[];
+	woodType?: string;
+	sizeLabel?: string;
+	color?: string;
 	image: string;
 	gallery: string[];
 	rating: number;
@@ -34,6 +48,13 @@ export type Product = {
 	addons: ProductAddon[];
 	shippingInfo: string;
 	returnPolicy: string;
+	handmadeProcess?: string;
+	handcraftedStory?: string;
+	dimensions?: string;
+	weight?: string;
+	careInstructions?: string;
+	specifications?: string[];
+	reviews?: ProductReview[];
 };
 
 export type CartItem = {

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,18 +15,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Global Handcraft AS",
-	description: "Premium handcrafted furniture for spiritual spaces",
+	title: "Global Handcrafts AS",
+	description: "Premium handcrafted temples, pooja items, and cultural products for customers across Norway and Europe.",
 	metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-	viewport: {
-		width: "device-width",
-		initialScale: 1,
-		maximumScale: 5,
-	},
 	robots: {
 		index: true,
 		follow: true,
 	},
+};
+
+export const viewport: Viewport = {
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 5,
 };
 
 export default function RootLayout({

@@ -1,27 +1,15 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { AdminLiveStats } from "@/components/admin-live-stats";
 import { Button } from "@/components/ui/button";
 import { getRecentOrders } from "@/lib/admin";
-import { products } from "@/lib/data/products";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
 	style: "currency",
 	currency: "EUR",
 	maximumFractionDigits: 0,
 });
-
-const lowStockThreshold = 5;
-const inventoryValue = products.reduce((total, product) => total + product.variants.reduce((variantTotal, variant) => variantTotal + variant.price * variant.stock, 0), 0);
-const lowStockCount = products.reduce((count, product) => count + product.variants.filter((variant) => variant.stock < lowStockThreshold).length, 0);
-const totalVariants = products.reduce((count, product) => count + product.variants.length, 0);
-
-const stats = [
-	{ label: "Inventory value", value: currencyFormatter.format(inventoryValue) },
-	{ label: "Products", value: products.length.toString() },
-	{ label: "Variants", value: totalVariants.toString() },
-	{ label: "Low stock", value: lowStockCount.toString() },
-];
 
 export default async function AdminPage() {
 	const recentOrders = await getRecentOrders(10);
@@ -39,14 +27,7 @@ export default async function AdminPage() {
 						<Link href="/admin/products">Manage products</Link>
 					</Button>
 				</div>
-				<div className="mt-8 grid gap-4 md:grid-cols-4">
-					{stats.map((stat) => (
-						<div key={stat.label} className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-							<p className="text-sm text-stone-500">{stat.label}</p>
-							<p className="mt-3 text-3xl font-semibold text-stone-900">{stat.value}</p>
-						</div>
-					))}
-				</div>
+				<AdminLiveStats />
 				<div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
 					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
 						<h2 className="text-xl font-semibold text-stone-900">Recent orders</h2>
