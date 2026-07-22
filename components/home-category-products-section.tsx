@@ -25,7 +25,7 @@ export function HomeCategoryProductsSection({ title, href, products }: HomeCateg
 				{products.map((product) => (
 					<div key={product.id} className="flex h-full w-[72vw] max-w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:w-auto md:max-w-none md:shrink md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
 						<Link href={`/product/${product.slug}`} className="block">
-							<div className="w-full aspect-5/6 bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
+							<div className="w-full aspect-5/6 bg-stone-100 bg-cover" style={{ backgroundImage: `url('${product.image}')` }} />
 							<div className="px-3 pt-3 sm:px-5 sm:pt-4">
 								<p className="text-sm font-semibold text-stone-900 sm:text-base">{product.name}</p>
 							</div>

@@ -7,7 +7,7 @@ const baseProducts: Product[] = [
 		name: "Small Handcrafted Temple",
 		shortDescription: "Compact pooja temple for apartments and family prayer corners.",
 		description: "Hand-carved by artisans in Bhaktapur using seasoned sheesham wood. Features floral lattice panels, handcrafted joinery, and a natural polish finish. Handmade process: wood selection, hand carving, sun-drying, fine sanding, and protective coating.",
-		category: "Handcrafted Wooden Temples",
+		category: "Temples",
 		material: "Sheesham Wood",
 		image: "/images/temple-1.webp",
 		gallery: ["/images/temple-1.webp", "/images/temple-2.jpg", "/images/temple-3.webp"],
@@ -31,7 +31,7 @@ const baseProducts: Product[] = [
 		name: "Medium Heritage Temple",
 		shortDescription: "Balanced size temple with carved pillars and deep platform space.",
 		description: "Built from rosewood and teak in a multi-step handmade process with hand-routed edges and carved side vents. Suitable for larger living rooms and dedicated prayer areas.",
-		category: "Handcrafted Wooden Temples",
+		category: "Temples",
 		material: "Rosewood & Teak",
 		image: "/images/temple-2.jpg",
 		gallery: ["/images/temple-2.jpg", "/images/temple-3.webp", "/images/temple-1.webp"],
@@ -55,7 +55,7 @@ const baseProducts: Product[] = [
 		name: "Premium Regal Temple",
 		shortDescription: "Signature heirloom temple with layered domes and hand-engraved motifs.",
 		description: "Master artisan build with premium teak and rosewood panels, hand-chiseled motifs, and gold accent inlays. Handmade process includes carving, assembly without visible screws, and multi-layer polish.",
-		category: "Handcrafted Wooden Temples",
+		category: "Temples",
 		material: "Teak & Rosewood",
 		image: "/images/temple-3.webp",
 		gallery: ["/images/temple-3.webp", "/images/temple-1.webp", "/images/temple-2.jpg"],
@@ -79,7 +79,7 @@ const baseProducts: Product[] = [
 		name: "Wall Mounted Temple",
 		shortDescription: "Space-saving temple design with handcrafted back panel carvings.",
 		description: "Designed for modern apartments. Built from kiln-dried teak with hand-carved lotus patterns and hidden wall brackets. Handmade process emphasizes precise balancing and corner finishing.",
-		category: "Handcrafted Wooden Temples",
+		category: "Temples",
 		material: "Teak Wood",
 		image: "/images/temple-3.webp",
 		gallery: ["/images/temple-3.webp", "/images/temple-1.webp", "/images/temple-2.jpg"],
@@ -100,7 +100,7 @@ const baseProducts: Product[] = [
 		name: "Teak Wood Classic Temple",
 		shortDescription: "Solid teak pooja temple with minimal Scandinavian silhouette.",
 		description: "A clean, premium profile that blends Nordic interiors with South Asian spiritual traditions. Handmade from FSC-aligned teak and finished with low-VOC sealant.",
-		category: "Handcrafted Wooden Temples",
+		category: "Temples",
 		material: "FSC Teak Wood",
 		image: "/images/temple-1.webp",
 		gallery: ["/images/temple-1.webp", "/images/temple-3.webp", "/images/temple-2.jpg"],
@@ -121,7 +121,7 @@ const baseProducts: Product[] = [
 		name: "Rosewood Ornate Temple",
 		shortDescription: "Traditional carved rosewood temple with decorative arch crown.",
 		description: "Premium rosewood build with deep hand-carved ethnic motifs inspired by temple architecture. Finished with grain-enhancing oil and humidity-safe treatment.",
-		category: "Handcrafted Wooden Temples",
+		category: "Temples",
 		material: "Rosewood",
 		image: "/images/temple-2.jpg",
 		gallery: ["/images/temple-2.jpg", "/images/temple-1.webp", "/images/temple-3.webp"],
@@ -142,7 +142,7 @@ const baseProducts: Product[] = [
 		name: "Custom Temple Build",
 		shortDescription: "Made-to-order temple tailored to your room size, rituals, and style.",
 		description: "Collaborative design service for custom dimensions, wood type, shelves, and decorative style. Handmade process includes consultation, sketch approval, artisan production, and quality checks.",
-		category: "Handcrafted Wooden Temples",
+		category: "Temples",
 		material: "Custom: Teak, Rosewood, or Sheesham",
 		image: "/images/temple-3.webp",
 		gallery: ["/images/temple-3.webp", "/images/temple-2.jpg", "/images/temple-1.webp"],
@@ -163,7 +163,7 @@ const baseProducts: Product[] = [
 		name: "Daura Suruwal Classic Set",
 		shortDescription: "Traditional Nepali menswear set for ceremonies and festive occasions.",
 		description: "Hand-stitched daura suruwal set using breathable cotton blend fabric with tailored finish. Includes tunic, trouser, and matching waist detail.",
-		category: "Traditional Clothes",
+		category: "Clothes",
 		material: "Cotton Blend",
 		image: "/images/temple-1.webp",
 		gallery: ["/images/temple-1.webp", "/images/temple-2.jpg", "/images/temple-3.webp"],
@@ -184,7 +184,7 @@ const baseProducts: Product[] = [
 		name: "Heritage Saree Collection",
 		shortDescription: "Elegant sarees with traditional motifs for pooja and celebrations.",
 		description: "Curated sarees from South Asian weaving clusters with soft drape, detailed borders, and festive tones. Designed for cultural events and temple ceremonies.",
-		category: "Traditional Clothes",
+		category: "Clothes",
 		material: "Silk Blend",
 		image: "/images/temple-2.jpg",
 		gallery: ["/images/temple-2.jpg", "/images/temple-1.webp", "/images/temple-3.webp"],
@@ -205,7 +205,7 @@ const baseProducts: Product[] = [
 		name: "Handloom Shawls",
 		shortDescription: "Soft woven shawls for daily wear, gifting, and temple visits.",
 		description: "Artisan-woven shawls with traditional patterns and winter-ready warmth. A versatile accessory collection for men and women.",
-		category: "Traditional Clothes",
+		category: "Clothes",
 		material: "Wool Blend",
 		image: "/images/temple-3.webp",
 		gallery: ["/images/temple-3.webp", "/images/temple-2.jpg", "/images/temple-1.webp"],
@@ -226,7 +226,7 @@ const baseProducts: Product[] = [
 		name: "Brass Diya Bell Kalash Set",
 		shortDescription: "Essential brass pooja starter set with diya, bell, and kalash.",
 		description: "Hand-finished brass pooja essentials made by metal artisans. Includes diya, temple bell, and kalash bowl suitable for daily rituals and festive pooja.",
-		category: "Pooja Items",
+		category: "Pooja",
 		material: "Solid Brass",
 		image: "/images/temple-1.webp",
 		gallery: ["/images/temple-1.webp", "/images/temple-3.webp", "/images/temple-2.jpg"],
@@ -247,7 +247,7 @@ const baseProducts: Product[] = [
 		name: "Copper Essentials Set",
 		shortDescription: "Traditional copper lota, plate, and spoon ritual set.",
 		description: "Hammered copper ritualware with smooth edges and balanced weight. Crafted for abhishek, offerings, and daily temple routines.",
-		category: "Pooja Items",
+		category: "Pooja",
 		material: "Pure Copper",
 		image: "/images/temple-2.jpg",
 		gallery: ["/images/temple-2.jpg", "/images/temple-1.webp", "/images/temple-3.webp"],
@@ -268,7 +268,7 @@ const baseProducts: Product[] = [
 		name: "Rudraksha & Pooja Accessories",
 		shortDescription: "Curated pooja accessories including rudraksha mala and ritual powders.",
 		description: "Includes incense, camphor, kumkum, sindoor, and authentic rudraksha mala. Ideal for home temple upkeep and gifting.",
-		category: "Pooja Items",
+		category: "Pooja",
 		material: "Natural Seed, Herb, and Ritual Blends",
 		image: "/images/temple-3.webp",
 		gallery: ["/images/temple-3.webp", "/images/temple-1.webp", "/images/temple-2.jpg"],
@@ -289,7 +289,7 @@ const baseProducts: Product[] = [
 		name: "Indoor Pooja Mandap Classic",
 		shortDescription: "Elegant indoor mandap for ceremonies, havan, and festive rituals.",
 		description: "Modular indoor mandap with carved columns and detachable canopy. Crafted for repeated setup in homes, halls, and community spaces.",
-		category: "Pooja Mandap",
+		category: "Mandap",
 		material: "Wood & Metal Framework",
 		image: "/images/temple-1.webp",
 		gallery: ["/images/temple-1.webp", "/images/temple-2.jpg", "/images/temple-3.webp"],
@@ -310,7 +310,7 @@ const baseProducts: Product[] = [
 		name: "Outdoor Festival Mandap",
 		shortDescription: "Weather-resistant outdoor mandap for temple and festival events.",
 		description: "Outdoor-grade frame with decorative panels for weddings and community festivals. Supports lighting and decor attachments.",
-		category: "Pooja Mandap",
+		category: "Mandap",
 		material: "Coated Metal, Wood Panels",
 		image: "/images/temple-2.jpg",
 		gallery: ["/images/temple-2.jpg", "/images/temple-3.webp", "/images/temple-1.webp"],
@@ -324,69 +324,6 @@ const baseProducts: Product[] = [
 			{ id: "outdoor-l", name: "Grand Event", price: 1999, width: "450 cm", height: "340 cm", depth: "450 cm", weight: "102 kg", stock: 1, sku: "MAND-OUT-GRAND" },
 		],
 		addons: [{ id: "lighting-rig", name: "Lighting Rig", price: 249, description: "Integrated warm-light frame for evening ceremonies" }],
-	},
-	{
-		id: "gift-collection-premium-box",
-		slug: "premium-cultural-gift-box",
-		name: "Premium Cultural Gift Box",
-		shortDescription: "Curated gift collection for housewarming, festivals, and family occasions.",
-		description: "Includes handcrafted diya set, incense holder, and artisan textile accessory in premium gift packaging.",
-		category: "Gift Collection",
-		material: "Mixed Artisan Materials",
-		image: "/images/temple-3.webp",
-		gallery: ["/images/temple-3.webp", "/images/temple-2.jpg", "/images/temple-1.webp"],
-		rating: 4.9,
-		reviewCount: 58,
-		featured: true,
-		shippingInfo: "Gift-ready delivery in 2-5 days.",
-		returnPolicy: "Returns accepted within 14 days if unopened.",
-		variants: [
-			{ id: "gift-classic", name: "Classic Box", price: 79, width: "30 cm", height: "20 cm", depth: "15 cm", weight: "2.2 kg", stock: 22, sku: "GIFT-BOX-CLS" },
-			{ id: "gift-festival", name: "Festival Box", price: 109, width: "35 cm", height: "24 cm", depth: "18 cm", weight: "2.8 kg", stock: 14, sku: "GIFT-BOX-FEST" },
-		],
-		addons: [{ id: "message-card", name: "Personalized Message Card", price: 5, description: "Printed custom note card for gifting" }],
-	},
-	{
-		id: "new-arrival-kurta",
-		slug: "new-arrival-festive-kurta",
-		name: "Festive Kurta New Arrival",
-		shortDescription: "Fresh seasonal kurta drop with modern tailored silhouette.",
-		description: "A new-arrival collection for festive gatherings and temple events. Soft fabric with clean lines and traditional accents.",
-		category: "New Arrivals",
-		material: "Cotton Silk",
-		image: "/images/temple-1.webp",
-		gallery: ["/images/temple-1.webp", "/images/temple-2.jpg", "/images/temple-3.webp"],
-		rating: 4.6,
-		reviewCount: 21,
-		featured: false,
-		shippingInfo: "Dispatch in 2-4 days.",
-		returnPolicy: "Size exchanges available within 14 days.",
-		variants: [
-			{ id: "kurta-m", name: "Size M", price: 89, width: "M", height: "Regular", depth: "N/A", weight: "0.45 kg", stock: 28, sku: "NEW-KURTA-M" },
-			{ id: "kurta-l", name: "Size L", price: 89, width: "L", height: "Regular", depth: "N/A", weight: "0.48 kg", stock: 24, sku: "NEW-KURTA-L" },
-		],
-		addons: [{ id: "embroidery", name: "Custom Embroidery", price: 19, description: "Initial embroidery on cuff or collar" }],
-	},
-	{
-		id: "festival-special-diya",
-		slug: "festival-special-decorative-lamps",
-		name: "Festival Special Decorative Lamps",
-		shortDescription: "Decorative diya lamp set curated for major festival seasons.",
-		description: "Limited seasonal collection with brass and clay decorative lamps for Diwali, Navratri, and family celebrations.",
-		category: "Festival Specials",
-		material: "Brass & Clay",
-		image: "/images/temple-2.jpg",
-		gallery: ["/images/temple-2.jpg", "/images/temple-1.webp", "/images/temple-3.webp"],
-		rating: 4.8,
-		reviewCount: 44,
-		featured: true,
-		shippingInfo: "Seasonal priority shipping with delivery ETA at checkout.",
-		returnPolicy: "Returns within 14 days for unopened packs.",
-		variants: [
-			{ id: "lamp-6", name: "Set of 6", price: 39, width: "N/A", height: "N/A", depth: "N/A", weight: "0.9 kg", stock: 35, sku: "FEST-LAMP-6" },
-			{ id: "lamp-12", name: "Set of 12", price: 69, width: "N/A", height: "N/A", depth: "N/A", weight: "1.7 kg", stock: 20, sku: "FEST-LAMP-12" },
-		],
-		addons: [{ id: "oil-pack", name: "Festival Oil Pack", price: 10, description: "Long-burning diya oil pack" }],
 	},
 ];
 
@@ -408,13 +345,13 @@ function inferWoodType(material: string) {
 }
 
 function inferColor(category: string) {
-	if (category === "Traditional Clothes") {
+	if (category === "Clothes") {
 		return "Festive Multi Tone";
 	}
-	if (category === "Pooja Items") {
+	if (category === "Pooja") {
 		return "Brass and Copper";
 	}
-	if (category === "Pooja Mandap") {
+	if (category === "Mandap") {
 		return "Natural and Gold Accent";
 	}
 
@@ -451,15 +388,18 @@ export const categories = ["Temples", "Clothes", "Pooja", "Mandap"];
 
 export const testimonials = [
 	{
-		name: "Puja Family, Oslo",
+		name: "Saroj Thapa, Oslo",
 		quote: "The temple quality exceeded expectations. Packaging, delivery updates, and finish quality all felt premium and trustworthy.",
+		image: "/images/testimonial-1.avif",
 	},
 	{
-		name: "Anand Temple Group, Stockholm",
+		name: "Jaya Devi Bista, Stockholm",
 		quote: "Our mandap and pooja set were beautifully crafted and arrived on schedule. The team understood our cultural requirements perfectly.",
+		image: "/images/testimonial-2.avif",
 	},
 	{
-		name: "Maya S., Berlin",
+		name: "Satakkar Singh, Berlin",
 		quote: "The saree and gift collection were elegant and authentic. This is the first store that feels both modern and deeply cultural.",
+		image: "/images/testimonial-3.webp",
 	},
 ];

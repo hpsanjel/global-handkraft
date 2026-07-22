@@ -21,9 +21,8 @@ export default function ContactPage() {
 						<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-900">Business details</p>
 						<ul className="mt-4 space-y-3 text-sm text-stone-600">
 							<li>Email: hello@globalhandcraft.com</li>
-							<li>Phone: +47 91267612</li>
-							<li>WhatsApp: +49 176 2234 5489</li>
-							<li>Oslo, Norway</li>
+							<li>WhatsApp: +47 91267612</li>
+							<li>Address: Oslo, Norway</li>
 						</ul>
 					</div>
 				</div>

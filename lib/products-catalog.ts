@@ -1,63 +1,71 @@
 import { useEffect, useState } from "react";
-import { products as initialProducts } from "@/lib/data/products";
 import type { Product } from "@/types/store";
-
-export const productsCatalogStorageKey = "global-handcraft-admin-products";
 
 let inMemoryCatalog: Product[] | null = null;
 
-function readCatalogFromStorage(): Product[] {
-	if (typeof window === "undefined") {
-		return initialProducts;
+async function fetchProductsFromApi(): Promise<Product[]> {
+	const response = await fetch("/api/products", {
+		method: "GET",
+		cache: "no-store",
+	});
+
+	if (!response.ok) {
+		throw new Error("Unable to fetch product catalog.");
 	}
 
-	try {
-		const stored = window.localStorage.getItem(productsCatalogStorageKey);
-		if (stored) {
-			const parsed = JSON.parse(stored) as Product[];
-			if (Array.isArray(parsed) && parsed.length > 0) {
-				return parsed;
-			}
-		}
-	} catch {
-		// Fall back to the seeded catalog if storage is unavailable.
+	const data = (await response.json()) as Product[];
+	if (!Array.isArray(data)) {
+		return [];
 	}
 
-	return initialProducts;
+	return data;
 }
 
-export function getProductsCatalog(): Product[] {
-	if (inMemoryCatalog) {
-		return inMemoryCatalog;
-	}
-
-	inMemoryCatalog = readCatalogFromStorage();
-	return inMemoryCatalog;
-}
-
-export function saveProductsCatalog(products: Product[]) {
-	inMemoryCatalog = products;
+export async function refreshProductsCatalog() {
 	if (typeof window === "undefined") {
 		return;
 	}
 
-	window.localStorage.setItem(productsCatalogStorageKey, JSON.stringify(products));
+	inMemoryCatalog = await fetchProductsFromApi();
 	window.dispatchEvent(new Event("products:updated"));
 }
 
 export function useProductsCatalog() {
-	const [products, setProducts] = useState<Product[]>(() => getProductsCatalog());
+	const [products, setProducts] = useState<Product[]>(() => inMemoryCatalog ?? []);
 
 	useEffect(() => {
-		const syncProducts = () => {
-			setProducts(getProductsCatalog());
+		let isDisposed = false;
+
+		const syncProducts = async () => {
+			try {
+				if (inMemoryCatalog) {
+					setProducts(inMemoryCatalog);
+					return;
+				}
+
+				const nextProducts = await fetchProductsFromApi();
+				inMemoryCatalog = nextProducts;
+				if (!isDisposed) {
+					setProducts(nextProducts);
+				}
+			} catch {
+				if (!isDisposed) {
+					setProducts([]);
+				}
+			}
 		};
 
-		syncProducts();
-		window.addEventListener("products:updated", syncProducts);
+		const handleProductsUpdated = () => {
+			inMemoryCatalog = null;
+			void syncProducts();
+		};
+
+		void syncProducts();
+		window.addEventListener("products:updated", handleProductsUpdated);
 
 		return () => {
-			window.removeEventListener("products:updated", syncProducts);
+			isDisposed = true;
+			window.removeEventListener("products:updated", handleProductsUpdated);
 		};
 	}, []);
 

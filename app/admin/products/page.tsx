@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { categories, products as initialProducts } from "@/lib/data/products";
-import { productsCatalogStorageKey, saveProductsCatalog } from "@/lib/products-catalog";
+import { refreshProductsCatalog } from "@/lib/products-catalog";
 import type { Product, ProductAddon, ProductVariant } from "@/types/store";
+
+const adminCategories = ["Handcrafted Wooden Temples", "Traditional Clothes", "Pooja Items", "Pooja Mandap", "Gift Collection", "New Arrivals", "Festival Specials"];
 
 type CategoryFormConfig = {
 	showWoodType: boolean;
@@ -242,7 +243,7 @@ function createEmptyProductForCategory(category: string): Product {
 }
 
 function createEmptyProduct(): Product {
-	return createEmptyProductForCategory(categories[0] ?? "Handcrafted Wooden Temples");
+	return createEmptyProductForCategory(adminCategories[0] ?? "Handcrafted Wooden Temples");
 }
 
 function createEmptyVariant(): ProductVariant {
@@ -270,43 +271,36 @@ function createEmptyAddon(): ProductAddon {
 }
 
 export default function AdminProductsPage() {
-	const [productsState, setProductsState] = useState<Product[]>(initialProducts);
-	const [selectedProductId, setSelectedProductId] = useState<string>(initialProducts[0]?.id ?? "");
-	const [draftProduct, setDraftProduct] = useState<Product | null>(initialProducts[0] ?? null);
-	const [hasLoaded, setHasLoaded] = useState(false);
+	const [productsState, setProductsState] = useState<Product[]>([]);
+	const [selectedProductId, setSelectedProductId] = useState<string>("");
+	const [draftProduct, setDraftProduct] = useState<Product | null>(null);
+	const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
 	const [saveFeedback, setSaveFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+	const [isSaving, setIsSaving] = useState(false);
 
 	useEffect(() => {
-		try {
-			const stored = window.localStorage.getItem(productsCatalogStorageKey);
-			if (stored) {
-				const parsed = JSON.parse(stored) as Product[];
-				if (Array.isArray(parsed) && parsed.length > 0) {
-					setProductsState(parsed);
-					setSelectedProductId(parsed[0].id);
-					setDraftProduct(parsed[0]);
-					setHasLoaded(true);
-					return;
+		const loadProducts = async () => {
+			setIsLoadingCatalog(true);
+			try {
+				const response = await fetch("/api/admin/products", { cache: "no-store" });
+				const payload = (await response.json()) as Product[] | { error?: string };
+
+				if (!response.ok || !Array.isArray(payload)) {
+					throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Unable to load products.");
 				}
+
+				setProductsState(payload);
+				setSelectedProductId(payload[0]?.id ?? "");
+				setDraftProduct(payload[0] ?? null);
+			} catch (error) {
+				setSaveFeedback({ type: "error", message: error instanceof Error ? error.message : "Unable to load products." });
+			} finally {
+				setIsLoadingCatalog(false);
 			}
-		} catch {
-			// Fallback to the seeded catalog when storage is not readable.
-		}
+		};
 
-		setHasLoaded(true);
+		void loadProducts();
 	}, []);
-
-	useEffect(() => {
-		if (!hasLoaded) {
-			return;
-		}
-
-		try {
-			saveProductsCatalog(productsState);
-		} catch {
-			setSaveFeedback({ type: "error", message: "Products could not be saved to local storage. Please try again." });
-		}
-	}, [hasLoaded, productsState]);
 
 	useEffect(() => {
 		if (!productsState.length) {
@@ -394,7 +388,7 @@ export default function AdminProductsPage() {
 		setDraftProduct((current) => (current ? { ...current, addons: current.addons.filter((addon) => addon.id !== addonId) } : current));
 	};
 
-	const saveProduct = () => {
+	const saveProduct = async () => {
 		if (!draftProduct) {
 			setSaveFeedback({ type: "error", message: "There is no product selected to save." });
 			return;
@@ -426,20 +420,31 @@ export default function AdminProductsPage() {
 			addons: draftProduct.addons.filter((addon) => addon.name.trim()),
 		};
 
-		const existingIndex = productsState.findIndex((product) => product.id === normalizedProduct.id);
-		const nextProducts = existingIndex >= 0 ? productsState.map((product, index) => (index === existingIndex ? normalizedProduct : product)) : [normalizedProduct, ...productsState];
-
 		try {
-			saveProductsCatalog(nextProducts);
-			setSaveFeedback({ type: "success", message: `${normalizedProduct.name} has been saved.` });
-		} catch {
-			setSaveFeedback({ type: "error", message: "Product could not be saved. Please try again." });
-			return;
-		}
+			setIsSaving(true);
+			const shouldCreate = normalizedProduct.id.startsWith("product-");
+			const response = await fetch("/api/admin/products", {
+				method: shouldCreate ? "POST" : "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(shouldCreate ? { ...normalizedProduct, id: undefined } : normalizedProduct),
+			});
+			const payload = (await response.json()) as Product[] | { error?: string };
 
-		setProductsState(nextProducts);
-		setSelectedProductId(normalizedProduct.id);
-		setDraftProduct(normalizedProduct);
+			if (!response.ok || !Array.isArray(payload)) {
+				throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Product could not be saved. Please try again.");
+			}
+
+			setProductsState(payload);
+			const saved = payload.find((product) => product.slug === normalizedProduct.slug) ?? payload[0] ?? null;
+			setSelectedProductId(saved?.id ?? "");
+			setDraftProduct(saved);
+			setSaveFeedback({ type: "success", message: `${normalizedProduct.name} has been saved.` });
+			await refreshProductsCatalog();
+		} catch (error) {
+			setSaveFeedback({ type: "error", message: error instanceof Error ? error.message : "Product could not be saved. Please try again." });
+		} finally {
+			setIsSaving(false);
+		}
 	};
 
 	const addNewProduct = () => {
@@ -450,7 +455,7 @@ export default function AdminProductsPage() {
 		setDraftProduct(nextProduct);
 	};
 
-	const deleteProduct = (productId: string) => {
+	const deleteProduct = async (productId: string) => {
 		setSaveFeedback(null);
 		const targetProduct = productsState.find((product) => product.id === productId);
 		if (!targetProduct) {
@@ -462,21 +467,32 @@ export default function AdminProductsPage() {
 			return;
 		}
 
-		const nextProducts = productsState.filter((product) => product.id !== productId);
-		setProductsState(nextProducts);
+		try {
+			setIsSaving(true);
+			const response = await fetch(`/api/admin/products?id=${encodeURIComponent(productId)}`, {
+				method: "DELETE",
+			});
+			const payload = (await response.json()) as Product[] | { error?: string };
 
-		if (nextProducts.length > 0) {
-			const fallback = nextProducts[0];
-			setSelectedProductId(fallback.id);
+			if (!response.ok || !Array.isArray(payload)) {
+				throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Product could not be deleted.");
+			}
+
+			setProductsState(payload);
+			const fallback = payload[0] ?? null;
+			setSelectedProductId(fallback?.id ?? "");
 			setDraftProduct(fallback);
-		} else {
-			setSelectedProductId("");
-			setDraftProduct(null);
+			setSaveFeedback({ type: "success", message: `${targetProduct.name} has been deleted.` });
+			await refreshProductsCatalog();
+		} catch (error) {
+			setSaveFeedback({ type: "error", message: error instanceof Error ? error.message : "Product could not be deleted." });
+		} finally {
+			setIsSaving(false);
 		}
 	};
 
 	const currentProduct = draftProduct ?? (selectedProductId ? (productsState.find((product) => product.id === selectedProductId) ?? null) : null);
-	const activeCategoryConfig = getCategoryFormConfig(currentProduct?.category ?? categories[0] ?? "Handcrafted Wooden Temples");
+	const activeCategoryConfig = getCategoryFormConfig(currentProduct?.category ?? adminCategories[0] ?? "Handcrafted Wooden Temples");
 
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
@@ -489,7 +505,9 @@ export default function AdminProductsPage() {
 						<p className="mt-2 max-w-2xl text-sm text-stone-600">Create, update, and remove products, variants, and add-ons from a single admin workspace.</p>
 					</div>
 					<div className="flex flex-wrap gap-3">
-						<Button onClick={addNewProduct}>Add product</Button>
+						<Button onClick={addNewProduct} disabled={isLoadingCatalog || isSaving}>
+							Add product
+						</Button>
 						<Button asChild variant="outline">
 							<Link href="/admin">Back to dashboard</Link>
 						</Button>
@@ -505,6 +523,7 @@ export default function AdminProductsPage() {
 							</div>
 						</div>
 						<div className="mt-6 space-y-3">
+							{isLoadingCatalog ? <p className="text-sm text-stone-500">Loading products...</p> : null}
 							{productsState.map((product) => (
 								<button key={product.id} type="button" className={`w-full rounded-2xl border p-4 text-left transition ${selectedProductId === product.id ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-stone-50 hover:border-stone-300"}`} onClick={() => selectProduct(product.id)}>
 									<div className="flex items-center justify-between gap-3">
@@ -548,7 +567,7 @@ export default function AdminProductsPage() {
 									<label className="space-y-2 text-sm text-stone-600">
 										<span className="font-medium text-stone-700">Category</span>
 										<select value={currentProduct.category} onChange={(event) => updateProductCategory(event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0">
-											{categories.map((category) => (
+											{adminCategories.map((category) => (
 												<option key={category} value={category}>
 													{category}
 												</option>
@@ -770,7 +789,9 @@ export default function AdminProductsPage() {
 								</div>
 
 								<div className="flex justify-end">
-									<Button onClick={saveProduct}>Save product</Button>
+									<Button onClick={saveProduct} disabled={isLoadingCatalog || isSaving}>
+										{isSaving ? "Saving..." : "Save product"}
+									</Button>
 								</div>
 							</div>
 						) : (
