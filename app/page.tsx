@@ -17,6 +17,7 @@ export default function HomePage() {
 	const categoryProductMap: Record<string, string> = {
 		Temples: "Handcrafted Wooden Temples",
 		Clothes: "Traditional Clothes",
+		Gifts: "Gift Collection",
 		Pooja: "Pooja Items",
 		Mandap: "Pooja Mandap",
 	};
@@ -56,7 +57,7 @@ export default function HomePage() {
 	];
 
 	return (
-		<div className="flex min-h-screen flex-col bg-stone-50 text-stone-800">
+		<div className="flex min-h-screen flex-col bg-saffron text-stone-800">
 			<SiteHeader />
 			<main className="flex-1">
 				<section className="hidden sm:relative overflow-hidden">
@@ -138,7 +139,7 @@ export default function HomePage() {
 				))}
 
 				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
-					<div className="rounded-[2rem] border border-stone-200 bg-gradient-to-r from-[#b18016] to-[#028207] px-6 py-10 text-white shadow-sm sm:px-10">
+					<div className="rounded-[2rem] border border-stone-200 bg-gradient-to-r from-[#b18016] to-stone-500 px-6 py-10 text-white shadow-sm sm:px-10">
 						<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 							<div className="max-w-2xl">
 								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80">Artisan Story</p>

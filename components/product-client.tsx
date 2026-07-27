@@ -343,7 +343,7 @@ export function ProductClient({ product }: { product: Product }) {
 											<button
 												type="button"
 												key={variant.id}
-												className={`rounded-full border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}
+												className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}
 												onClick={() => {
 													setSelectedVariantId(variant.id);
 												}}
@@ -385,7 +385,7 @@ export function ProductClient({ product }: { product: Product }) {
 							</div>
 						</div>
 					)}
-					<Button className="mt-8 w-full" onClick={handleAddToCart} disabled={!selectedVariant}>
+					<Button className="mt-8 w-full cursor-pointer" onClick={handleAddToCart} disabled={!selectedVariant}>
 						Add to Cart
 					</Button>
 				</div>

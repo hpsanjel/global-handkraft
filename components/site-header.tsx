@@ -11,6 +11,7 @@ const navItems = [
 	{ href: "/shop?category=Traditional%20Clothes", label: "Clothes" },
 	{ href: "/shop?category=Pooja%20Items", label: "Pooja Items" },
 	{ href: "/shop?category=Pooja%20Mandap", label: "Mandaps" },
+	{ href: "/shop?category=Gift%20Collection", label: "Gifts" },
 ];
 
 export function SiteHeader() {
