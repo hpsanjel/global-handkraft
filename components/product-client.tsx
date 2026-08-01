@@ -6,50 +6,6 @@ import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
 
-const customInquiryStorageKey = "global-handcraft-custom-inquiries";
-
-type CustomInquiry = {
-	id: string;
-	createdAt: string;
-	productId: string;
-	productSlug: string;
-	length: string;
-	width: string;
-	height: string;
-	material: string;
-	expectedCostRange: string;
-	description: string;
-	whatsapp: string;
-	email: string;
-	sampleImages: string[];
-};
-
-function readCustomInquiries(): CustomInquiry[] {
-	if (typeof window === "undefined") {
-		return [];
-	}
-
-	try {
-		const stored = window.localStorage.getItem(customInquiryStorageKey);
-		if (!stored) {
-			return [];
-		}
-
-		const parsed = JSON.parse(stored) as CustomInquiry[];
-		return Array.isArray(parsed) ? parsed : [];
-	} catch {
-		return [];
-	}
-}
-
-function saveCustomInquiries(inquiries: CustomInquiry[]) {
-	if (typeof window === "undefined") {
-		return;
-	}
-
-	window.localStorage.setItem(customInquiryStorageKey, JSON.stringify(inquiries));
-}
-
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
@@ -70,6 +26,7 @@ export function ProductClient({ product }: { product: Product }) {
 	const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
 	const [isMobileImageViewerOpen, setIsMobileImageViewerOpen] = useState(false);
 	const [activePreviewImage, setActivePreviewImage] = useState(product.image);
+	const [selectedGalleryImage, setSelectedGalleryImage] = useState(product.image);
 	const [mandapLength, setMandapLength] = useState("");
 	const [mandapWidth, setMandapWidth] = useState("");
 	const [mandapHeight, setMandapHeight] = useState("");
@@ -79,6 +36,7 @@ export function ProductClient({ product }: { product: Product }) {
 	const [mandapWhatsapp, setMandapWhatsapp] = useState("");
 	const [mandapEmail, setMandapEmail] = useState("");
 	const [mandapSampleImages, setMandapSampleImages] = useState<string[]>([]);
+	const [mandapSampleImageFiles, setMandapSampleImageFiles] = useState<File[]>([]);
 	const [mandapFormError, setMandapFormError] = useState("");
 	const [mandapFormSuccess, setMandapFormSuccess] = useState("");
 	const [isSubmittingMandap, setIsSubmittingMandap] = useState(false);
@@ -98,9 +56,11 @@ export function ProductClient({ product }: { product: Product }) {
 	};
 
 	const displaySpecifications = product.specifications ?? [];
-	const displayMaterials = product.materials ?? [product.material];
 	const hasMultipleVariants = product.variants.length > 1;
-	const customInquiryEnabled = displaySpecifications.some((spec) => spec.toLowerCase().includes("custom inquiry")) || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom request")) || product.slug.includes("custom");
+	const categoryName = product.category?.toLowerCase() ?? "";
+	const categorySlug = product.categorySlug?.toLowerCase() ?? "";
+	const isMandapCategory = categoryName.includes("mandap") || categorySlug.includes("mandap");
+	const customInquiryEnabled = isMandapCategory || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom inquiry")) || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom request")) || product.slug.includes("custom");
 
 	const handleAddToCart = () => {
 		const existingItems = getCartItems();
@@ -140,6 +100,7 @@ export function ProductClient({ product }: { product: Product }) {
 		const fileList = event.target.files;
 		if (!fileList || fileList.length === 0) {
 			setMandapSampleImages([]);
+			setMandapSampleImageFiles([]);
 			return;
 		}
 
@@ -151,12 +112,13 @@ export function ProductClient({ product }: { product: Product }) {
 		try {
 			const imageDataUrls = await Promise.all(files.map((file) => fileToDataUrl(file)));
 			setMandapSampleImages(imageDataUrls);
+			setMandapSampleImageFiles(files);
 		} catch {
 			setMandapFormError("One or more images could not be processed. Please try again.");
 		}
 	};
 
-	const handleCustomInquirySubmit = () => {
+	const handleCustomInquirySubmit = async () => {
 		setMandapFormError("");
 		setMandapFormSuccess("");
 
@@ -181,37 +143,49 @@ export function ProductClient({ product }: { product: Product }) {
 
 		setIsSubmittingMandap(true);
 
-		const inquiry: CustomInquiry = {
-			id: `mandap-inquiry-${Date.now()}-${Math.round(Math.random() * 1000)}`,
-			createdAt: new Date().toISOString(),
-			productId: product.id,
-			productSlug: product.slug,
-			length: trimmedLength,
-			width: trimmedWidth,
-			height: trimmedHeight,
-			material: trimmedMaterial,
-			expectedCostRange: trimmedExpectedCostRange,
-			description: trimmedDescription,
-			whatsapp: trimmedWhatsapp,
-			email: trimmedEmail,
-			sampleImages: mandapSampleImages,
-		};
+		try {
+			const formData = new FormData();
+			formData.set("productId", product.id);
+			formData.set("productName", product.name);
+			formData.set("productSlug", product.slug);
+			formData.set("length", trimmedLength);
+			formData.set("width", trimmedWidth);
+			formData.set("height", trimmedHeight);
+			formData.set("material", trimmedMaterial);
+			formData.set("expectedCostRange", trimmedExpectedCostRange);
+			formData.set("description", trimmedDescription);
+			formData.set("whatsapp", trimmedWhatsapp);
+			formData.set("email", trimmedEmail);
+			mandapSampleImageFiles.forEach((file) => formData.append("sampleImages", file));
 
-		const existingInquiries = readCustomInquiries();
-		saveCustomInquiries([inquiry, ...existingInquiries]);
+			const response = await fetch("/api/mandap-inquiries", {
+				method: "POST",
+				body: formData,
+			});
 
-		setIsSubmittingMandap(false);
-		setMandapFormSuccess("Request submitted. Our team will contact you soon.");
+			const result = (await response.json().catch(() => null)) as { error?: string } | null;
 
-		setMandapLength("");
-		setMandapWidth("");
-		setMandapHeight("");
-		setMandapMaterial("");
-		setMandapExpectedCostRange("");
-		setMandapDescription("");
-		setMandapWhatsapp("");
-		setMandapEmail("");
-		setMandapSampleImages([]);
+			if (!response.ok) {
+				setMandapFormError(result?.error || "Unable to submit request. Please try again.");
+				return;
+			}
+
+			setMandapFormSuccess("Request submitted. Our team will contact you soon.");
+			setMandapLength("");
+			setMandapWidth("");
+			setMandapHeight("");
+			setMandapMaterial("");
+			setMandapExpectedCostRange("");
+			setMandapDescription("");
+			setMandapWhatsapp("");
+			setMandapEmail("");
+			setMandapSampleImages([]);
+			setMandapSampleImageFiles([]);
+		} catch {
+			setMandapFormError("Unable to submit request. Please check your connection and try again.");
+		} finally {
+			setIsSubmittingMandap(false);
+		}
 	};
 
 	if (customInquiryEnabled) {
@@ -296,10 +270,10 @@ export function ProductClient({ product }: { product: Product }) {
 	return (
 		<div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
 			<div className="hidden space-y-4 lg:block">
-				<div className="aspect-[4/5] rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
+				<div className="aspect-[4/5] rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${selectedGalleryImage}')` }} />
 				<div className="grid gap-4 sm:grid-cols-3">
 					{product.gallery.map((image) => (
-						<div key={image} className="aspect-square rounded-[1.25rem] border border-stone-200 bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${image}')` }} />
+						<button key={image} type="button" onClick={() => setSelectedGalleryImage(image)} className={`aspect-square rounded-[1.25rem] border bg-stone-100 bg-cover bg-center transition ${selectedGalleryImage === image ? "border-stone-900 ring-2 ring-stone-900" : "border-stone-200 hover:border-stone-400"}`} style={{ backgroundImage: `url('${image}')` }} aria-label="View image" />
 					))}
 				</div>
 			</div>
@@ -307,21 +281,20 @@ export function ProductClient({ product }: { product: Product }) {
 				<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">{product.category}</p>
 				<h1 className="mt-3 text-2xl font-semibold text-stone-900 sm:text-4xl">{product.name}</h1>
 				<p className="mt-3 text-base leading-7 text-stone-600 sm:text-lg sm:leading-8">{product.shortDescription}</p>
-				<button
-					type="button"
-					onClick={() => {
-						setActivePreviewImage(product.image);
-						setIsMobileImageViewerOpen(true);
-					}}
-					className="mt-4 inline-flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-2 shadow-sm transition hover:bg-stone-50 lg:hidden"
-				>
-					<div className="h-16 w-16 rounded-xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
-					<span className="text-sm font-medium text-stone-700">Tap to view full image</span>
-				</button>
-				<div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-stone-700">
-					{product.woodType ? <span className="rounded-full border border-stone-300 bg-white px-3 py-1">Wood: {product.woodType}</span> : null}
-					{product.color ? <span className="rounded-full border border-stone-300 bg-white px-3 py-1">Color: {product.color}</span> : null}
-					{hasMultipleVariants && product.sizeLabel ? <span className="rounded-full border border-stone-300 bg-white px-3 py-1">Size: {product.sizeLabel}</span> : null}
+				<div className="mt-4 flex gap-3 overflow-x-auto pb-1 lg:hidden">
+					{(product.gallery.length > 0 ? product.gallery : [product.image]).map((image) => (
+						<button
+							key={image}
+							type="button"
+							onClick={() => {
+								setActivePreviewImage(image);
+								setIsMobileImageViewerOpen(true);
+							}}
+							className="h-20 w-20 shrink-0 rounded-xl border border-stone-200 bg-stone-100 bg-cover bg-center shadow-sm transition active:scale-95"
+							style={{ backgroundImage: `url('${image}')` }}
+							aria-label="View image full screen"
+						/>
+					))}
 				</div>
 				<div className="mt-5 rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 					<div className="flex items-center justify-between gap-3">
@@ -395,50 +368,12 @@ export function ProductClient({ product }: { product: Product }) {
 						</div>
 					) : null}
 				</div>
-				<p className="mt-5 text-sm leading-7 text-stone-600 sm:text-base">{product.description}</p>
-				<div className="mt-8 grid gap-4 sm:grid-cols-2">
-					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<p className="text-sm font-semibold text-stone-900">Material</p>
-						<p className="mt-2 text-sm text-stone-600">{displayMaterials.join(", ")}</p>
-					</div>
+				<p className="mt-5 text-sm leading-7 text-stone-600 sm:text-base p-4">{product.description}</p>
+				<div className="mt-2">
 					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 						<p className="text-sm font-semibold text-stone-900">Shipping</p>
 						<p className="mt-2 text-sm text-stone-600">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo}</p>
 					</div>
-					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<p className="text-sm font-semibold text-stone-900">Dimensions</p>
-						<p className="mt-2 text-sm text-stone-600">{product.dimensions ?? `${selectedVariant?.width ?? "N/A"} x ${selectedVariant?.height ?? "N/A"} x ${selectedVariant?.depth ?? "N/A"}`}</p>
-					</div>
-					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<p className="text-sm font-semibold text-stone-900">Weight</p>
-						<p className="mt-2 text-sm text-stone-600">{product.weight ?? selectedVariant?.weight ?? "N/A"}</p>
-					</div>
-				</div>
-
-				<div className="mt-8 space-y-4">
-					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<p className="text-sm font-semibold text-stone-900">Handcrafted Story</p>
-						<p className="mt-2 text-sm leading-7 text-stone-600">{product.handcraftedStory ?? product.description}</p>
-					</div>
-					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<p className="text-sm font-semibold text-stone-900">Handmade Process</p>
-						<p className="mt-2 text-sm leading-7 text-stone-600">{product.handmadeProcess ?? "Each piece is hand-finished by skilled artisans and quality checked before shipping."}</p>
-					</div>
-					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<p className="text-sm font-semibold text-stone-900">Care Instructions</p>
-						<p className="mt-2 text-sm leading-7 text-stone-600">{product.careInstructions ?? "Keep dry, dust with a soft cloth, and avoid direct harsh sunlight exposure."}</p>
-					</div>
-
-					{displaySpecifications.length > 0 ? (
-						<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-							<p className="text-sm font-semibold text-stone-900">Specifications</p>
-							<ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-stone-600">
-								{displaySpecifications.map((spec) => (
-									<li key={spec}>{spec}</li>
-								))}
-							</ul>
-						</div>
-					) : null}
 				</div>
 			</div>
 

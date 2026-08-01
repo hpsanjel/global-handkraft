@@ -1,5 +1,40 @@
 import Stripe from "stripe";
 import { products } from "@/lib/data/products";
+import { prisma } from "@/lib/prisma";
+
+export interface AdminMandapInquiry {
+	id: string;
+	productId: string;
+	productName: string;
+	productSlug: string;
+	length: string;
+	width: string;
+	height: string;
+	material: string;
+	expectedCostRange: string;
+	description: string;
+	whatsapp: string | null;
+	email: string | null;
+	sampleImages: string[];
+	status: string;
+	createdAt: string;
+}
+
+export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry[]> {
+	if (!process.env.DATABASE_URL) {
+		return [];
+	}
+
+	const inquiries = await prisma.mandapInquiry.findMany({
+		orderBy: { createdAt: "desc" },
+		take: limit,
+	});
+
+	return inquiries.map((inquiry) => ({
+		...inquiry,
+		createdAt: inquiry.createdAt.toISOString(),
+	}));
+}
 
 export interface AdminOrder {
 	id: string;

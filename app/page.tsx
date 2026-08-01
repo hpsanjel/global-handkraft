@@ -30,7 +30,7 @@ export default function HomePage() {
 			label: category.name,
 			slug: category.slug,
 			count: category.productCount,
-			previewImage: matchedProducts[0]?.image ?? "/images/temple-1.webp",
+			previewImage: category.imageUrl ?? matchedProducts[0]?.image ?? "/images/temple-1.webp",
 		};
 	});
 	const trustHighlights = ["Verified craftsmanship", "Secure checkout", "Tracked Europe-wide delivery", "Responsive support"];
@@ -76,10 +76,13 @@ export default function HomePage() {
 							</div>
 						</div>
 						<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-							{highlightedCategories.map((category, index) => (
-								<Link key={category.id} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="relative group grid aspect-square w-[36vw] max-w-55 min-w-35 shrink-0 snap-start grid-rows-[1fr_auto] rounded-2xl border border-stone-200 bg-white p-1 shadow-sm transition hover:shadow-md md:w-55 md:aspect-auto md:overflow-hidden md:rounded-3xl md:border-stone-200 md:p-0 md:shadow-sm md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
-									<Image src={`/images/cat-${(index % 5) + 1}.avif`} alt={category.name} width={200} height={200} className="h-full w-full rounded-xl object-cover transition duration-300 group-hover:scale-[1.03] md:h-48 md:rounded-none md:group-hover:scale-105" />
-									<p className="absolute bottom-2 left-1/2 w-[60%] -translate-x-1/2 rounded-full bg-white px-2 py-1 text-center text-xs font-semibold text-stone-900 shadow-sm transition duration-300 group-hover:bg-stone-100 group-hover:text-[#1B365D] md:static md:mt-0 md:w-full md:translate-x-0 md:rounded-none md:bg-transparent md:px-5 md:pb-5 md:pt-4 md:text-left md:text-lg md:font-semibold md:shadow-none md:transition-none">{category.name}</p>
+							{categoryHighlights.map((category) => (
+								<Link key={category.slug} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="group flex w-40 shrink-0 snap-start flex-col overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-sm transition sm:w-48 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
+									<div className="aspect-square w-full bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${category.previewImage}')` }} />
+									<div className="px-3 py-3">
+										<p className="text-sm font-semibold text-stone-900 group-hover:text-[#1B365D]">{category.label}</p>
+										<p className="mt-1 text-xs text-stone-600">{category.count} products</p>
+									</div>
 								</Link>
 							))}
 						</div>

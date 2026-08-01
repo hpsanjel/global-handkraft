@@ -7,7 +7,6 @@ export type ProductVariant = {
 	depth: string;
 	weight: string;
 	stock: number;
-	sku: string;
 	shippingNote?: string;
 };
 

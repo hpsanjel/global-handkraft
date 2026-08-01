@@ -17,8 +17,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Norway: 3-5 days. Sweden/Denmark: 4-7 days. Finland/Germany: 5-10 days.",
 		returnPolicy: "Returns within 14 days for unused items in original packaging.",
 		variants: [
-			{ id: "small", name: "Standard", price: 249, width: "40 cm", height: "62 cm", depth: "30 cm", weight: "10 kg", stock: 14, sku: "TMP-SM-NEP-STD" },
-			{ id: "small-deluxe", name: "Deluxe", price: 319, width: "45 cm", height: "70 cm", depth: "34 cm", weight: "12 kg", stock: 8, sku: "TMP-SM-NEP-DLX" },
+			{ id: "small", name: "Standard", price: 249, width: "40 cm", height: "62 cm", depth: "30 cm", weight: "10 kg", stock: 14 },
+			{ id: "small-deluxe", name: "Deluxe", price: 319, width: "45 cm", height: "70 cm", depth: "34 cm", weight: "12 kg", stock: 8 },
 		],
 		addons: [
 			{ id: "led", name: "LED Diya Lighting", price: 39, description: "Warm integrated lighting strip for evening pooja" },
@@ -41,8 +41,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Delivered in 4-8 days across Scandinavia and 5-10 days in Germany.",
 		returnPolicy: "Returns within 14 days. Custom engraving items are exchange-only.",
 		variants: [
-			{ id: "medium-std", name: "Standard", price: 449, width: "58 cm", height: "96 cm", depth: "40 cm", weight: "18 kg", stock: 9, sku: "TMP-MD-HER-STD" },
-			{ id: "medium-prem", name: "Premium", price: 579, width: "65 cm", height: "108 cm", depth: "44 cm", weight: "22 kg", stock: 5, sku: "TMP-MD-HER-PRM" },
+			{ id: "medium-std", name: "Standard", price: 449, width: "58 cm", height: "96 cm", depth: "40 cm", weight: "18 kg", stock: 9 },
+			{ id: "medium-prem", name: "Premium", price: 579, width: "65 cm", height: "108 cm", depth: "44 cm", weight: "22 kg", stock: 5 },
 		],
 		addons: [
 			{ id: "brass-handle", name: "Brass Handle Set", price: 35, description: "Traditional brass hardware for drawers and doors" },
@@ -65,8 +65,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "White-glove pallet shipping with tracking. Delivery 5-10 business days.",
 		returnPolicy: "Returns accepted within 14 days. White-glove return pickup available.",
 		variants: [
-			{ id: "regal-m", name: "Regal Medium", price: 899, width: "78 cm", height: "128 cm", depth: "52 cm", weight: "34 kg", stock: 4, sku: "TMP-PR-RGL-M" },
-			{ id: "regal-l", name: "Regal Large", price: 1199, width: "92 cm", height: "152 cm", depth: "60 cm", weight: "46 kg", stock: 2, sku: "TMP-PR-RGL-L" },
+			{ id: "regal-m", name: "Regal Medium", price: 899, width: "78 cm", height: "128 cm", depth: "52 cm", weight: "34 kg", stock: 4 },
+			{ id: "regal-l", name: "Regal Large", price: 1199, width: "92 cm", height: "152 cm", depth: "60 cm", weight: "46 kg", stock: 2 },
 		],
 		addons: [
 			{ id: "gold-inlay", name: "Gold Inlay Finish", price: 110, description: "Accent gold carving finish for selected motifs" },
@@ -89,8 +89,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Ships in reinforced packaging with mounting template. Delivery in 3-7 days.",
 		returnPolicy: "14-day return policy for standard variants.",
 		variants: [
-			{ id: "wall-s", name: "Small", price: 199, width: "36 cm", height: "52 cm", depth: "24 cm", weight: "7 kg", stock: 15, sku: "TMP-WL-S" },
-			{ id: "wall-m", name: "Medium", price: 269, width: "45 cm", height: "62 cm", depth: "28 cm", weight: "9 kg", stock: 10, sku: "TMP-WL-M" },
+			{ id: "wall-s", name: "Small", price: 199, width: "36 cm", height: "52 cm", depth: "24 cm", weight: "7 kg", stock: 15 },
+			{ id: "wall-m", name: "Medium", price: 269, width: "45 cm", height: "62 cm", depth: "28 cm", weight: "9 kg", stock: 10 },
 		],
 		addons: [{ id: "mount-kit", name: "Premium Mount Kit", price: 25, description: "Heavy-duty wall anchors and Nordic wall compatibility kit" }],
 	},
@@ -110,8 +110,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Carbon-aware shipping partners across Norway and EU.",
 		returnPolicy: "14-day standard returns, 30-day structural warranty support.",
 		variants: [
-			{ id: "teak-std", name: "Standard", price: 529, width: "62 cm", height: "102 cm", depth: "42 cm", weight: "19 kg", stock: 8, sku: "TMP-TK-STD" },
-			{ id: "teak-xl", name: "XL", price: 699, width: "76 cm", height: "122 cm", depth: "50 cm", weight: "28 kg", stock: 4, sku: "TMP-TK-XL" },
+			{ id: "teak-std", name: "Standard", price: 529, width: "62 cm", height: "102 cm", depth: "42 cm", weight: "19 kg", stock: 8 },
+			{ id: "teak-xl", name: "XL", price: 699, width: "76 cm", height: "122 cm", depth: "50 cm", weight: "28 kg", stock: 4 },
 		],
 		addons: [{ id: "brass-diya-tray", name: "Brass Diya Tray", price: 44, description: "Removable brass tray for lamp rituals" }],
 	},
@@ -131,8 +131,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Tracked shipping with moisture-control wrapping for long-distance delivery.",
 		returnPolicy: "14-day returns for non-custom variants.",
 		variants: [
-			{ id: "rose-m", name: "Medium", price: 599, width: "64 cm", height: "106 cm", depth: "45 cm", weight: "23 kg", stock: 6, sku: "TMP-RS-M" },
-			{ id: "rose-l", name: "Large", price: 779, width: "82 cm", height: "136 cm", depth: "54 cm", weight: "33 kg", stock: 3, sku: "TMP-RS-L" },
+			{ id: "rose-m", name: "Medium", price: 599, width: "64 cm", height: "106 cm", depth: "45 cm", weight: "23 kg", stock: 6 },
+			{ id: "rose-l", name: "Large", price: 779, width: "82 cm", height: "136 cm", depth: "54 cm", weight: "33 kg", stock: 3 },
 		],
 		addons: [{ id: "carving-upgrade", name: "Deep Carving Upgrade", price: 120, description: "Extra-depth hand carving on side pillars and crown" }],
 	},
@@ -152,8 +152,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Production 3-6 weeks. Delivery 5-10 days after completion.",
 		returnPolicy: "Custom builds are non-refundable after production begins.",
 		variants: [
-			{ id: "custom-consult", name: "Design Consultation", price: 99, width: "Custom", height: "Custom", depth: "Custom", weight: "Custom", stock: 20, sku: "TMP-CST-CONSULT" },
-			{ id: "custom-build", name: "Custom Build Deposit", price: 899, width: "Custom", height: "Custom", depth: "Custom", weight: "Custom", stock: 12, sku: "TMP-CST-DEP" },
+			{ id: "custom-consult", name: "Design Consultation", price: 99, width: "Custom", height: "Custom", depth: "Custom", weight: "Custom", stock: 20 },
+			{ id: "custom-build", name: "Custom Build Deposit", price: 899, width: "Custom", height: "Custom", depth: "Custom", weight: "Custom", stock: 12 },
 		],
 		addons: [{ id: "3d-preview", name: "3D Preview Pack", price: 149, description: "Room-fit mockup and 3D visual preview before production" }],
 	},
@@ -173,8 +173,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Ships in 3-6 days across Norway and EU.",
 		returnPolicy: "Size exchanges within 14 days.",
 		variants: [
-			{ id: "m-size-m", name: "Size M", price: 129, width: "M", height: "Regular", depth: "N/A", weight: "0.8 kg", stock: 20, sku: "CLOTH-DAURA-M" },
-			{ id: "m-size-l", name: "Size L", price: 129, width: "L", height: "Regular", depth: "N/A", weight: "0.85 kg", stock: 16, sku: "CLOTH-DAURA-L" },
+			{ id: "m-size-m", name: "Size M", price: 129, width: "M", height: "Regular", depth: "N/A", weight: "0.8 kg", stock: 20 },
+			{ id: "m-size-l", name: "Size L", price: 129, width: "L", height: "Regular", depth: "N/A", weight: "0.85 kg", stock: 16 },
 		],
 		addons: [{ id: "topi", name: "Dhaka Topi Add-on", price: 25, description: "Matching traditional Dhaka topi" }],
 	},
@@ -194,8 +194,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Gift-ready packaging. Delivery in 4-8 business days.",
 		returnPolicy: "Returns accepted within 14 days for unworn items.",
 		variants: [
-			{ id: "saree-red", name: "Ruby Red", price: 159, width: "5.5 m", height: "Standard", depth: "N/A", weight: "0.7 kg", stock: 12, sku: "CLOTH-SAR-RED" },
-			{ id: "saree-gold", name: "Gold Beige", price: 169, width: "5.5 m", height: "Standard", depth: "N/A", weight: "0.72 kg", stock: 10, sku: "CLOTH-SAR-GLD" },
+			{ id: "saree-red", name: "Ruby Red", price: 159, width: "5.5 m", height: "Standard", depth: "N/A", weight: "0.7 kg", stock: 12 },
+			{ id: "saree-gold", name: "Gold Beige", price: 169, width: "5.5 m", height: "Standard", depth: "N/A", weight: "0.72 kg", stock: 10 },
 		],
 		addons: [{ id: "blouse", name: "Stitched Blouse", price: 35, description: "Custom stitched blouse as per selected size" }],
 	},
@@ -215,8 +215,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Ships within 2-4 business days.",
 		returnPolicy: "14-day returns for unused items.",
 		variants: [
-			{ id: "shawl-earth", name: "Earth Tones", price: 69, width: "200 cm", height: "70 cm", depth: "N/A", weight: "0.5 kg", stock: 24, sku: "CLOTH-SHW-ERTH" },
-			{ id: "shawl-royal", name: "Royal Tones", price: 79, width: "200 cm", height: "70 cm", depth: "N/A", weight: "0.52 kg", stock: 18, sku: "CLOTH-SHW-RYL" },
+			{ id: "shawl-earth", name: "Earth Tones", price: 69, width: "200 cm", height: "70 cm", depth: "N/A", weight: "0.5 kg", stock: 24 },
+			{ id: "shawl-royal", name: "Royal Tones", price: 79, width: "200 cm", height: "70 cm", depth: "N/A", weight: "0.52 kg", stock: 18 },
 		],
 		addons: [{ id: "gift-box", name: "Gift Box", price: 9, description: "Premium hard-box festive gift wrapping" }],
 	},
@@ -236,8 +236,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Ships in protective anti-tarnish packing. Delivery 3-7 days.",
 		returnPolicy: "14-day return policy.",
 		variants: [
-			{ id: "brass-set-s", name: "3-Piece Set", price: 59, width: "Standard", height: "Standard", depth: "Standard", weight: "1.3 kg", stock: 25, sku: "POOJA-BRS-3" },
-			{ id: "brass-set-l", name: "5-Piece Set", price: 89, width: "Standard", height: "Standard", depth: "Standard", weight: "2.1 kg", stock: 18, sku: "POOJA-BRS-5" },
+			{ id: "brass-set-s", name: "3-Piece Set", price: 59, width: "Standard", height: "Standard", depth: "Standard", weight: "1.3 kg", stock: 25 },
+			{ id: "brass-set-l", name: "5-Piece Set", price: 89, width: "Standard", height: "Standard", depth: "Standard", weight: "2.1 kg", stock: 18 },
 		],
 		addons: [{ id: "aarti-lamp", name: "Aarti Lamp", price: 29, description: "Matching brass aarti lamp add-on" }],
 	},
@@ -257,8 +257,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Ships within 2-5 days with anti-dent packaging.",
 		returnPolicy: "14-day return policy.",
 		variants: [
-			{ id: "copper-basic", name: "Basic", price: 49, width: "Standard", height: "Standard", depth: "Standard", weight: "1.1 kg", stock: 30, sku: "POOJA-CPR-BSC" },
-			{ id: "copper-prem", name: "Premium", price: 75, width: "Standard", height: "Standard", depth: "Standard", weight: "1.6 kg", stock: 19, sku: "POOJA-CPR-PRM" },
+			{ id: "copper-basic", name: "Basic", price: 49, width: "Standard", height: "Standard", depth: "Standard", weight: "1.1 kg", stock: 30 },
+			{ id: "copper-prem", name: "Premium", price: 75, width: "Standard", height: "Standard", depth: "Standard", weight: "1.6 kg", stock: 19 },
 		],
 		addons: [{ id: "cleaning-kit", name: "Copper Care Kit", price: 14, description: "Natural cleaner and polishing cloth set" }],
 	},
@@ -278,8 +278,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Ships in 1-3 days. Secure pouch packaging.",
 		returnPolicy: "Returns accepted for unopened packs only.",
 		variants: [
-			{ id: "acc-basic", name: "Basic Pack", price: 29, width: "N/A", height: "N/A", depth: "N/A", weight: "0.4 kg", stock: 44, sku: "POOJA-ACC-BSC" },
-			{ id: "acc-festive", name: "Festive Pack", price: 45, width: "N/A", height: "N/A", depth: "N/A", weight: "0.7 kg", stock: 31, sku: "POOJA-ACC-FEST" },
+			{ id: "acc-basic", name: "Basic Pack", price: 29, width: "N/A", height: "N/A", depth: "N/A", weight: "0.4 kg", stock: 44 },
+			{ id: "acc-festive", name: "Festive Pack", price: 45, width: "N/A", height: "N/A", depth: "N/A", weight: "0.7 kg", stock: 31 },
 		],
 		addons: [{ id: "diya-oil", name: "Diya Oil Pack", price: 11, description: "Temple-grade diya oil blend" }],
 	},
@@ -299,8 +299,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Flat-pack shipping with guided assembly support. Delivery in 5-10 days.",
 		returnPolicy: "Returns within 14 days for unopened kits.",
 		variants: [
-			{ id: "indoor-s", name: "2m x 2m", price: 799, width: "200 cm", height: "240 cm", depth: "200 cm", weight: "38 kg", stock: 6, sku: "MAND-IN-2X2" },
-			{ id: "indoor-m", name: "3m x 3m", price: 1199, width: "300 cm", height: "270 cm", depth: "300 cm", weight: "56 kg", stock: 3, sku: "MAND-IN-3X3" },
+			{ id: "indoor-s", name: "2m x 2m", price: 799, width: "200 cm", height: "240 cm", depth: "200 cm", weight: "38 kg", stock: 6 },
+			{ id: "indoor-m", name: "3m x 3m", price: 1199, width: "300 cm", height: "270 cm", depth: "300 cm", weight: "56 kg", stock: 3 },
 		],
 		addons: [{ id: "fabric-drape", name: "Ceremony Drape Set", price: 129, description: "Festival-ready premium fabric draping kit" }],
 	},
@@ -320,8 +320,8 @@ const baseProducts: Product[] = [
 		shippingInfo: "Freight shipping with setup coordination available.",
 		returnPolicy: "Commercial/event orders are exchange-only after dispatch.",
 		variants: [
-			{ id: "outdoor-m", name: "Standard Event", price: 1499, width: "350 cm", height: "300 cm", depth: "350 cm", weight: "74 kg", stock: 2, sku: "MAND-OUT-STD" },
-			{ id: "outdoor-l", name: "Grand Event", price: 1999, width: "450 cm", height: "340 cm", depth: "450 cm", weight: "102 kg", stock: 1, sku: "MAND-OUT-GRAND" },
+			{ id: "outdoor-m", name: "Standard Event", price: 1499, width: "350 cm", height: "300 cm", depth: "350 cm", weight: "74 kg", stock: 2 },
+			{ id: "outdoor-l", name: "Grand Event", price: 1999, width: "450 cm", height: "340 cm", depth: "450 cm", weight: "102 kg", stock: 1 },
 		],
 		addons: [{ id: "lighting-rig", name: "Lighting Rig", price: 249, description: "Integrated warm-light frame for evening ceremonies" }],
 	},
@@ -379,7 +379,7 @@ export const products: Product[] = baseProducts.map((product) => {
 		dimensions: product.dimensions ?? `${product.variants[0]?.width ?? "N/A"} x ${product.variants[0]?.height ?? "N/A"} x ${product.variants[0]?.depth ?? "N/A"}`,
 		weight: product.weight ?? product.variants[0]?.weight ?? "N/A",
 		careInstructions: product.careInstructions ?? "Keep dry, clean with a soft cloth, and avoid prolonged direct sunlight.",
-		specifications: product.specifications ?? [`Category: ${product.category}`, `Material: ${product.material}`, `SKU: ${product.variants[0]?.sku ?? "N/A"}`],
+		specifications: product.specifications ?? [`Category: ${product.category}`, `Material: ${product.material}`],
 		reviews: product.reviews ?? [defaultReview],
 	};
 });

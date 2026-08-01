@@ -1,185 +1,103 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { type CategorySummary } from "@/lib/category-utils";
 import { refreshProductsCatalog } from "@/lib/products-catalog";
+import { createClient } from "@/lib/supabase/client";
 import type { Product, ProductAddon, ProductVariant } from "@/types/store";
 
-type CategoryFormConfig = {
-	showWoodType: boolean;
-	showMaterials: boolean;
-	showSizeLabel: boolean;
-	showColor: boolean;
-	showDimensions: boolean;
-	showWeight: boolean;
-	showHandcraftedStory: boolean;
-	showHandmadeProcess: boolean;
-	showCareInstructions: boolean;
-	showSpecifications: boolean;
-	materialsLabel: string;
-	sizeLabel: string;
-	colorLabel: string;
-	dimensionsLabel: string;
-	weightLabel: string;
-	handcraftedStoryLabel: string;
-	handmadeProcessLabel: string;
-	careInstructionsLabel: string;
-	specificationsLabel: string;
-	defaultMaterial: string;
-	defaultWoodType?: string;
-	defaultSizeLabel: string;
-	defaultColor: string;
-	defaultDimensions: string;
-	defaultWeight: string;
-	defaultHandcraftedStory: string;
-	defaultHandmadeProcess: string;
-	defaultCareInstructions: string;
-	defaultSpecifications: string[];
-};
+// Shared Tailwind fragments — avoids repeating the same class string across the form.
+const FIELD_INPUT = "w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0";
+const SUBFIELD_INPUT = "w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0";
+const FIELD_LABEL = "space-y-2 text-sm text-stone-600";
 
-const defaultCategoryConfig: CategoryFormConfig = {
-	showWoodType: false,
-	showMaterials: true,
-	showSizeLabel: true,
-	showColor: true,
-	showDimensions: false,
-	showWeight: false,
-	showHandcraftedStory: false,
-	showHandmadeProcess: false,
-	showCareInstructions: false,
-	showSpecifications: false,
-	materialsLabel: "Materials",
-	sizeLabel: "Size label",
-	colorLabel: "Color",
-	dimensionsLabel: "Dimensions",
-	weightLabel: "Weight",
-	handcraftedStoryLabel: "Handcrafted story",
-	handmadeProcessLabel: "Handmade process",
-	careInstructionsLabel: "Care instructions",
-	specificationsLabel: "Specifications",
-	defaultMaterial: "Mixed Artisan Materials",
-	defaultSizeLabel: "Standard",
-	defaultColor: "Natural",
-	defaultDimensions: "Add product dimensions",
-	defaultWeight: "Add product weight",
-	defaultHandcraftedStory: "Describe the story behind this collection.",
-	defaultHandmadeProcess: "Describe the artisan process.",
-	defaultCareInstructions: "Use a soft cloth and avoid prolonged moisture exposure.",
-	defaultSpecifications: ["Add a product specification"],
-};
+// All categories currently share the same defaults — no per-category config needed.
+const DEFAULT_MATERIAL = "Mixed Artisan Materials";
+const DEFAULT_SIZE_LABEL = "Standard";
+const DEFAULT_DIMENSIONS = "Add product dimensions";
+const DEFAULT_WEIGHT = "Add product weight";
 
-function getCategoryFormConfig(_category: string): CategoryFormConfig {
-	return {
-		...defaultCategoryConfig,
-		showWoodType: true,
-		showDimensions: true,
-		showWeight: true,
-		showHandcraftedStory: true,
-		showHandmadeProcess: true,
-		showCareInstructions: true,
-		showSpecifications: true,
-		materialsLabel: "Materials",
-		sizeLabel: "Size label",
-		colorLabel: "Color",
-		dimensionsLabel: "Dimensions",
-		weightLabel: "Weight",
-	};
+const STORAGE_BUCKET = "products";
+const MAX_IMAGES = 5;
+const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
+
+function generateId(prefix: string): string {
+	return `${prefix}-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+}
+
+function slugify(value: string): string {
+	return value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/(^-|-$)/g, "");
 }
 
 function applyCategoryDefaults(product: Product, category: string): Product {
-	const config = getCategoryFormConfig(category);
-
 	return {
 		...product,
 		category,
-		material: product.material || config.defaultMaterial,
-		materials: config.showMaterials ? (product.materials?.length ? product.materials : [config.defaultMaterial]) : undefined,
-		woodType: config.showWoodType ? (product.woodType ?? config.defaultWoodType) : undefined,
-		sizeLabel: config.showSizeLabel ? (product.sizeLabel ?? config.defaultSizeLabel) : undefined,
-		color: config.showColor ? (product.color ?? config.defaultColor) : undefined,
-		dimensions: config.showDimensions ? (product.dimensions ?? config.defaultDimensions) : undefined,
-		weight: config.showWeight ? (product.weight ?? config.defaultWeight) : undefined,
-		handcraftedStory: config.showHandcraftedStory ? (product.handcraftedStory ?? config.defaultHandcraftedStory) : undefined,
-		handmadeProcess: config.showHandmadeProcess ? (product.handmadeProcess ?? config.defaultHandmadeProcess) : undefined,
-		careInstructions: config.showCareInstructions ? (product.careInstructions ?? config.defaultCareInstructions) : undefined,
-		specifications: config.showSpecifications ? (product.specifications?.length ? product.specifications : config.defaultSpecifications) : undefined,
+		material: product.material || DEFAULT_MATERIAL,
+		materials: product.materials?.length ? product.materials : [DEFAULT_MATERIAL],
+		sizeLabel: product.sizeLabel ?? DEFAULT_SIZE_LABEL,
+		dimensions: product.dimensions ?? DEFAULT_DIMENSIONS,
+		weight: product.weight ?? DEFAULT_WEIGHT,
 	};
 }
 
 function buildCategoryDraft(product: Product, category: string): Product {
-	const config = getCategoryFormConfig(category);
-
 	return {
 		...product,
 		category,
-		material: config.defaultMaterial,
-		materials: config.showMaterials ? [config.defaultMaterial] : undefined,
-		woodType: config.showWoodType ? config.defaultWoodType : undefined,
-		sizeLabel: config.defaultSizeLabel,
-		color: config.defaultColor,
-		dimensions: config.showDimensions ? config.defaultDimensions : undefined,
-		weight: config.showWeight ? config.defaultWeight : undefined,
-		handcraftedStory: config.showHandcraftedStory ? config.defaultHandcraftedStory : undefined,
-		handmadeProcess: config.showHandmadeProcess ? config.defaultHandmadeProcess : undefined,
-		careInstructions: config.showCareInstructions ? config.defaultCareInstructions : undefined,
-		specifications: config.showSpecifications ? config.defaultSpecifications : undefined,
+		material: DEFAULT_MATERIAL,
+		materials: [DEFAULT_MATERIAL],
+		sizeLabel: DEFAULT_SIZE_LABEL,
+		dimensions: DEFAULT_DIMENSIONS,
+		weight: DEFAULT_WEIGHT,
 	};
 }
 
-function createEmptyProductForCategory(category: string): Product {
-	const id = `product-${Date.now()}-${Math.round(Math.random() * 1000)}`;
-	const baseProduct: Product = {
-		id,
-		slug: "new-product",
-		name: "New product",
-		shortDescription: "Add a short description",
-		description: "Add a detailed product description",
+function createEmptyProduct(category: string): Product {
+	return buildCategoryDraft(
+		{
+			id: generateId("product"),
+			slug: "new-product",
+			name: "New product",
+			shortDescription: "Add a short description",
+			description: "Add a detailed product description",
+			category,
+			material: "",
+			image: "",
+			gallery: [],
+			rating: 0,
+			reviewCount: 0,
+			featured: false,
+			variants: [],
+			addons: [],
+			shippingInfo: "Ships within 3-5 business days",
+			returnPolicy: "Free returns within 14 days",
+		},
 		category,
-		material: "",
-		image: "/images/temple-1.webp",
-		gallery: ["/images/temple-1.webp"],
-		rating: 0,
-		reviewCount: 0,
-		featured: false,
-		variants: [],
-		addons: [],
-		shippingInfo: "Ships within 3-5 business days",
-		returnPolicy: "Free returns within 14 days",
-	};
-
-	return buildCategoryDraft(baseProduct, category);
-}
-
-function createEmptyProduct(defaultCategory: string): Product {
-	return createEmptyProductForCategory(defaultCategory);
+	);
 }
 
 function createEmptyVariant(): ProductVariant {
-	return {
-		id: `variant-${Date.now()}-${Math.round(Math.random() * 1000)}`,
-		name: "New size",
-		price: 0,
-		width: "",
-		height: "",
-		depth: "",
-		weight: "",
-		stock: 0,
-		sku: "",
-		shippingNote: "",
-	};
+	return { id: generateId("variant"), name: "New size", price: 0, width: "", height: "", depth: "", weight: "", stock: 0 };
 }
 
 function createEmptyAddon(): ProductAddon {
-	return {
-		id: `addon-${Date.now()}-${Math.round(Math.random() * 1000)}`,
-		name: "New add-on",
-		price: 0,
-		description: "",
-	};
+	return { id: generateId("addon"), name: "New add-on", price: 0, description: "" };
+}
+
+// Extracts the storage path from a Supabase public URL so we can delete the
+// underlying file when an image is removed from the gallery.
+function extractStoragePath(url: string): string | null {
+	const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+	const index = url.indexOf(marker);
+	return index === -1 ? null : url.slice(index + marker.length);
 }
 
 export default function AdminProductsPage() {
@@ -190,6 +108,9 @@ export default function AdminProductsPage() {
 	const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
 	const [saveFeedback, setSaveFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isUploadingImages, setIsUploadingImages] = useState(false);
+	const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+	const imageInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		const loadProducts = async () => {
@@ -202,7 +123,6 @@ export default function AdminProductsPage() {
 				if (!productsResponse.ok || !Array.isArray(productsPayload)) {
 					throw new Error(!Array.isArray(productsPayload) && productsPayload.error ? productsPayload.error : "Unable to load products.");
 				}
-
 				if (!categoriesResponse.ok || !Array.isArray(categoriesPayload)) {
 					throw new Error(!Array.isArray(categoriesPayload) && categoriesPayload.error ? categoriesPayload.error : "Unable to load categories.");
 				}
@@ -228,25 +148,22 @@ export default function AdminProductsPage() {
 			return;
 		}
 
-		if (!selectedProductId || !productsState.some((product) => product.id === selectedProductId)) {
-			const fallback = productsState[0];
-			setSelectedProductId(fallback.id);
-			setDraftProduct(fallback);
+		const activeProduct = productsState.find((product) => product.id === selectedProductId);
+		if (activeProduct) {
+			setDraftProduct(activeProduct);
 			return;
 		}
 
-		const currentProduct = productsState.find((product) => product.id === selectedProductId);
-		if (currentProduct) {
-			setDraftProduct(currentProduct);
-		}
+		const fallback = productsState[0];
+		setSelectedProductId(fallback.id);
+		setDraftProduct(fallback);
 	}, [productsState, selectedProductId]);
 
 	const selectProduct = (productId: string) => {
 		setSelectedProductId(productId);
+		setImageUploadError(null);
 		const nextProduct = productsState.find((product) => product.id === productId);
-		if (nextProduct) {
-			setDraftProduct(nextProduct);
-		}
+		if (nextProduct) setDraftProduct(nextProduct);
 	};
 
 	const updateDraftField = <K extends keyof Product>(key: K, value: Product[K]) => {
@@ -261,30 +178,12 @@ export default function AdminProductsPage() {
 
 	const updateVariant = (variantId: string, key: keyof ProductVariant, value: string | number) => {
 		setSaveFeedback(null);
-		setDraftProduct((current) => {
-			if (!current) {
-				return current;
-			}
-
-			return {
-				...current,
-				variants: current.variants.map((variant) => (variant.id === variantId ? { ...variant, [key]: value } : variant)),
-			};
-		});
+		setDraftProduct((current) => (current ? { ...current, variants: current.variants.map((variant) => (variant.id === variantId ? { ...variant, [key]: value } : variant)) } : current));
 	};
 
 	const updateAddon = (addonId: string, key: keyof ProductAddon, value: string | number) => {
 		setSaveFeedback(null);
-		setDraftProduct((current) => {
-			if (!current) {
-				return current;
-			}
-
-			return {
-				...current,
-				addons: current.addons.map((addon) => (addon.id === addonId ? { ...addon, [key]: value } : addon)),
-			};
-		});
+		setDraftProduct((current) => (current ? { ...current, addons: current.addons.map((addon) => (addon.id === addonId ? { ...addon, [key]: value } : addon)) } : current));
 	};
 
 	const addVariant = () => {
@@ -299,13 +198,85 @@ export default function AdminProductsPage() {
 
 	const removeVariant = (variantId: string) => {
 		setSaveFeedback(null);
-		setDraftProduct((current) => (current ? { ...current, variants: current.variants.filter((variant) => variant.id !== variantId) } : current));
+		setDraftProduct((current) => (current ? { ...current, variants: current.variants.filter((v) => v.id !== variantId) } : current));
 	};
 
 	const removeAddon = (addonId: string) => {
 		setSaveFeedback(null);
-		setDraftProduct((current) => (current ? { ...current, addons: current.addons.filter((addon) => addon.id !== addonId) } : current));
+		setDraftProduct((current) => (current ? { ...current, addons: current.addons.filter((a) => a.id !== addonId) } : current));
 	};
+
+	// --- Image uploads -------------------------------------------------------
+
+	const uploadProductImages = async (fileList: FileList | null) => {
+		if (!fileList || fileList.length === 0 || !draftProduct) return;
+
+		const files = Array.from(fileList);
+		setImageUploadError(null);
+
+		const existingCount = draftProduct.gallery.length;
+		if (existingCount + files.length > MAX_IMAGES) {
+			setImageUploadError(`You can upload up to ${MAX_IMAGES} images per product (${existingCount} already added).`);
+			return;
+		}
+
+		const invalidFile = files.find((file) => !file.type.startsWith("image/") || file.size > MAX_IMAGE_SIZE_BYTES);
+		if (invalidFile) {
+			setImageUploadError(`"${invalidFile.name}" must be an image under ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB.`);
+			return;
+		}
+
+		setIsUploadingImages(true);
+		try {
+			const supabase = createClient();
+			const productFolder = draftProduct.slug || draftProduct.id;
+			const uploadedUrls: string[] = [];
+
+			for (const file of files) {
+				const extension = file.name.split(".").pop() ?? "jpg";
+				const filePath = `${productFolder}/${generateId("img")}.${extension}`;
+
+				const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, file, {
+					cacheControl: "3600",
+					upsert: false,
+				});
+				if (uploadError) throw uploadError;
+
+				const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
+				uploadedUrls.push(data.publicUrl);
+			}
+
+			setDraftProduct((current) => {
+				if (!current) return current;
+				const nextGallery = [...current.gallery, ...uploadedUrls];
+				return { ...current, gallery: nextGallery, image: current.image || nextGallery[0] };
+			});
+		} catch (error) {
+			setImageUploadError(error instanceof Error ? error.message : "Image upload failed. Please try again.");
+		} finally {
+			setIsUploadingImages(false);
+		}
+	};
+
+	const removeGalleryImage = async (url: string) => {
+		setDraftProduct((current) => {
+			if (!current) return current;
+			const nextGallery = current.gallery.filter((image) => image !== url);
+			return { ...current, gallery: nextGallery, image: current.image === url ? (nextGallery[0] ?? "") : current.image };
+		});
+
+		// Best-effort cleanup in storage; harmless if it fails (e.g. externally hosted URL).
+		try {
+			const path = extractStoragePath(url);
+			if (path) await createClient().storage.from(STORAGE_BUCKET).remove([path]);
+		} catch {
+			// Non-fatal — the URL is already removed from the product's gallery.
+		}
+	};
+
+	const setCoverImage = (url: string) => updateDraftField("image", url);
+
+	// --- Persistence -----------------------------------------------------------
 
 	const saveProduct = async () => {
 		if (!draftProduct) {
@@ -313,28 +284,22 @@ export default function AdminProductsPage() {
 			return;
 		}
 
-		const categoryConfig = getCategoryFormConfig(draftProduct.category);
+		if (draftProduct.gallery.length === 0) {
+			setSaveFeedback({ type: "error", message: "Add at least one product image before saving." });
+			return;
+		}
+
 		const categoryNormalizedProduct = applyCategoryDefaults(draftProduct, draftProduct.category);
 
 		const normalizedProduct: Product = {
 			...categoryNormalizedProduct,
-			slug:
-				draftProduct.slug ||
-				draftProduct.name
-					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, "-")
-					.replace(/(^-|-$)/g, ""),
-			gallery: draftProduct.gallery.length > 0 ? draftProduct.gallery : [draftProduct.image],
-			materials: categoryConfig.showMaterials ? (categoryNormalizedProduct.materials ?? [categoryNormalizedProduct.material]).map((entry) => entry.trim()).filter(Boolean) : undefined,
-			woodType: categoryConfig.showWoodType ? categoryNormalizedProduct.woodType?.trim() || undefined : undefined,
-			sizeLabel: categoryConfig.showSizeLabel ? categoryNormalizedProduct.sizeLabel?.trim() || undefined : undefined,
-			color: categoryConfig.showColor ? categoryNormalizedProduct.color?.trim() || undefined : undefined,
-			dimensions: categoryConfig.showDimensions ? categoryNormalizedProduct.dimensions?.trim() || undefined : undefined,
-			weight: categoryConfig.showWeight ? categoryNormalizedProduct.weight?.trim() || undefined : undefined,
-			handcraftedStory: categoryConfig.showHandcraftedStory ? categoryNormalizedProduct.handcraftedStory?.trim() || undefined : undefined,
-			handmadeProcess: categoryConfig.showHandmadeProcess ? categoryNormalizedProduct.handmadeProcess?.trim() || undefined : undefined,
-			careInstructions: categoryConfig.showCareInstructions ? categoryNormalizedProduct.careInstructions?.trim() || undefined : undefined,
-			specifications: categoryConfig.showSpecifications ? (categoryNormalizedProduct.specifications ?? []).map((entry) => entry.trim()).filter(Boolean) : undefined,
+			slug: draftProduct.slug || slugify(draftProduct.name),
+			gallery: draftProduct.gallery,
+			image: draftProduct.image || draftProduct.gallery[0],
+			materials: (categoryNormalizedProduct.materials ?? [DEFAULT_MATERIAL]).map((entry) => entry.trim()).filter(Boolean),
+			sizeLabel: categoryNormalizedProduct.sizeLabel?.trim() || undefined,
+			dimensions: categoryNormalizedProduct.dimensions?.trim() || undefined,
+			weight: categoryNormalizedProduct.weight?.trim() || undefined,
 			variants: draftProduct.variants.filter((variant) => variant.name.trim()),
 			addons: draftProduct.addons.filter((addon) => addon.name.trim()),
 		};
@@ -368,6 +333,7 @@ export default function AdminProductsPage() {
 
 	const addNewProduct = () => {
 		setSaveFeedback(null);
+		setImageUploadError(null);
 		const defaultCategory = categories[0]?.name;
 		if (!defaultCategory) {
 			setSaveFeedback({ type: "error", message: "Add at least one category first before creating products." });
@@ -383,20 +349,13 @@ export default function AdminProductsPage() {
 	const deleteProduct = async (productId: string) => {
 		setSaveFeedback(null);
 		const targetProduct = productsState.find((product) => product.id === productId);
-		if (!targetProduct) {
-			return;
-		}
+		if (!targetProduct) return;
 
-		const confirmed = window.confirm(`Delete "${targetProduct.name}" from the catalog?`);
-		if (!confirmed) {
-			return;
-		}
+		if (!window.confirm(`Delete "${targetProduct.name}" from the catalog?`)) return;
 
 		try {
 			setIsSaving(true);
-			const response = await fetch(`/api/admin/products?id=${encodeURIComponent(productId)}`, {
-				method: "DELETE",
-			});
+			const response = await fetch(`/api/admin/products?id=${encodeURIComponent(productId)}`, { method: "DELETE" });
 			const payload = (await response.json()) as Product[] | { error?: string };
 
 			if (!response.ok || !Array.isArray(payload)) {
@@ -416,8 +375,7 @@ export default function AdminProductsPage() {
 		}
 	};
 
-	const currentProduct = draftProduct ?? (selectedProductId ? (productsState.find((product) => product.id === selectedProductId) ?? null) : null);
-	const activeCategoryConfig = getCategoryFormConfig(currentProduct?.category ?? categories[0]?.name ?? "");
+	const currentProduct = draftProduct ?? productsState.find((product) => product.id === selectedProductId) ?? null;
 
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
@@ -444,33 +402,36 @@ export default function AdminProductsPage() {
 
 				<div className="mt-8 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
 					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<div className="flex items-center justify-between">
-							<div>
-								<h2 className="text-xl font-semibold text-stone-900">Products</h2>
-								<p className="mt-1 text-sm text-stone-500">{productsState.length} products in the catalog</p>
-								<p className="mt-1 text-xs text-stone-500">Categories available: {categories.length}</p>
-							</div>
+						<div>
+							<h2 className="text-xl font-semibold text-stone-900">Products</h2>
+							<p className="mt-1 text-sm text-stone-500">{productsState.length} products in the catalog</p>
+							<p className="mt-1 text-xs text-stone-500">Categories available: {categories.length}</p>
 						</div>
 						<div className="mt-6 space-y-3">
-							{isLoadingCatalog ? <p className="text-sm text-stone-500">Loading products...</p> : null}
-							{productsState.map((product) => (
-								<button key={product.id} type="button" className={`w-full rounded-2xl border p-4 text-left transition ${selectedProductId === product.id ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-stone-50 hover:border-stone-300"}`} onClick={() => selectProduct(product.id)}>
-									<div className="flex items-center justify-between gap-3">
-										<div>
-											<p className="font-semibold">{product.name}</p>
-											<p className={`mt-1 text-sm ${selectedProductId === product.id ? "text-stone-200" : "text-stone-600"}`}>{product.category}</p>
+							{isLoadingCatalog && <p className="text-sm text-stone-500">Loading products...</p>}
+							{productsState.map((product) => {
+								const isSelected = selectedProductId === product.id;
+								return (
+									<button key={product.id} type="button" onClick={() => selectProduct(product.id)} className={`w-full rounded-2xl border p-4 text-left transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-stone-50 hover:border-stone-300"}`}>
+										<div className="flex items-center justify-between gap-3">
+											<div>
+												<p className="font-semibold">{product.name}</p>
+												<p className={`mt-1 text-sm ${isSelected ? "text-stone-200" : "text-stone-600"}`}>{product.category}</p>
+											</div>
+											<div className={`text-sm ${isSelected ? "text-stone-200" : "text-stone-500"}`}>
+												{product.variants.length} sizes • {product.addons.length} add-ons
+											</div>
 										</div>
-										<div className={`text-sm ${selectedProductId === product.id ? "text-stone-200" : "text-stone-500"}`}>
-											{product.variants.length} sizes • {product.addons.length} add-ons
-										</div>
-									</div>
-								</button>
-							))}
+									</button>
+								);
+							})}
 						</div>
 					</div>
 
 					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-						{currentProduct ? (
+						{!currentProduct ? (
+							<div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-8 text-center text-sm text-stone-500">Create a product to begin editing variants and add-ons.</div>
+						) : (
 							<div className="space-y-8">
 								<div className="flex flex-wrap items-center justify-between gap-3">
 									<div>
@@ -482,21 +443,21 @@ export default function AdminProductsPage() {
 									</Button>
 								</div>
 
-								{saveFeedback ? <div className={`rounded-2xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{saveFeedback.message}</div> : null}
+								{saveFeedback && <div className={`rounded-2xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{saveFeedback.message}</div>}
 
 								<div className="grid gap-4 md:grid-cols-2">
-									<label className="space-y-2 text-sm text-stone-600">
+									<label className={FIELD_LABEL}>
 										<span className="font-medium text-stone-700">Product name</span>
-										<input value={currentProduct.name} onChange={(event) => updateDraftField("name", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
+										<input value={currentProduct.name} onChange={(e) => updateDraftField("name", e.target.value)} className={FIELD_INPUT} />
 									</label>
-									<label className="space-y-2 text-sm text-stone-600">
+									<label className={FIELD_LABEL}>
 										<span className="font-medium text-stone-700">Slug</span>
-										<input value={currentProduct.slug} onChange={(event) => updateDraftField("slug", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
+										<input value={currentProduct.slug} onChange={(e) => updateDraftField("slug", e.target.value)} className={FIELD_INPUT} />
 									</label>
-									<label className="space-y-2 text-sm text-stone-600">
+									<label className={FIELD_LABEL}>
 										<span className="font-medium text-stone-700">Category</span>
-										<select value={currentProduct.category} onChange={(event) => updateProductCategory(event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0">
-											{!categories.some((category) => category.name === currentProduct.category) ? <option value={currentProduct.category}>{currentProduct.category}</option> : null}
+										<select value={currentProduct.category} onChange={(e) => updateProductCategory(e.target.value)} className={FIELD_INPUT}>
+											{!categories.some((c) => c.name === currentProduct.category) && <option value={currentProduct.category}>{currentProduct.category}</option>}
 											{categories.map((category) => (
 												<option key={category.id} value={category.name}>
 													{category.name}
@@ -504,123 +465,95 @@ export default function AdminProductsPage() {
 											))}
 										</select>
 									</label>
-									<label className="space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">Material</span>
-										<input value={currentProduct.material} onChange={(event) => updateDraftField("material", event.target.value)} placeholder={activeCategoryConfig.defaultMaterial} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
+									<label className={FIELD_LABEL}>
+										<span className="font-medium text-stone-700">Size label</span>
+										<input value={currentProduct.sizeLabel ?? ""} onChange={(e) => updateDraftField("sizeLabel", e.target.value)} placeholder={DEFAULT_SIZE_LABEL} className={FIELD_INPUT} />
 									</label>
-									{activeCategoryConfig.showWoodType ? (
-										<label className="space-y-2 text-sm text-stone-600">
-											<span className="font-medium text-stone-700">Wood type</span>
-											<input value={currentProduct.woodType ?? ""} onChange={(event) => updateDraftField("woodType", event.target.value)} placeholder={activeCategoryConfig.defaultWoodType ?? ""} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-										</label>
-									) : null}
-									{activeCategoryConfig.showColor ? (
-										<label className="space-y-2 text-sm text-stone-600">
-											<span className="font-medium text-stone-700">{activeCategoryConfig.colorLabel}</span>
-											<input value={currentProduct.color ?? ""} onChange={(event) => updateDraftField("color", event.target.value)} placeholder={activeCategoryConfig.defaultColor} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-										</label>
-									) : null}
-									{activeCategoryConfig.showSizeLabel ? (
-										<label className="space-y-2 text-sm text-stone-600">
-											<span className="font-medium text-stone-700">{activeCategoryConfig.sizeLabel}</span>
-											<input value={currentProduct.sizeLabel ?? ""} onChange={(event) => updateDraftField("sizeLabel", event.target.value)} placeholder={activeCategoryConfig.defaultSizeLabel} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-										</label>
-									) : null}
-									<label className="space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">Image</span>
-										<input value={currentProduct.image} onChange={(event) => updateDraftField("image", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-									</label>
-									<label className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
-										<input type="checkbox" checked={currentProduct.featured} onChange={(event) => updateDraftField("featured", event.target.checked)} className="h-4 w-4 rounded border-stone-300" />
+									<label className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700 md:col-span-2">
+										<input type="checkbox" checked={currentProduct.featured} onChange={(e) => updateDraftField("featured", e.target.checked)} className="h-4 w-4 rounded border-stone-300" />
 										<span>Featured on storefront</span>
 									</label>
 								</div>
 
-								<label className="block space-y-2 text-sm text-stone-600">
-									<span className="font-medium text-stone-700">Short description</span>
-									<input value={currentProduct.shortDescription} onChange={(event) => updateDraftField("shortDescription", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-								</label>
-								<label className="block space-y-2 text-sm text-stone-600">
-									<span className="font-medium text-stone-700">Description</span>
-									<textarea value={currentProduct.description} onChange={(event) => updateDraftField("description", event.target.value)} rows={4} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-								</label>
-								{activeCategoryConfig.showMaterials ? (
-									<label className="block space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">{activeCategoryConfig.materialsLabel} (comma-separated)</span>
-										<input
-											value={(currentProduct.materials ?? [currentProduct.material]).join(", ")}
-											onChange={(event) =>
-												updateDraftField(
-													"materials",
-													event.target.value
-														.split(",")
-														.map((entry) => entry.trim())
-														.filter(Boolean),
-												)
-											}
-											className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0"
-										/>
-									</label>
-								) : null}
-								{activeCategoryConfig.showHandcraftedStory ? (
-									<label className="block space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">{activeCategoryConfig.handcraftedStoryLabel}</span>
-										<textarea value={currentProduct.handcraftedStory ?? ""} onChange={(event) => updateDraftField("handcraftedStory", event.target.value)} rows={3} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-									</label>
-								) : null}
-								{activeCategoryConfig.showHandmadeProcess ? (
-									<label className="block space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">{activeCategoryConfig.handmadeProcessLabel}</span>
-										<textarea value={currentProduct.handmadeProcess ?? ""} onChange={(event) => updateDraftField("handmadeProcess", event.target.value)} rows={3} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-									</label>
-								) : null}
-								<div className="grid gap-4 md:grid-cols-2">
-									{activeCategoryConfig.showDimensions ? (
-										<label className="space-y-2 text-sm text-stone-600">
-											<span className="font-medium text-stone-700">{activeCategoryConfig.dimensionsLabel}</span>
-											<input value={currentProduct.dimensions ?? ""} onChange={(event) => updateDraftField("dimensions", event.target.value)} placeholder={activeCategoryConfig.defaultDimensions} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-										</label>
-									) : null}
-									{activeCategoryConfig.showWeight ? (
-										<label className="space-y-2 text-sm text-stone-600">
-											<span className="font-medium text-stone-700">{activeCategoryConfig.weightLabel}</span>
-											<input value={currentProduct.weight ?? ""} onChange={(event) => updateDraftField("weight", event.target.value)} placeholder={activeCategoryConfig.defaultWeight} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-										</label>
-									) : null}
+								{/* Image uploads */}
+								<div className={FIELD_LABEL}>
+									<div className="flex items-center justify-between">
+										<span className="font-medium text-stone-700">Product images</span>
+										<span className="text-xs text-stone-500">
+											{currentProduct.gallery.length}/{MAX_IMAGES} · max 3MB each
+										</span>
+									</div>
+
+									<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+										{currentProduct.gallery.map((url) => (
+											<div key={url} className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+												{/* eslint-disable-next-line @next/next/no-img-element */}
+												<img src={url} alt="" className="h-full w-full object-cover" />
+												{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-stone-900/80 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>}
+												<div className="absolute inset-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
+													{currentProduct.image !== url && (
+														<button type="button" onClick={() => setCoverImage(url)} className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-stone-800">
+															Set cover
+														</button>
+													)}
+													<button type="button" onClick={() => void removeGalleryImage(url)} className="ml-auto rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-red-600">
+														Remove
+													</button>
+												</div>
+											</div>
+										))}
+
+										{currentProduct.gallery.length < MAX_IMAGES && (
+											<button type="button" onClick={() => imageInputRef.current?.click()} disabled={isUploadingImages} className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-stone-300 text-xs font-medium text-stone-500 hover:border-stone-400 hover:text-stone-700 disabled:opacity-50">
+												<span className="text-xl leading-none">+</span>
+												<span>{isUploadingImages ? "Uploading..." : "Add image"}</span>
+											</button>
+										)}
+									</div>
+
+									<input
+										ref={imageInputRef}
+										type="file"
+										accept="image/*"
+										multiple
+										className="hidden"
+										onChange={(e) => {
+											void uploadProductImages(e.target.files);
+											e.target.value = "";
+										}}
+									/>
+
+									{imageUploadError && <p className="text-xs font-medium text-red-600">{imageUploadError}</p>}
 								</div>
-								{activeCategoryConfig.showCareInstructions ? (
-									<label className="block space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">{activeCategoryConfig.careInstructionsLabel}</span>
-										<textarea value={currentProduct.careInstructions ?? ""} onChange={(event) => updateDraftField("careInstructions", event.target.value)} rows={3} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-									</label>
-								) : null}
-								{activeCategoryConfig.showSpecifications ? (
-									<label className="block space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">{activeCategoryConfig.specificationsLabel} (one per line)</span>
-										<textarea
-											value={(currentProduct.specifications ?? []).join("\n")}
-											onChange={(event) =>
-												updateDraftField(
-													"specifications",
-													event.target.value
-														.split("\n")
-														.map((entry) => entry.trim())
-														.filter(Boolean),
-												)
-											}
-											rows={4}
-											className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0"
-										/>
-									</label>
-								) : null}
+
+								<label className={`block ${FIELD_LABEL}`}>
+									<span className="font-medium text-stone-700">Short description</span>
+									<input value={currentProduct.shortDescription} onChange={(e) => updateDraftField("shortDescription", e.target.value)} className={FIELD_INPUT} />
+								</label>
+								<label className={`block ${FIELD_LABEL}`}>
+									<span className="font-medium text-stone-700">Description</span>
+									<textarea value={currentProduct.description} onChange={(e) => updateDraftField("description", e.target.value)} rows={4} className={FIELD_INPUT} />
+								</label>
+
 								<div className="grid gap-4 md:grid-cols-2">
-									<label className="space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">Shipping info</span>
-										<input value={currentProduct.shippingInfo} onChange={(event) => updateDraftField("shippingInfo", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
+									<label className={FIELD_LABEL}>
+										<span className="font-medium text-stone-700">Dimensions</span>
+										<input value={currentProduct.dimensions ?? ""} onChange={(e) => updateDraftField("dimensions", e.target.value)} placeholder={DEFAULT_DIMENSIONS} className={FIELD_INPUT} />
 									</label>
-									<label className="space-y-2 text-sm text-stone-600">
+									<label className={FIELD_LABEL}>
+										<span className="font-medium text-stone-700">Weight</span>
+										<input value={currentProduct.weight ?? ""} onChange={(e) => updateDraftField("weight", e.target.value)} placeholder={DEFAULT_WEIGHT} className={FIELD_INPUT} />
+									</label>
+								</div>
+
+								<div className="grid gap-4 md:grid-cols-2">
+									<label className={FIELD_LABEL}>
+										<span className="font-medium text-stone-700">Shipping info</span>
+										<input value={currentProduct.shippingInfo} onChange={(e) => updateDraftField("shippingInfo", e.target.value)} className={FIELD_INPUT} />
+									</label>
+									<label className={FIELD_LABEL}>
 										<span className="font-medium text-stone-700">Return policy</span>
-										<input value={currentProduct.returnPolicy} onChange={(event) => updateDraftField("returnPolicy", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
+										<input value={currentProduct.returnPolicy} onChange={(e) => updateDraftField("returnPolicy", e.target.value)} className={FIELD_INPUT} />
 									</label>
 								</div>
 
@@ -641,41 +574,33 @@ export default function AdminProductsPage() {
 													</button>
 												</div>
 												<div className="mt-3 grid gap-3 md:grid-cols-2">
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Name</span>
-														<input value={variant.name} onChange={(event) => updateVariant(variant.id, "name", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input value={variant.name} onChange={(e) => updateVariant(variant.id, "name", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Price</span>
-														<input type="number" value={variant.price} onChange={(event) => updateVariant(variant.id, "price", Number(event.target.value))} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input type="number" value={variant.price} onChange={(e) => updateVariant(variant.id, "price", Number(e.target.value))} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Stock</span>
-														<input type="number" value={variant.stock} onChange={(event) => updateVariant(variant.id, "stock", Number(event.target.value))} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input type="number" value={variant.stock} onChange={(e) => updateVariant(variant.id, "stock", Number(e.target.value))} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600">
-														<span className="font-medium text-stone-700">SKU</span>
-														<input value={variant.sku} onChange={(event) => updateVariant(variant.id, "sku", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
-													</label>
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Width</span>
-														<input value={variant.width} onChange={(event) => updateVariant(variant.id, "width", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input value={variant.width} onChange={(e) => updateVariant(variant.id, "width", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Height</span>
-														<input value={variant.height} onChange={(event) => updateVariant(variant.id, "height", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input value={variant.height} onChange={(e) => updateVariant(variant.id, "height", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Depth</span>
-														<input value={variant.depth} onChange={(event) => updateVariant(variant.id, "depth", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input value={variant.depth} onChange={(e) => updateVariant(variant.id, "depth", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Weight</span>
-														<input value={variant.weight} onChange={(event) => updateVariant(variant.id, "weight", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
-													</label>
-													<label className="space-y-2 text-sm text-stone-600 md:col-span-2">
-														<span className="font-medium text-stone-700">Variant shipping note</span>
-														<input value={variant.shippingNote ?? ""} onChange={(event) => updateVariant(variant.id, "shippingNote", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input value={variant.weight} onChange={(e) => updateVariant(variant.id, "weight", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
 												</div>
 											</div>
@@ -700,17 +625,17 @@ export default function AdminProductsPage() {
 													</button>
 												</div>
 												<div className="mt-3 grid gap-3 md:grid-cols-2">
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Name</span>
-														<input value={addon.name} onChange={(event) => updateAddon(addon.id, "name", event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input value={addon.name} onChange={(e) => updateAddon(addon.id, "name", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600">
+													<label className={FIELD_LABEL}>
 														<span className="font-medium text-stone-700">Price</span>
-														<input type="number" value={addon.price} onChange={(event) => updateAddon(addon.id, "price", Number(event.target.value))} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<input type="number" value={addon.price} onChange={(e) => updateAddon(addon.id, "price", Number(e.target.value))} className={SUBFIELD_INPUT} />
 													</label>
-													<label className="space-y-2 text-sm text-stone-600 md:col-span-2">
+													<label className={`md:col-span-2 ${FIELD_LABEL}`}>
 														<span className="font-medium text-stone-700">Description</span>
-														<textarea value={addon.description} onChange={(event) => updateAddon(addon.id, "description", event.target.value)} rows={2} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0" />
+														<textarea value={addon.description} onChange={(e) => updateAddon(addon.id, "description", e.target.value)} rows={2} className={SUBFIELD_INPUT} />
 													</label>
 												</div>
 											</div>
@@ -719,13 +644,11 @@ export default function AdminProductsPage() {
 								</div>
 
 								<div className="flex justify-end">
-									<Button onClick={saveProduct} disabled={isLoadingCatalog || isSaving}>
+									<Button onClick={saveProduct} disabled={isLoadingCatalog || isSaving || isUploadingImages}>
 										{isSaving ? "Saving..." : "Save product"}
 									</Button>
 								</div>
 							</div>
-						) : (
-							<div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-8 text-center text-sm text-stone-500">Create a product to begin editing variants and add-ons.</div>
 						)}
 					</div>
 				</div>

@@ -1,8 +1,10 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { hasAdminRole } from "@/lib/admin-auth";
 import { createCategorySlug } from "@/lib/category-utils";
 import { prisma } from "@/lib/prisma";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const CATEGORY_BUCKET = "categories";
@@ -42,7 +44,7 @@ function normalizeCategoryName(value: string) {
 	return value.trim().replace(/\s+/g, " ");
 }
 
-function categoryImageUrlForPath(supabase: Awaited<ReturnType<typeof createClient>>, imagePath: string | null) {
+function categoryImageUrlForPath(supabase: SupabaseClient, imagePath: string | null) {
 	if (!imagePath) {
 		return null;
 	}
@@ -72,7 +74,7 @@ function imageExtensionFromFile(file: File) {
 	return null;
 }
 
-async function uploadCategoryImage(supabase: Awaited<ReturnType<typeof createClient>>, imageFile: File, slug: string) {
+async function uploadCategoryImage(supabase: SupabaseClient, imageFile: File, slug: string) {
 	if (!ALLOWED_IMAGE_TYPES.has(imageFile.type)) {
 		throw new Error("Only JPG, PNG, WEBP, AVIF, and GIF category images are allowed.");
 	}
@@ -100,7 +102,7 @@ async function uploadCategoryImage(supabase: Awaited<ReturnType<typeof createCli
 	return filePath;
 }
 
-async function deleteCategoryImageIfExists(supabase: Awaited<ReturnType<typeof createClient>>, imagePath: string | null) {
+async function deleteCategoryImageIfExists(supabase: SupabaseClient, imagePath: string | null) {
 	if (!imagePath) {
 		return;
 	}
@@ -135,7 +137,7 @@ async function parseCategoryInput(request: Request): Promise<CategoryFormInput> 
 	};
 }
 
-async function listCategories(supabase: Awaited<ReturnType<typeof createClient>>) {
+async function listCategories(supabase: SupabaseClient) {
 	const categories = await prisma.category.findMany({
 		orderBy: { createdAt: "asc" },
 		include: {
@@ -168,7 +170,7 @@ export async function GET() {
 			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
 		}
 
-		return NextResponse.json(await listCategories(supabase));
+		return NextResponse.json(await listCategories(createAdminClient()));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to load categories.";
 		return NextResponse.json({ error: message }, { status: 500 });
@@ -177,8 +179,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
 	try {
-		const { error: adminError, supabase } = await requireAdmin();
-		if (adminError || !supabase) {
+		const { error: adminError } = await requireAdmin();
+		if (adminError) {
 			return adminError;
 		}
 
@@ -186,6 +188,7 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
 		}
 
+		const supabase = createAdminClient();
 		const categoryInput = await parseCategoryInput(request);
 		const rawName = categoryInput.name;
 		const name = normalizeCategoryName(rawName);
@@ -239,8 +242,8 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
 	try {
-		const { error: adminError, supabase } = await requireAdmin();
-		if (adminError || !supabase) {
+		const { error: adminError } = await requireAdmin();
+		if (adminError) {
 			return adminError;
 		}
 
@@ -248,6 +251,7 @@ export async function PUT(request: Request) {
 			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
 		}
 
+		const supabase = createAdminClient();
 		const contentType = request.headers.get("content-type") ?? "";
 		let categoryInput: CategoryFormInput;
 		if (!contentType.includes("multipart/form-data")) {
@@ -367,8 +371,8 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
 	try {
-		const { error: adminError, supabase } = await requireAdmin();
-		if (adminError || !supabase) {
+		const { error: adminError } = await requireAdmin();
+		if (adminError) {
 			return adminError;
 		}
 
@@ -376,6 +380,7 @@ export async function DELETE(request: Request) {
 			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
 		}
 
+		const supabase = createAdminClient();
 		const id = new URL(request.url).searchParams.get("id");
 		if (!id) {
 			return NextResponse.json({ error: "Category id is required." }, { status: 400 });

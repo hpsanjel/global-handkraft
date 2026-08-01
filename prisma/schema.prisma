@@ -39,6 +39,8 @@ model Product {
   active           Boolean       @default(true)
   rating           Float         @default(0)
   reviewCount      Int           @default(0)
+  dimensions       String?
+  weight           String?
   seoTitle         String?
   seoDescription   String?
   variants         Variant[]
@@ -181,4 +183,22 @@ model GalleryImage {
   url       String
   alt       String?
   createdAt DateTime @default(now())
+}
+
+model MandapInquiry {
+  id                String   @id @default(cuid())
+  productId         String
+  productName       String
+  productSlug       String
+  length            String
+  width             String
+  height            String
+  material          String
+  expectedCostRange String
+  description       String
+  whatsapp          String?
+  email             String?
+  sampleImages      String[]
+  status            String   @default("NEW")
+  createdAt         DateTime @default(now())
 }

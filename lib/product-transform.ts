@@ -51,6 +51,8 @@ type DbProductRecord = {
 	featured: boolean;
 	rating: number;
 	reviewCount: number;
+	dimensions: string | null;
+	weight: string | null;
 	category: {
 		name: string;
 		slug: string;
@@ -64,7 +66,6 @@ type DbProductRecord = {
 		depth: string;
 		weight: string;
 		stock: number;
-		sku: string;
 	}>;
 	addons: Array<{
 		id: string;
@@ -97,6 +98,8 @@ export function toStoreProduct(record: DbProductRecord): Product {
 		rating: record.rating,
 		reviewCount: record.reviewCount,
 		featured: record.featured,
+		dimensions: record.dimensions ?? undefined,
+		weight: record.weight ?? undefined,
 		variants: record.variants.map((variant) => ({
 			id: variant.id,
 			name: variant.name,
@@ -106,7 +109,6 @@ export function toStoreProduct(record: DbProductRecord): Product {
 			depth: variant.depth,
 			weight: variant.weight,
 			stock: variant.stock,
-			sku: variant.sku,
 		})),
 		addons: record.addons.map((addon) => ({
 			id: addon.id,

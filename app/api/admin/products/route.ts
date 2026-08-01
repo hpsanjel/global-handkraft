@@ -17,6 +17,8 @@ type ProductRequestPayload = {
 	featured?: boolean;
 	rating?: number;
 	reviewCount?: number;
+	dimensions?: string;
+	weight?: string;
 	variants: Array<{
 		name: string;
 		price: number;
@@ -25,7 +27,6 @@ type ProductRequestPayload = {
 		depth: string;
 		weight: string;
 		stock: number;
-		sku: string;
 	}>;
 	addons: Array<{
 		name: string;
@@ -49,6 +50,15 @@ async function requireAdmin() {
 	}
 
 	return null;
+}
+
+function generateVariantSku(productSlug: string, variantName: string, index: number) {
+	const variantSlug = variantName
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/(^-|-$)/g, "");
+	return `${productSlug}-${variantSlug || "variant"}-${index + 1}`.toUpperCase();
 }
 
 async function getCategoryByName(categoryName: string) {
@@ -148,10 +158,12 @@ export async function POST(request: Request) {
 				active: true,
 				rating: Number(body.rating ?? 0),
 				reviewCount: Number(body.reviewCount ?? 0),
+				dimensions: body.dimensions?.trim() || null,
+				weight: body.weight?.trim() || null,
 				seoTitle: body.name.trim(),
 				seoDescription: body.shortDescription?.trim() || body.name.trim(),
 				variants: {
-					create: body.variants.map((variant) => ({
+					create: body.variants.map((variant, index) => ({
 						name: variant.name.trim(),
 						price: Number(variant.price ?? 0),
 						width: variant.width ?? "",
@@ -159,7 +171,7 @@ export async function POST(request: Request) {
 						depth: variant.depth ?? "",
 						weight: variant.weight ?? "",
 						stock: Number(variant.stock ?? 0),
-						sku: variant.sku?.trim() || `${body.slug}-${Math.random().toString(36).slice(2, 8)}`,
+						sku: generateVariantSku(body.slug.trim(), variant.name, index),
 					})),
 				},
 				addons: {
@@ -219,11 +231,13 @@ export async function PUT(request: Request) {
 				featured: Boolean(body.featured),
 				rating: Number(body.rating ?? 0),
 				reviewCount: Number(body.reviewCount ?? 0),
+				dimensions: body.dimensions?.trim() || null,
+				weight: body.weight?.trim() || null,
 				seoTitle: body.name.trim(),
 				seoDescription: body.shortDescription?.trim() || body.name.trim(),
 				variants: {
 					deleteMany: {},
-					create: body.variants.map((variant) => ({
+					create: body.variants.map((variant, index) => ({
 						name: variant.name.trim(),
 						price: Number(variant.price ?? 0),
 						width: variant.width ?? "",
@@ -231,7 +245,7 @@ export async function PUT(request: Request) {
 						depth: variant.depth ?? "",
 						weight: variant.weight ?? "",
 						stock: Number(variant.stock ?? 0),
-						sku: variant.sku?.trim() || `${body.slug}-${Math.random().toString(36).slice(2, 8)}`,
+						sku: generateVariantSku(body.slug.trim(), variant.name, index),
 					})),
 				},
 				addons: {

@@ -88,7 +88,7 @@ export async function GET() {
 						depth: variant.depth,
 						weight: variant.weight,
 						stock: variant.stock,
-						sku: variant.sku,
+						sku: `${seedProduct.slug}-${variant.id}`.toUpperCase(),
 					})),
 				});
 			}

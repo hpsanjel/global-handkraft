@@ -102,12 +102,12 @@ export default function AdminCategoriesPage() {
 							formData.append("image", newCategoryImage);
 							return formData;
 						})(),
-				  })
+					})
 				: await fetch("/api/admin/categories", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ name: newCategoryName }),
-				  });
+					});
 			const payload = (await response.json()) as CategorySummary[] | { error?: string };
 
 			if (!response.ok || !Array.isArray(payload)) {
@@ -151,12 +151,12 @@ export default function AdminCategoriesPage() {
 							formData.append("image", selectedImage);
 							return formData;
 						})(),
-				  })
+					})
 				: await fetch("/api/admin/categories", {
 						method: "PUT",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ id: categoryId, name: nextName }),
-				  });
+					});
 			const payload = (await response.json()) as CategorySummary[] | { error?: string };
 
 			if (!response.ok || !Array.isArray(payload)) {
@@ -261,13 +261,7 @@ export default function AdminCategoriesPage() {
 							</label>
 							<label className="space-y-2 text-sm text-stone-600">
 								<span className="font-medium text-stone-700">Category image (optional)</span>
-								<input
-									key={newImageInputKey}
-									type="file"
-									accept="image/*"
-									onChange={(event) => setNewCategoryImage(event.target.files?.[0] ?? null)}
-									className="w-full rounded-2xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700"
-								/>
+								<input key={newImageInputKey} type="file" accept="image/*" onChange={(event) => setNewCategoryImage(event.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700" />
 							</label>
 							<Button onClick={createCategory} disabled={isSaving} className="mt-2">
 								{isSaving ? "Saving..." : "Add category"}
