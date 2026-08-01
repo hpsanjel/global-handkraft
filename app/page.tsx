@@ -123,21 +123,6 @@ export default function HomePage() {
 				{dynamicCategorySections.map((section) => (
 					<HomeCategoryProductsSection key={section.title} title={section.title} href={section.href} products={section.products} />
 				))}
-				{/* 
-				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
-					<div className="rounded-[2rem] border border-stone-200 bg-gradient-to-r from-[#b18016] to-stone-500 px-6 py-10 text-white shadow-sm sm:px-10">
-						<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-							<div className="max-w-2xl">
-								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80">Artisan Story</p>
-								<h2 className="mt-3 text-3xl font-semibold sm:text-4xl">From artisan workshops to homes across Europe.</h2>
-								<p className="mt-4 text-sm leading-7 text-white/90">We partner with skilled makers to preserve traditional craft methods, source responsibly, and deliver heirloom-quality products with modern service standards.</p>
-							</div>
-							<Button asChild className="bg-white text-[#1B365D] hover:bg-stone-100">
-								<Link href="/about">Our Journey</Link>
-							</Button>
-						</div>
-					</div>
-				</section> */}
 
 				{/* <section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="grid gap-2 lg:gap-6 grid-cols-2 lg:grid-cols-4">
