@@ -5,10 +5,9 @@ import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { type CategorySummary } from "@/lib/category-utils";
 import { refreshProductsCatalog } from "@/lib/products-catalog";
 import type { Product, ProductAddon, ProductVariant } from "@/types/store";
-
-const adminCategories = ["Handcrafted Wooden Temples", "Traditional Clothes", "Pooja Items", "Pooja Mandap", "Gift Collection", "New Arrivals", "Festival Specials"];
 
 type CategoryFormConfig = {
 	showWoodType: boolean;
@@ -73,109 +72,22 @@ const defaultCategoryConfig: CategoryFormConfig = {
 	defaultSpecifications: ["Add a product specification"],
 };
 
-function getCategoryFormConfig(category: string): CategoryFormConfig {
-	switch (category) {
-		case "Traditional Clothes":
-			return {
-				...defaultCategoryConfig,
-				showWoodType: false,
-				materialsLabel: "Fabric and weave",
-				sizeLabel: "Fit / size",
-				colorLabel: "Color / pattern",
-				dimensionsLabel: "Garment measurements",
-				weightLabel: "Fabric weight",
-				defaultMaterial: "Cotton Silk",
-				defaultSizeLabel: "M / L / XL",
-				defaultColor: "Festive tone",
-				defaultDimensions: "Bust, length, sleeve, and waist measurements",
-				defaultWeight: "Lightweight",
-				defaultHandcraftedStory: "Traditional attire crafted for ceremonies, gifting, and festive wear.",
-				defaultHandmadeProcess: "Cutting, tailoring, embroidery, and finishing are completed by skilled garment artisans.",
-				defaultCareInstructions: "Hand wash or dry clean based on fabric type.",
-				defaultSpecifications: ["One set per order", "Multiple sizes available"],
-			};
-		case "Pooja Items":
-			return {
-				...defaultCategoryConfig,
-				showWoodType: false,
-				materialsLabel: "Metal, wood, or ritual materials",
-				sizeLabel: "Pack / set size",
-				colorLabel: "Finish",
-				dimensionsLabel: "Item dimensions",
-				weightLabel: "Pack weight",
-				defaultMaterial: "Brass / Copper / Natural",
-				defaultSizeLabel: "Set size",
-				defaultColor: "Brass / Copper",
-				defaultDimensions: "Set dimensions or single-item dimensions",
-				defaultWeight: "Standard pack weight",
-				defaultHandcraftedStory: "Essential ritual items crafted for daily worship and festival use.",
-				defaultHandmadeProcess: "Casting, polishing, carving, and ritual finishing by artisans.",
-				defaultCareInstructions: "Dry thoroughly after use and store in a dry place.",
-				defaultSpecifications: ["Suitable for daily pooja", "Gift ready packaging available"],
-			};
-		case "Pooja Mandap":
-			return {
-				...defaultCategoryConfig,
-				showWoodType: true,
-				materialsLabel: "Framework materials",
-				sizeLabel: "Mandap size",
-				colorLabel: "Finish / drape color",
-				dimensionsLabel: "Footprint and height",
-				weightLabel: "Frame weight",
-				defaultMaterial: "Wood & Metal Framework",
-				defaultWoodType: "Teak",
-				defaultSizeLabel: "Indoor / Outdoor",
-				defaultColor: "Natural wood and gold accent",
-				defaultDimensions: "Footprint, height, and ceiling clearance",
-				defaultWeight: "Frame weight",
-				defaultHandcraftedStory: "Modular mandap solutions designed for ceremonies, temples, and events.",
-				defaultHandmadeProcess: "Framework assembly, carving, finishing, and decorative fitting are completed by artisan teams.",
-				defaultCareInstructions: "Store dry, wipe after events, and inspect fittings before use.",
-				defaultSpecifications: ["Modular assembly", "Indoor and outdoor options"],
-			};
-		case "Gift Collection":
-		case "New Arrivals":
-		case "Festival Specials":
-			return {
-				...defaultCategoryConfig,
-				showWoodType: false,
-				materialsLabel: "Materials",
-				sizeLabel: "Pack / collection size",
-				colorLabel: "Theme color",
-				dimensionsLabel: "Dimensions",
-				weightLabel: "Weight",
-				defaultMaterial: "Mixed Artisan Materials",
-				defaultSizeLabel: "Standard",
-				defaultColor: "Seasonal / festive",
-				defaultDimensions: "Add product dimensions",
-				defaultWeight: "Add product weight",
-				defaultHandcraftedStory: "Curated collection selected for gifting, seasonal launches, and festive occasions.",
-				defaultHandmadeProcess: "Sourcing, packaging, and finishing are tailored to the collection theme.",
-				defaultCareInstructions: "Follow product-specific care instructions and keep packaging intact for gifting.",
-				defaultSpecifications: ["Seasonal collection", "Gift ready"],
-			};
-		case "Handcrafted Wooden Temples":
-		default:
-			return {
-				...defaultCategoryConfig,
-				showWoodType: true,
-				materialsLabel: "Wood and finish materials",
-				sizeLabel: "Temple size",
-				colorLabel: "Finish color",
-				dimensionsLabel: "Temple dimensions",
-				weightLabel: "Temple weight",
-				defaultMaterial: "Sheesham Wood",
-				defaultWoodType: "Teak",
-				defaultSizeLabel: "Standard",
-				defaultColor: "Natural Wood",
-				defaultDimensions: "Width, height, and depth",
-				defaultWeight: "Add product weight",
-				defaultHandcraftedStory: "Handcrafted temple collection made for home worship and sacred interiors.",
-				defaultHandmadeProcess: "Wood selection, carving, sanding, assembly, and protective finishing completed by artisans.",
-				defaultCareInstructions: "Keep dry, dust with a soft cloth, and avoid prolonged sunlight or moisture.",
-				defaultSpecifications: ["Hand carved details", "Built for devotional use"],
-			};
-	}
+function getCategoryFormConfig(_category: string): CategoryFormConfig {
+	return {
+		...defaultCategoryConfig,
+		showWoodType: true,
+		showDimensions: true,
+		showWeight: true,
+		showHandcraftedStory: true,
+		showHandmadeProcess: true,
+		showCareInstructions: true,
+		showSpecifications: true,
+		materialsLabel: "Materials",
+		sizeLabel: "Size label",
+		colorLabel: "Color",
+		dimensionsLabel: "Dimensions",
+		weightLabel: "Weight",
+	};
 }
 
 function applyCategoryDefaults(product: Product, category: string): Product {
@@ -242,8 +154,8 @@ function createEmptyProductForCategory(category: string): Product {
 	return buildCategoryDraft(baseProduct, category);
 }
 
-function createEmptyProduct(): Product {
-	return createEmptyProductForCategory(adminCategories[0] ?? "Handcrafted Wooden Temples");
+function createEmptyProduct(defaultCategory: string): Product {
+	return createEmptyProductForCategory(defaultCategory);
 }
 
 function createEmptyVariant(): ProductVariant {
@@ -272,6 +184,7 @@ function createEmptyAddon(): ProductAddon {
 
 export default function AdminProductsPage() {
 	const [productsState, setProductsState] = useState<Product[]>([]);
+	const [categories, setCategories] = useState<CategorySummary[]>([]);
 	const [selectedProductId, setSelectedProductId] = useState<string>("");
 	const [draftProduct, setDraftProduct] = useState<Product | null>(null);
 	const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
@@ -282,16 +195,22 @@ export default function AdminProductsPage() {
 		const loadProducts = async () => {
 			setIsLoadingCatalog(true);
 			try {
-				const response = await fetch("/api/admin/products", { cache: "no-store" });
-				const payload = (await response.json()) as Product[] | { error?: string };
+				const [productsResponse, categoriesResponse] = await Promise.all([fetch("/api/admin/products", { cache: "no-store" }), fetch("/api/admin/categories", { cache: "no-store" })]);
+				const productsPayload = (await productsResponse.json()) as Product[] | { error?: string };
+				const categoriesPayload = (await categoriesResponse.json()) as CategorySummary[] | { error?: string };
 
-				if (!response.ok || !Array.isArray(payload)) {
-					throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Unable to load products.");
+				if (!productsResponse.ok || !Array.isArray(productsPayload)) {
+					throw new Error(!Array.isArray(productsPayload) && productsPayload.error ? productsPayload.error : "Unable to load products.");
 				}
 
-				setProductsState(payload);
-				setSelectedProductId(payload[0]?.id ?? "");
-				setDraftProduct(payload[0] ?? null);
+				if (!categoriesResponse.ok || !Array.isArray(categoriesPayload)) {
+					throw new Error(!Array.isArray(categoriesPayload) && categoriesPayload.error ? categoriesPayload.error : "Unable to load categories.");
+				}
+
+				setCategories(categoriesPayload);
+				setProductsState(productsPayload);
+				setSelectedProductId(productsPayload[0]?.id ?? "");
+				setDraftProduct(productsPayload[0] ?? null);
 			} catch (error) {
 				setSaveFeedback({ type: "error", message: error instanceof Error ? error.message : "Unable to load products." });
 			} finally {
@@ -449,7 +368,13 @@ export default function AdminProductsPage() {
 
 	const addNewProduct = () => {
 		setSaveFeedback(null);
-		const nextProduct = createEmptyProduct();
+		const defaultCategory = categories[0]?.name;
+		if (!defaultCategory) {
+			setSaveFeedback({ type: "error", message: "Add at least one category first before creating products." });
+			return;
+		}
+
+		const nextProduct = createEmptyProduct(defaultCategory);
 		setProductsState((current) => [nextProduct, ...current]);
 		setSelectedProductId(nextProduct.id);
 		setDraftProduct(nextProduct);
@@ -492,7 +417,7 @@ export default function AdminProductsPage() {
 	};
 
 	const currentProduct = draftProduct ?? (selectedProductId ? (productsState.find((product) => product.id === selectedProductId) ?? null) : null);
-	const activeCategoryConfig = getCategoryFormConfig(currentProduct?.category ?? adminCategories[0] ?? "Handcrafted Wooden Temples");
+	const activeCategoryConfig = getCategoryFormConfig(currentProduct?.category ?? categories[0]?.name ?? "");
 
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
@@ -502,11 +427,14 @@ export default function AdminProductsPage() {
 					<div>
 						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Admin</p>
 						<h1 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Manage products</h1>
-						<p className="mt-2 max-w-2xl text-sm text-stone-600">Create, update, and remove products, variants, and add-ons from a single admin workspace.</p>
+						<p className="mt-2 max-w-2xl text-sm text-stone-600">Create, update, and remove products, variants, and add-ons from a single admin workspace. Categories are managed separately.</p>
 					</div>
 					<div className="flex flex-wrap gap-3">
-						<Button onClick={addNewProduct} disabled={isLoadingCatalog || isSaving}>
+						<Button onClick={addNewProduct} disabled={isLoadingCatalog || isSaving || categories.length === 0}>
 							Add product
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/admin/categories">Manage categories</Link>
 						</Button>
 						<Button asChild variant="outline">
 							<Link href="/admin">Back to dashboard</Link>
@@ -520,6 +448,7 @@ export default function AdminProductsPage() {
 							<div>
 								<h2 className="text-xl font-semibold text-stone-900">Products</h2>
 								<p className="mt-1 text-sm text-stone-500">{productsState.length} products in the catalog</p>
+								<p className="mt-1 text-xs text-stone-500">Categories available: {categories.length}</p>
 							</div>
 						</div>
 						<div className="mt-6 space-y-3">
@@ -567,9 +496,10 @@ export default function AdminProductsPage() {
 									<label className="space-y-2 text-sm text-stone-600">
 										<span className="font-medium text-stone-700">Category</span>
 										<select value={currentProduct.category} onChange={(event) => updateProductCategory(event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0">
-											{adminCategories.map((category) => (
-												<option key={category} value={category}>
-													{category}
+											{!categories.some((category) => category.name === currentProduct.category) ? <option value={currentProduct.category}>{currentProduct.category}</option> : null}
+											{categories.map((category) => (
+												<option key={category.id} value={category.name}>
+													{category.name}
 												</option>
 											))}
 										</select>

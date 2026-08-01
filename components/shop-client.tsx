@@ -3,66 +3,20 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { categories } from "@/lib/data/products";
+import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useProductsCatalog } from "@/lib/products-catalog";
 
 const PAGE_SIZE = 8;
 
-const normalizeCategory = (value: string) => value.trim().toLowerCase();
-
-type ShopFilterConfig = {
-	showMaterial: boolean;
-	showWoodType: boolean;
-	showSize: boolean;
-	showColor: boolean;
-};
-
-const categoryAliases: Record<string, string> = {
-	Temples: "Handcrafted Wooden Temples",
-	Clothes: "Traditional Clothes",
-	Pooja: "Pooja Items",
-	Mandap: "Pooja Mandap",
-	Gifts: "Gift Collection",
-	"New Arrivals": "New Arrivals",
-};
-
-const getDisplayCategoryLabel = (value: string) => {
-	const matched = Object.entries(categoryAliases).find(([, actualCategory]) => normalizeCategory(actualCategory) === normalizeCategory(value));
-	return matched?.[0] ?? value;
-};
-
-const resolveSelectedCategory = (value: string) => categoryAliases[value] ?? value;
-
-const defaultShopFilterConfig: ShopFilterConfig = {
-	showMaterial: true,
-	showWoodType: true,
-	showSize: true,
-	showColor: true,
-};
-
-function getShopFilterConfig(category: string): ShopFilterConfig {
-	switch (category) {
-		case "Traditional Clothes":
-			return {
-				...defaultShopFilterConfig,
-				showWoodType: false,
-			};
-		default:
-			return defaultShopFilterConfig;
-	}
-}
-
 export function ShopClient() {
-	const clothesSubcategories = ["Men", "Women", "Kids", "Family Sets", "Festivals"] as const;
-
 	const products = useProductsCatalog();
+	const categories = useCategoriesCatalog();
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedCategory, setSelectedCategory] = useState("All");
-	const [selectedClothesSubcategory, setSelectedClothesSubcategory] = useState("All");
+	const [selectedCategorySlug, setSelectedCategorySlug] = useState("All");
 	const [selectedMaterial, setSelectedMaterial] = useState("All");
 	const [selectedWoodType, setSelectedWoodType] = useState("All");
 	const [selectedSize, setSelectedSize] = useState("All");
@@ -132,9 +86,6 @@ export function ShopClient() {
 		return Array.from(set).sort();
 	}, [products]);
 
-	const resolvedSelectedCategory = resolveSelectedCategory(selectedCategory);
-	const activeFilterConfig = getShopFilterConfig(resolvedSelectedCategory);
-
 	useEffect(() => {
 		setMinPrice(availablePriceRange.min);
 		setMaxPrice(availablePriceRange.max);
@@ -142,48 +93,33 @@ export function ShopClient() {
 
 	useEffect(() => {
 		if (!categoryParam) {
-			setSelectedCategory((current) => (current === "All" ? current : "All"));
+			setSelectedCategorySlug((current) => (current === "All" ? current : "All"));
 			return;
 		}
 
-		const matchedCategory = categories.find((category) => {
-			const normalizedParam = normalizeCategory(categoryParam);
-			return normalizeCategory(category) === normalizedParam || normalizeCategory(resolveSelectedCategory(category)) === normalizedParam;
-		});
-		setSelectedCategory((current) => {
+		const matchedCategory = categories.find((category) => category.slug === categoryParam || category.name.toLowerCase() === categoryParam.toLowerCase());
+		setSelectedCategorySlug((current) => {
 			if (!matchedCategory) {
 				return current === "All" ? current : "All";
 			}
 
-			return current === matchedCategory ? current : matchedCategory;
+			return current === matchedCategory.slug ? current : matchedCategory.slug;
 		});
-	}, [categoryParam]);
+	}, [categories, categoryParam]);
 
-	const handleCategoryChange = (nextCategory: string) => {
-		setSelectedCategory(nextCategory);
+	const handleCategoryChange = (nextCategorySlug: string) => {
+		setSelectedCategorySlug(nextCategorySlug);
 
 		const nextParams = new URLSearchParams(searchParams.toString());
-		if (nextCategory === "All") {
+		if (nextCategorySlug === "All") {
 			nextParams.delete("category");
 		} else {
-			nextParams.set("category", nextCategory);
+			nextParams.set("category", nextCategorySlug);
 		}
 
 		const query = nextParams.toString();
 		router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
 	};
-
-	useEffect(() => {
-		if (!activeFilterConfig.showWoodType) {
-			setSelectedWoodType("All");
-		}
-	}, [activeFilterConfig.showWoodType]);
-
-	useEffect(() => {
-		if (resolvedSelectedCategory !== "Traditional Clothes" && selectedClothesSubcategory !== "All") {
-			setSelectedClothesSubcategory("All");
-		}
-	}, [resolvedSelectedCategory, selectedClothesSubcategory]);
 
 	const filteredProducts = useMemo(() => {
 		const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -191,46 +127,23 @@ export function ShopClient() {
 		const normalizedMinPrice = Number.isFinite(minPrice) ? minPrice : availablePriceRange.min;
 		const normalizedMaxPrice = Number.isFinite(maxPrice) ? maxPrice : availablePriceRange.max;
 
-		const classifyClothesSubcategory = (product: (typeof products)[number]) => {
-			const text = [product.name, product.shortDescription, product.description].join(" ").toLowerCase();
-
-			if (text.includes("kids") || text.includes("children") || text.includes("child")) {
-				return "Kids";
-			}
-			if (text.includes("family") || text.includes("set")) {
-				return "Family Sets";
-			}
-			if (text.includes("festival") || text.includes("festive") || text.includes("ceremony")) {
-				return "Festivals";
-			}
-			if (text.includes("women") || text.includes("saree") || text.includes("blouse")) {
-				return "Women";
-			}
-			if (text.includes("men") || text.includes("menswear") || text.includes("daura") || text.includes("suruwal")) {
-				return "Men";
-			}
-
-			return "Festivals";
-		};
-
 		const filtered = products.filter((product) => {
-			const matchesCategory = selectedCategory === "All" || normalizeCategory(product.category) === normalizeCategory(resolvedSelectedCategory);
-			const matchesClothesSubcategory = resolvedSelectedCategory !== "Traditional Clothes" || selectedClothesSubcategory === "All" || classifyClothesSubcategory(product) === selectedClothesSubcategory;
+			const matchesCategory = selectedCategorySlug === "All" || product.categorySlug === selectedCategorySlug;
 			const productMaterials = product.materials ?? [product.material];
 			const productMinimumPrice = product.variants.length > 0 ? Math.min(...product.variants.map((variant) => variant.price)) : 0;
 			const stockCount = product.variants.reduce((sum, variant) => sum + variant.stock, 0);
 
 			const matchesMaterial = selectedMaterial === "All" || productMaterials.includes(selectedMaterial);
-			const matchesWoodType = !activeFilterConfig.showWoodType || selectedWoodType === "All" || product.woodType === selectedWoodType;
-			const matchesSize = !activeFilterConfig.showSize || selectedSize === "All" || product.sizeLabel === selectedSize || product.variants.some((variant) => variant.name === selectedSize);
-			const matchesColor = !activeFilterConfig.showColor || selectedColor === "All" || product.color === selectedColor;
+			const matchesWoodType = selectedWoodType === "All" || product.woodType === selectedWoodType;
+			const matchesSize = selectedSize === "All" || product.sizeLabel === selectedSize || product.variants.some((variant) => variant.name === selectedSize);
+			const matchesColor = selectedColor === "All" || product.color === selectedColor;
 			const matchesAvailability = availability === "All" || (availability === "In stock" && stockCount > 0) || (availability === "Low stock" && stockCount > 0 && stockCount <= 5) || (availability === "Out of stock" && stockCount === 0);
 			const matchesPrice = product.variants.length === 0 || (productMinimumPrice >= normalizedMinPrice && productMinimumPrice <= normalizedMaxPrice);
 
 			const searchableText = [product.name, product.shortDescription, product.description, product.category, product.material, ...(product.materials ?? []), product.woodType ?? "", product.color ?? ""].join(" ").toLowerCase();
 			const matchesSearch = hasSearchQuery ? searchableText.includes(normalizedQuery) : true;
 
-			return matchesCategory && matchesClothesSubcategory && matchesMaterial && matchesWoodType && matchesSize && matchesColor && matchesAvailability && matchesPrice && matchesSearch;
+			return matchesCategory && matchesMaterial && matchesWoodType && matchesSize && matchesColor && matchesAvailability && matchesPrice && matchesSearch;
 		});
 
 		const sorted = [...filtered];
@@ -254,12 +167,11 @@ export function ShopClient() {
 		}
 
 		return sorted;
-	}, [activeFilterConfig.showColor, activeFilterConfig.showSize, activeFilterConfig.showWoodType, availability, availablePriceRange.max, availablePriceRange.min, maxPrice, minPrice, products, resolvedSelectedCategory, searchQuery, selectedCategory, selectedClothesSubcategory, selectedColor, selectedMaterial, selectedSize, selectedWoodType, sortBy]);
+	}, [availability, availablePriceRange.max, availablePriceRange.min, maxPrice, minPrice, products, searchQuery, selectedCategorySlug, selectedColor, selectedMaterial, selectedSize, selectedWoodType, sortBy]);
 
 	const resetFilters = () => {
 		setSearchQuery("");
 		handleCategoryChange("All");
-		setSelectedClothesSubcategory("All");
 		setSelectedMaterial("All");
 		setSelectedWoodType("All");
 		setSelectedSize("All");
@@ -273,7 +185,7 @@ export function ShopClient() {
 
 	useEffect(() => {
 		setVisibleCount(PAGE_SIZE);
-	}, [searchQuery, selectedCategory, selectedClothesSubcategory, selectedMaterial, selectedWoodType, selectedSize, selectedColor, availability, sortBy, minPrice, maxPrice]);
+	}, [searchQuery, selectedCategorySlug, selectedMaterial, selectedWoodType, selectedSize, selectedColor, availability, sortBy, minPrice, maxPrice]);
 
 	const visibleProducts = useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
 	const hasMoreProducts = visibleCount < filteredProducts.length;
@@ -307,30 +219,15 @@ export function ShopClient() {
 				<label className="text-sm font-medium text-stone-700" htmlFor="shop-category">
 					Category
 				</label>
-				<select id="shop-category" value={selectedCategory} onChange={(event) => handleCategoryChange(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
+				<select id="shop-category" value={selectedCategorySlug} onChange={(event) => handleCategoryChange(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
 					<option>All</option>
 					{categories.map((category) => (
-						<option key={category} value={category}>
-							{category}
+						<option key={category.id} value={category.slug}>
+							{category.name}
 						</option>
 					))}
 				</select>
 			</div>
-			{selectedCategory === "Traditional Clothes" ? (
-				<div>
-					<label className="text-sm font-medium text-stone-700" htmlFor="shop-clothes-subcategory">
-						Clothes subcategory
-					</label>
-					<select id="shop-clothes-subcategory" value={selectedClothesSubcategory} onChange={(event) => setSelectedClothesSubcategory(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
-						<option>All</option>
-						{clothesSubcategories.map((subcategory) => (
-							<option key={subcategory} value={subcategory}>
-								{subcategory}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
 			<div>
 				<label className="text-sm font-medium text-stone-700" htmlFor="shop-sort">
 					Sort by
@@ -488,7 +385,7 @@ export function ShopClient() {
 										</div>
 
 										<div className="mt-3 flex flex-wrap gap-2 text-xs text-stone-600">
-											<span className="absolute top-4 right-6 rounded-full border border-stone-200 bg-stone-50 px-2 py-1">{getDisplayCategoryLabel(product.category)}</span>
+											<span className="absolute top-4 right-6 rounded-full border border-stone-200 bg-stone-50 px-2 py-1">{product.category}</span>
 										</div>
 									</div>
 								</Link>

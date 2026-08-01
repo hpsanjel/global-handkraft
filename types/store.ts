@@ -34,6 +34,7 @@ export type Product = {
 	shortDescription: string;
 	description: string;
 	category: string;
+	categorySlug?: string;
 	material: string;
 	materials?: string[];
 	woodType?: string;

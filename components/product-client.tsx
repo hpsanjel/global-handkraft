@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
 
-const mandapInquiryStorageKey = "global-handcraft-mandap-inquiries";
+const customInquiryStorageKey = "global-handcraft-custom-inquiries";
 
-type MandapInquiry = {
+type CustomInquiry = {
 	id: string;
 	createdAt: string;
 	productId: string;
@@ -23,30 +24,30 @@ type MandapInquiry = {
 	sampleImages: string[];
 };
 
-function readMandapInquiries(): MandapInquiry[] {
+function readCustomInquiries(): CustomInquiry[] {
 	if (typeof window === "undefined") {
 		return [];
 	}
 
 	try {
-		const stored = window.localStorage.getItem(mandapInquiryStorageKey);
+		const stored = window.localStorage.getItem(customInquiryStorageKey);
 		if (!stored) {
 			return [];
 		}
 
-		const parsed = JSON.parse(stored) as MandapInquiry[];
+		const parsed = JSON.parse(stored) as CustomInquiry[];
 		return Array.isArray(parsed) ? parsed : [];
 	} catch {
 		return [];
 	}
 }
 
-function saveMandapInquiries(inquiries: MandapInquiry[]) {
+function saveCustomInquiries(inquiries: CustomInquiry[]) {
 	if (typeof window === "undefined") {
 		return;
 	}
 
-	window.localStorage.setItem(mandapInquiryStorageKey, JSON.stringify(inquiries));
+	window.localStorage.setItem(customInquiryStorageKey, JSON.stringify(inquiries));
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -81,6 +82,7 @@ export function ProductClient({ product }: { product: Product }) {
 	const [mandapFormError, setMandapFormError] = useState("");
 	const [mandapFormSuccess, setMandapFormSuccess] = useState("");
 	const [isSubmittingMandap, setIsSubmittingMandap] = useState(false);
+	const [cartFeedback, setCartFeedback] = useState("");
 
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
 
@@ -97,18 +99,13 @@ export function ProductClient({ product }: { product: Product }) {
 
 	const displaySpecifications = product.specifications ?? [];
 	const displayMaterials = product.materials ?? [product.material];
-	const isMandapCustomProduct = product.category === "Pooja Mandap" || product.slug === "pooja-mandap";
-	const isPoojaItemsProduct = product.category === "Pooja Items";
-	const isTraditionalClothesProduct = product.category === "Traditional Clothes";
-
-	useEffect(() => {
-		setActivePreviewImage(product.image);
-	}, [product.image]);
+	const hasMultipleVariants = product.variants.length > 1;
+	const customInquiryEnabled = displaySpecifications.some((spec) => spec.toLowerCase().includes("custom inquiry")) || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom request")) || product.slug.includes("custom");
 
 	const handleAddToCart = () => {
 		const existingItems = getCartItems();
 		const selectedVariantName = selectedVariant?.name ?? "Default option";
-		const itemName = isPoojaItemsProduct ? product.name : `${product.name} (${selectedVariantName})`;
+		const itemName = hasMultipleVariants ? `${product.name} (${selectedVariantName})` : product.name;
 		const matchingItemIndex = existingItems.findIndex((item) => item.productId === product.id && item.variantId === (selectedVariant?.id ?? "") && JSON.stringify(item.addonIds) === JSON.stringify(selectedAddonIds));
 		const nextItems = [...existingItems];
 
@@ -132,6 +129,7 @@ export function ProductClient({ product }: { product: Product }) {
 		}
 
 		saveCartItems(nextItems);
+		setCartFeedback("Added to Cart");
 		window.dispatchEvent(new Event("cart:updated"));
 	};
 
@@ -158,7 +156,7 @@ export function ProductClient({ product }: { product: Product }) {
 		}
 	};
 
-	const handleMandapInquirySubmit = () => {
+	const handleCustomInquirySubmit = () => {
 		setMandapFormError("");
 		setMandapFormSuccess("");
 
@@ -172,7 +170,7 @@ export function ProductClient({ product }: { product: Product }) {
 		const trimmedEmail = mandapEmail.trim();
 
 		if (!trimmedLength || !trimmedWidth || !trimmedHeight || !trimmedMaterial || !trimmedExpectedCostRange || !trimmedDescription) {
-			setMandapFormError("Please fill all required mandap details before submitting.");
+			setMandapFormError("Please fill all required details before submitting.");
 			return;
 		}
 
@@ -183,7 +181,7 @@ export function ProductClient({ product }: { product: Product }) {
 
 		setIsSubmittingMandap(true);
 
-		const inquiry: MandapInquiry = {
+		const inquiry: CustomInquiry = {
 			id: `mandap-inquiry-${Date.now()}-${Math.round(Math.random() * 1000)}`,
 			createdAt: new Date().toISOString(),
 			productId: product.id,
@@ -199,11 +197,11 @@ export function ProductClient({ product }: { product: Product }) {
 			sampleImages: mandapSampleImages,
 		};
 
-		const existingInquiries = readMandapInquiries();
-		saveMandapInquiries([inquiry, ...existingInquiries]);
+		const existingInquiries = readCustomInquiries();
+		saveCustomInquiries([inquiry, ...existingInquiries]);
 
 		setIsSubmittingMandap(false);
-		setMandapFormSuccess("Mandap request submitted. Our team will contact you soon.");
+		setMandapFormSuccess("Request submitted. Our team will contact you soon.");
 
 		setMandapLength("");
 		setMandapWidth("");
@@ -216,7 +214,7 @@ export function ProductClient({ product }: { product: Product }) {
 		setMandapSampleImages([]);
 	};
 
-	if (isMandapCustomProduct) {
+	if (customInquiryEnabled) {
 		return (
 			<div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
 				<div className="space-y-4">
@@ -224,9 +222,9 @@ export function ProductClient({ product }: { product: Product }) {
 				</div>
 
 				<div className="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Custom Mandap Request</p>
-					<h1 className="mt-3 text-3xl font-semibold text-stone-900 sm:text-4xl">Order Customized Pooja Mandap</h1>
-					<p className="mt-4 mb-6 text-sm leading-7 text-stone-600">We do not keep readymade mandaps. Share your preferred size, material, budget, and references so our team can guide you with personalized options and next steps.</p>
+					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Custom Request</p>
+					<h1 className="mt-3 text-3xl font-semibold text-stone-900 sm:text-4xl">Request a custom {product.name}</h1>
+					<p className="mt-4 mb-6 text-sm leading-7 text-stone-600">We do not keep this product as a fixed ready-made option. Share your preferred size, material, budget, and references so our team can guide you with personalized options and next steps.</p>
 					<div className="grid gap-4 sm:grid-cols-3">
 						<label className="space-y-2 text-sm text-stone-600">
 							<span className="font-medium text-stone-700">Length *</span>
@@ -254,7 +252,7 @@ export function ProductClient({ product }: { product: Product }) {
 					</div>
 
 					<label className="mt-4 block space-y-2 text-sm text-stone-600">
-						<span className="font-medium text-stone-700">Mandap Description *</span>
+						<span className="font-medium text-stone-700">Project Description *</span>
 						<textarea value={mandapDescription} onChange={(event) => setMandapDescription(event.target.value)} rows={5} placeholder="Describe stage style, pillars, colors, canopy, backdrop, rituals, location setup, and any custom requirements." className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 					</label>
 
@@ -287,8 +285,8 @@ export function ProductClient({ product }: { product: Product }) {
 					{mandapFormError ? <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{mandapFormError}</p> : null}
 					{mandapFormSuccess ? <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{mandapFormSuccess}</p> : null}
 
-					<Button className="mt-6 w-full" onClick={handleMandapInquirySubmit} disabled={isSubmittingMandap}>
-						{isSubmittingMandap ? "Submitting..." : "Submit Mandap Request"}
+					<Button className="mt-6 w-full" onClick={handleCustomInquirySubmit} disabled={isSubmittingMandap}>
+						{isSubmittingMandap ? "Submitting..." : "Submit Request"}
 					</Button>
 				</div>
 			</div>
@@ -323,14 +321,14 @@ export function ProductClient({ product }: { product: Product }) {
 				<div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-stone-700">
 					{product.woodType ? <span className="rounded-full border border-stone-300 bg-white px-3 py-1">Wood: {product.woodType}</span> : null}
 					{product.color ? <span className="rounded-full border border-stone-300 bg-white px-3 py-1">Color: {product.color}</span> : null}
-					{!isPoojaItemsProduct && product.sizeLabel ? <span className="rounded-full border border-stone-300 bg-white px-3 py-1">Size: {product.sizeLabel}</span> : null}
+					{hasMultipleVariants && product.sizeLabel ? <span className="rounded-full border border-stone-300 bg-white px-3 py-1">Size: {product.sizeLabel}</span> : null}
 				</div>
 				<div className="mt-5 rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-stone-500">{isPoojaItemsProduct ? "Ready to order" : "Selected option"}</p>
+						<p className="text-sm font-medium text-stone-500">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
 						<p className="text-3xl font-semibold text-stone-900">€{totalPrice}</p>
 					</div>
-					{isPoojaItemsProduct ? (
+					{!hasMultipleVariants ? (
 						""
 					) : (
 						<div className="mt-6 space-y-4">
@@ -358,7 +356,7 @@ export function ProductClient({ product }: { product: Product }) {
 									<p className="mt-1">
 										{selectedVariant?.width} × {selectedVariant?.height} · {selectedVariant?.depth}
 									</p>
-									{!isTraditionalClothesProduct ? (
+									{selectedVariant?.weight || selectedVariant?.stock !== undefined ? (
 										<p className="mt-1">
 											{selectedVariant?.weight} · {selectedVariant?.stock} in stock
 										</p>
@@ -388,6 +386,14 @@ export function ProductClient({ product }: { product: Product }) {
 					<Button className="mt-8 w-full cursor-pointer" onClick={handleAddToCart} disabled={!selectedVariant}>
 						Add to Cart
 					</Button>
+					{cartFeedback ? (
+						<div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+							<p className="font-medium">Added to Cart</p>
+							<Link href="/cart" className="mt-2 inline-flex items-center font-semibold text-emerald-800 hover:underline">
+								View Basket
+							</Link>
+						</div>
+					) : null}
 				</div>
 				<p className="mt-5 text-sm leading-7 text-stone-600 sm:text-base">{product.description}</p>
 				<div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -442,9 +448,19 @@ export function ProductClient({ product }: { product: Product }) {
 						<p className="text-xs text-stone-500">Total</p>
 						<p className="text-lg font-semibold text-stone-900">€{totalPrice}</p>
 					</div>
-					<Button className="rounded-full px-6" onClick={handleAddToCart} disabled={!selectedVariant}>
-						Add to Cart
-					</Button>
+					<div className="flex flex-col items-end gap-2">
+						<Button className="rounded-full px-6" onClick={handleAddToCart} disabled={!selectedVariant}>
+							Add to Cart
+						</Button>
+						{cartFeedback ? (
+							<div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-700">
+								<p className="font-medium">Added to Cart</p>
+								<Link href="/cart" className="mt-1 inline-flex items-center font-semibold text-emerald-800 hover:underline">
+									View Basket
+								</Link>
+							</div>
+						) : null}
+					</div>
 				</div>
 			</div>
 

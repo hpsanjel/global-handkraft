@@ -3,18 +3,6 @@ import type { Product } from "@/types/store";
 const DEFAULT_SHIPPING_INFO = "Delivery in 3-7 business days across Norway and Europe.";
 const DEFAULT_RETURN_POLICY = "Returns within 14 days for unused items in original packaging.";
 
-const categoryAliases: Record<string, string> = {
-	Temples: "Handcrafted Wooden Temples",
-	Clothes: "Traditional Clothes",
-	Pooja: "Pooja Items",
-	Mandap: "Pooja Mandap",
-	Gifts: "Gift Collection",
-};
-
-function normalizeCategory(categoryName: string) {
-	return categoryAliases[categoryName] ?? categoryName;
-}
-
 function inferWoodType(material: string) {
 	const value = material.toLowerCase();
 	if (value.includes("rosewood")) {
@@ -33,18 +21,22 @@ function inferWoodType(material: string) {
 	return "Not Applicable";
 }
 
-function inferColor(category: string) {
-	if (category === "Traditional Clothes") {
-		return "Festive Multi Tone";
-	}
-	if (category === "Pooja Items") {
+function inferColorFromMaterial(material: string) {
+	const value = material.toLowerCase();
+	if (value.includes("brass") || value.includes("copper")) {
 		return "Brass and Copper";
 	}
-	if (category === "Pooja Mandap") {
-		return "Natural and Gold Accent";
+	if (value.includes("gold")) {
+		return "Gold Accent";
+	}
+	if (value.includes("rosewood")) {
+		return "Rosewood Tone";
+	}
+	if (value.includes("teak") || value.includes("sheesham") || value.includes("wood")) {
+		return "Natural Wood";
 	}
 
-	return "Natural Wood";
+	return "Natural";
 }
 
 type DbProductRecord = {
@@ -61,6 +53,7 @@ type DbProductRecord = {
 	reviewCount: number;
 	category: {
 		name: string;
+		slug: string;
 	};
 	variants: Array<{
 		id: string;
@@ -82,7 +75,7 @@ type DbProductRecord = {
 };
 
 export function toStoreProduct(record: DbProductRecord): Product {
-	const category = normalizeCategory(record.category.name);
+	const category = record.category.name;
 	const material = record.material || "Mixed Artisan Materials";
 	const firstVariant = record.variants[0];
 
@@ -93,11 +86,12 @@ export function toStoreProduct(record: DbProductRecord): Product {
 		shortDescription: record.shortDescription,
 		description: record.description,
 		category,
+		categorySlug: record.category.slug,
 		material,
 		materials: [material],
 		woodType: inferWoodType(material),
 		sizeLabel: firstVariant?.name ?? "Standard",
-		color: inferColor(category),
+		color: inferColorFromMaterial(material),
 		image: record.image,
 		gallery: record.gallery.length > 0 ? record.gallery : [record.image],
 		rating: record.rating,
@@ -123,15 +117,4 @@ export function toStoreProduct(record: DbProductRecord): Product {
 		shippingInfo: DEFAULT_SHIPPING_INFO,
 		returnPolicy: DEFAULT_RETURN_POLICY,
 	};
-}
-
-export function resolveCategoryForDb(categoryName: string) {
-	return normalizeCategory(categoryName);
-}
-
-export function createCategorySlug(categoryName: string) {
-	return normalizeCategory(categoryName)
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/(^-|-$)/g, "");
 }

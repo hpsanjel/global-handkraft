@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createCategorySlug, resolveCategoryForDb, toStoreProduct } from "@/lib/product-transform";
+import { toStoreProduct } from "@/lib/product-transform";
+import { hasAdminRole } from "@/lib/admin-auth";
+import { createClient } from "@/lib/supabase/server";
 
 type ProductRequestPayload = {
 	id?: string;
@@ -32,27 +34,35 @@ type ProductRequestPayload = {
 	}>;
 };
 
-async function getOrCreateCategory(categoryName: string) {
-	const resolvedCategoryName = resolveCategoryForDb(categoryName);
+async function requireAdmin() {
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	if (!hasAdminRole(user)) {
+		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	}
+
+	return null;
+}
+
+async function getCategoryByName(categoryName: string) {
+	const normalizedCategoryName = categoryName.trim();
 	const existingCategory = await prisma.category.findFirst({
 		where: {
 			name: {
-				equals: resolvedCategoryName,
+				equals: normalizedCategoryName,
 				mode: "insensitive",
 			},
 		},
 	});
 
-	if (existingCategory) {
-		return existingCategory;
-	}
-
-	return prisma.category.create({
-		data: {
-			name: resolvedCategoryName,
-			slug: createCategorySlug(resolvedCategoryName),
-		},
-	});
+	return existingCategory;
 }
 
 function validatePayload(body: ProductRequestPayload) {
@@ -87,6 +97,11 @@ async function listProducts() {
 
 export async function GET() {
 	try {
+		const adminError = await requireAdmin();
+		if (adminError) {
+			return adminError;
+		}
+
 		if (!process.env.DATABASE_URL) {
 			return NextResponse.json({ message: "Database not configured yet." }, { status: 503 });
 		}
@@ -100,6 +115,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
 	try {
+		const adminError = await requireAdmin();
+		if (adminError) {
+			return adminError;
+		}
+
 		if (!process.env.DATABASE_URL) {
 			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
 		}
@@ -109,7 +129,10 @@ export async function POST(request: Request) {
 		if (validationError) {
 			return NextResponse.json({ error: validationError }, { status: 400 });
 		}
-		const category = await getOrCreateCategory(body.category);
+		const category = await getCategoryByName(body.category);
+		if (!category) {
+			return NextResponse.json({ error: "Selected category does not exist. Create the category first." }, { status: 400 });
+		}
 
 		await prisma.product.create({
 			data: {
@@ -158,6 +181,11 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
 	try {
+		const adminError = await requireAdmin();
+		if (adminError) {
+			return adminError;
+		}
+
 		if (!process.env.DATABASE_URL) {
 			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
 		}
@@ -172,7 +200,10 @@ export async function PUT(request: Request) {
 			return NextResponse.json({ error: validationError }, { status: 400 });
 		}
 
-		const category = await getOrCreateCategory(body.category);
+		const category = await getCategoryByName(body.category);
+		if (!category) {
+			return NextResponse.json({ error: "Selected category does not exist. Create the category first." }, { status: 400 });
+		}
 
 		await prisma.product.update({
 			where: { id: body.id },
@@ -223,6 +254,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
 	try {
+		const adminError = await requireAdmin();
+		if (adminError) {
+			return adminError;
+		}
+
 		if (!process.env.DATABASE_URL) {
 			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
 		}
@@ -232,9 +268,15 @@ export async function DELETE(request: Request) {
 			return NextResponse.json({ error: "Product id is required." }, { status: 400 });
 		}
 
-		await prisma.product.delete({
-			where: { id },
+		const orderItemCount = await prisma.orderItem.count({
+			where: { productId: id },
 		});
+
+		if (orderItemCount > 0) {
+			return NextResponse.json({ error: "This product has existing order history and cannot be deleted." }, { status: 409 });
+		}
+
+		await prisma.$transaction([prisma.variant.deleteMany({ where: { productId: id } }), prisma.addon.deleteMany({ where: { productId: id } }), prisma.product.delete({ where: { id } })]);
 
 		return NextResponse.json(await listProducts());
 	} catch (error) {

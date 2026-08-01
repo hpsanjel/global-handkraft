@@ -39,11 +39,15 @@ The complete project scope, information architecture, feature matrix, content st
    cp .env.example .env.local
    ```
 3. Configure PostgreSQL and service credentials.
-4. Run database migrations
+4. Configure admin email allow-list for dashboard access.
+   ```bash
+   ADMIN_EMAILS=admin@globalhandcrafts.no,owner@globalhandcrafts.no
+   ```
+5. Run database migrations
    ```bash
    npx prisma migrate dev --name init
    ```
-5. Start development server
+6. Start development server
    ```bash
    npm run dev
    ```

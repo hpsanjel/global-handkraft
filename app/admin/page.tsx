@@ -23,9 +23,14 @@ export default async function AdminPage() {
 						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Admin dashboard</p>
 						<h1 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Manage your store with confidence</h1>
 					</div>
-					<Button asChild>
-						<Link href="/admin/products">Manage products</Link>
-					</Button>
+					<div className="flex flex-wrap gap-3">
+						<Button asChild>
+							<Link href="/admin/products">Manage products</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/admin/categories">Manage categories</Link>
+						</Button>
+					</div>
 				</div>
 				<AdminLiveStats />
 				<div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -59,6 +64,9 @@ export default async function AdminPage() {
 						<div className="mt-4 space-y-3">
 							<Link href="/admin/products" className="block rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-700 transition hover:border-stone-300 hover:text-stone-900">
 								Manage products
+							</Link>
+							<Link href="/admin/categories" className="block rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-700 transition hover:border-stone-300 hover:text-stone-900">
+								Manage categories
 							</Link>
 							<Link href="/admin/orders" className="block rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-700 transition hover:border-stone-300 hover:text-stone-900">
 								Review orders

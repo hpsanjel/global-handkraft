@@ -2,58 +2,42 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { categories, testimonials } from "@/lib/data/products";
+import { testimonials } from "@/lib/data/products";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import Image from "next/image";
 import { HomeCategoryProductsSection } from "@/components/home-category-products-section";
 import { Star } from "lucide-react";
+import { useCategoriesCatalog } from "@/lib/categories-catalog";
 
 export default function HomePage() {
 	const products = useProductsCatalog();
-	const featuredProducts = products.filter((product) => product.featured).slice(0, 4);
-	const highlightedCategories = categories.slice(0, 6);
-	const categoryProductMap: Record<string, string> = {
-		Temples: "Handcrafted Wooden Temples",
-		Clothes: "Traditional Clothes",
-		Gifts: "Gift Collection",
-		Pooja: "Pooja Items",
-		Mandap: "Pooja Mandap",
-	};
-	const dynamicCategorySections = highlightedCategories
-		.map((category) => {
-			const productCategory = categoryProductMap[category] ?? category;
-			return {
-				title: category,
-				href: `/shop?category=${encodeURIComponent(category)}`,
-				products: products.filter((product) => product.category === productCategory).slice(0, 4),
-			};
-		})
-		.filter((section) => section.products.length > 0);
-	const categoryHighlights = Object.entries(categoryProductMap)
-		.map(([label, category]) => {
-			const matchedProducts = products.filter((product) => product.category === category);
-			return {
-				label,
-				category,
-				count: matchedProducts.length,
-				previewImage: matchedProducts[0]?.image ?? "/images/temple-1.webp",
-			};
-		})
-		.filter((item) => item.count > 0)
-		.slice(0, 4);
+	const categories = useCategoriesCatalog();
+	const categoriesWithProducts = categories.filter((category) => category.productCount > 0);
+	const featuredProducts = (products.filter((product) => product.featured).length > 0 ? products.filter((product) => product.featured) : products).slice(0, 4);
+	const highlightedCategories = categoriesWithProducts;
+	const dynamicCategorySections = highlightedCategories.map((category) => {
+		return {
+			title: category.name,
+			href: `/shop?category=${encodeURIComponent(category.slug)}`,
+			products: products.filter((product) => product.categorySlug === category.slug).slice(0, 4),
+		};
+	});
+	const categoryHighlights = categoriesWithProducts.map((category) => {
+		const matchedProducts = products.filter((product) => product.categorySlug === category.slug);
+		return {
+			label: category.name,
+			slug: category.slug,
+			count: category.productCount,
+			previewImage: matchedProducts[0]?.image ?? "/images/temple-1.webp",
+		};
+	});
 	const trustHighlights = ["Verified craftsmanship", "Secure checkout", "Tracked Europe-wide delivery", "Responsive support"];
 	const reviewFacts = [
 		{ label: "Avg. satisfaction", value: "4.9/5" },
 		{ label: "Repeat customers", value: "95%" },
 		{ label: "On-time deliveries", value: "99%" },
-	];
-	const stats = [
-		{ label: "Happy Customers", value: "300+" },
-		{ label: "Handmade Products", value: "400+" },
-		{ label: "Skilled Artisans", value: "20+" },
-		{ label: "Countries Served", value: "10+" },
 	];
 
 	return (
@@ -83,25 +67,24 @@ export default function HomePage() {
 					</div>
 				</section>
 
-				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
-					<div className="flex items-end justify-between gap-4">
-						<div>
-							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Featured Categories</p>
-							<h2 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Collections curated for culture, prayer, and gifting</h2>
+				{highlightedCategories.length > 0 ? (
+					<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+						<div className="flex items-end justify-between gap-4">
+							<div>
+								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Featured Categories</p>
+								<h2 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Collections curated for culture, prayer, and gifting</h2>
+							</div>
 						</div>
-						<Link href="/categories" className="hidden sm:block text-sm font-semibold text-[#1B365D] hover:text-[#152d4c]">
-							View all categories
-						</Link>
-					</div>
-					<div className="mt-8 flex gap-2 overflow-x-auto overflow-y-hidden pb-2 md:grid md:grid-cols-6 md:gap-32 md:overflow-visible md:pb-0">
-						{highlightedCategories.map((category, index) => (
-							<Link key={category} href={`/shop?category=${encodeURIComponent(category)}`} className="relative group grid aspect-square w-[36vw] max-w-[200px] min-w-[132px] shrink-0 grid-rows-[1fr_auto] rounded-2xl border border-stone-200 bg-white p-1 shadow-sm transition hover:shadow-md md:aspect-auto md:min-w-0 md:shrink md:overflow-hidden md:rounded-[1.5rem] md:border-stone-200 md:p-0 md:shadow-sm md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
-								<Image src={`/images/cat-${index + 1}.avif`} alt={category} width={200} height={200} className="h-full w-full rounded-xl object-cover transition duration-300 group-hover:scale-[1.03] md:h-48 md:rounded-none md:group-hover:scale-105" />
-								<p className="absolute bottom-2 left-1/2 w-[60%] -translate-x-1/2 rounded-full bg-white px-2 py-1 text-center text-xs font-semibold text-stone-900 shadow-sm transition duration-300 group-hover:bg-stone-100 group-hover:text-[#1B365D] md:static md:mt-0 md:w-full md:translate-x-0 md:rounded-none md:bg-transparent md:px-5 md:pb-5 md:pt-4 md:text-left md:text-lg md:font-semibold md:shadow-none md:transition-none">{category}</p>
-							</Link>
-						))}
-					</div>
-				</section>
+						<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+							{highlightedCategories.map((category, index) => (
+								<Link key={category.id} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="relative group grid aspect-square w-[36vw] max-w-55 min-w-35 shrink-0 snap-start grid-rows-[1fr_auto] rounded-2xl border border-stone-200 bg-white p-1 shadow-sm transition hover:shadow-md md:w-55 md:aspect-auto md:overflow-hidden md:rounded-3xl md:border-stone-200 md:p-0 md:shadow-sm md:transition-all md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
+									<Image src={`/images/cat-${(index % 5) + 1}.avif`} alt={category.name} width={200} height={200} className="h-full w-full rounded-xl object-cover transition duration-300 group-hover:scale-[1.03] md:h-48 md:rounded-none md:group-hover:scale-105" />
+									<p className="absolute bottom-2 left-1/2 w-[60%] -translate-x-1/2 rounded-full bg-white px-2 py-1 text-center text-xs font-semibold text-stone-900 shadow-sm transition duration-300 group-hover:bg-stone-100 group-hover:text-[#1B365D] md:static md:mt-0 md:w-full md:translate-x-0 md:rounded-none md:bg-transparent md:px-5 md:pb-5 md:pt-4 md:text-left md:text-lg md:font-semibold md:shadow-none md:transition-none">{category.name}</p>
+								</Link>
+							))}
+						</div>
+					</section>
+				) : null}
 
 				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="flex items-end justify-between gap-4">
@@ -113,9 +96,9 @@ export default function HomePage() {
 							Shop all
 						</Link>
 					</div>
-					<div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
+					<div className="-mx-4 mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden px-4 pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
 						{featuredProducts.map((product) => (
-							<div key={product.id} className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
+							<div key={product.id} className="flex h-full w-[72vw] max-w-70 shrink-0 snap-start flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:w-70 md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
 								<Link href={`/product/${product.slug}`} className="block">
 									<div className="w-full aspect-5/6 bg-stone-100 bg-cover" style={{ backgroundImage: `url('${product.image}')` }} />
 									<div className="px-3 pt-3 sm:px-5 sm:pt-4">
@@ -137,7 +120,7 @@ export default function HomePage() {
 				{dynamicCategorySections.map((section) => (
 					<HomeCategoryProductsSection key={section.title} title={section.title} href={section.href} products={section.products} />
 				))}
-
+				{/* 
 				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="rounded-[2rem] border border-stone-200 bg-gradient-to-r from-[#b18016] to-stone-500 px-6 py-10 text-white shadow-sm sm:px-10">
 						<div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -151,9 +134,9 @@ export default function HomePage() {
 							</Button>
 						</div>
 					</div>
-				</section>
+				</section> */}
 
-				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+				{/* <section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="grid gap-2 lg:gap-6 grid-cols-2 lg:grid-cols-4">
 						{stats.map((item) => (
 							<div key={item.label} className="rounded-[1.5rem] border border-stone-200 bg-white p-6 text-center shadow-sm">
@@ -162,7 +145,7 @@ export default function HomePage() {
 							</div>
 						))}
 					</div>
-				</section>
+				</section> */}
 
 				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -202,11 +185,11 @@ export default function HomePage() {
 							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Find the right collection faster</h2>
 							<div className="mt-5 space-y-3">
 								{categoryHighlights.map((item) => (
-									<Link key={item.label} href={`/shop?category=${encodeURIComponent(item.label)}`} className="group flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-3 transition hover:border-stone-300 hover:bg-white">
+									<Link key={item.slug} href={`/shop?category=${encodeURIComponent(item.slug)}`} className="group flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-3 transition hover:border-stone-300 hover:bg-white">
 										<div className="h-14 w-14 shrink-0 rounded-xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${item.previewImage}')` }} />
 										<div className="min-w-0">
 											<p className="text-sm font-semibold text-stone-900 group-hover:text-[#1B365D]">{item.label}</p>
-											<p className="mt-1 text-xs text-stone-600">{item.count} products available</p>
+											<p className="mt-1 text-xs text-stone-600">{item.count > 0 ? `${item.count} products available` : "No products yet"}</p>
 										</div>
 										<span className="ml-auto text-xs font-semibold text-[#1B365D]">Open</span>
 									</Link>

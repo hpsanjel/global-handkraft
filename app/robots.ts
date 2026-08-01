@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
 			userAgent: "*",
 			allow: "/",
 		},
-		sitemap: "https://globalhandcraft.com/sitemap.xml",
+		sitemap: "https://handcraftsglobal.com/sitemap.xml",
 	};
 }

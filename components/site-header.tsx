@@ -2,24 +2,29 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/cart-badge";
-
-const navItems = [
-	{ href: "/shop?category=Handcrafted%20Wooden%20Temples", label: "Temples" },
-	{ href: "/shop?category=Traditional%20Clothes", label: "Clothes" },
-	{ href: "/shop?category=Pooja%20Items", label: "Pooja Items" },
-	{ href: "/shop?category=Pooja%20Mandap", label: "Mandaps" },
-	{ href: "/shop?category=Gift%20Collection", label: "Gifts" },
-];
+import { AccountMenu } from "@/components/account-menu";
+import { useCategoriesCatalog } from "@/lib/categories-catalog";
 
 export function SiteHeader() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+	const categories = useCategoriesCatalog();
+	const navItems = useMemo(
+		() =>
+			categories
+				.filter((category) => category.productCount > 0)
+				.map((category) => ({
+					href: `/shop?category=${encodeURIComponent(category.slug)}`,
+					label: category.name,
+				})),
+		[categories],
+	);
 
 	return (
 		<header className="sticky top-0 z-30 border-b border-stone-200/70 bg-white/90 backdrop-blur">
-			<div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4">
+			<div className="mx-auto flex max-w-7xl items-center gap-3 px-4">
 				<div className="flex items-center gap-1">
 					<div className="flex h-16 w-16 items-center justify-center overflow-hidden sm:h-24 sm:w-24">
 						<img src="/images/globalhandicraft-logo.png" alt="Global Handcrafts Logo" width={100} height={100} className="h-full w-full scale-125 object-contain" />
@@ -29,18 +34,21 @@ export function SiteHeader() {
 						Handcrafts
 					</Link>
 				</div>
-				<nav className="hidden items-center gap-6 text-sm font-medium text-stone-700 md:flex">
-					{navItems.map((item) => (
-						<Link key={item.href} href={item.href} className="transition hover:text-stone-950">
-							{item.label}
-						</Link>
-					))}
-				</nav>
-				<div className="flex items-center gap-3">
+				<div className="hidden flex-1 md:block">
+					<nav className="flex items-center justify-center gap-8 text-sm font-medium text-stone-700">
+						{navItems.map((item) => (
+							<Link key={item.href} href={item.href} className="shrink-0 transition hover:text-stone-950">
+								{item.label}
+							</Link>
+						))}
+					</nav>
+				</div>
+				<div className="ml-auto flex items-center gap-3">
 					<CartBadge />
 					<Button asChild className="hidden rounded-full bg-stone-900 px-4 py-2 text-sm sm:inline-flex">
 						<Link href="/shop">Shop Now</Link>
 					</Button>
+					<AccountMenu />
 					<button type="button" onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-700 md:hidden" aria-label="Toggle navigation menu" aria-expanded={mobileMenuOpen}>
 						{mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
 					</button>

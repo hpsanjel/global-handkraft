@@ -384,8 +384,6 @@ export const products: Product[] = baseProducts.map((product) => {
 	};
 });
 
-export const categories = ["Temples", "Clothes", "Gifts", "Pooja", "Mandap"];
-
 export const testimonials = [
 	{
 		name: "Saroj Thapa, Oslo",

@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "@/lib/cart";
 import { useProductsCatalog } from "@/lib/products-catalog";
+import { createClient } from "@/lib/supabase/client";
 import type { CartItem } from "@/types/store";
 
 export default function CartPage() {
@@ -82,10 +83,19 @@ export default function CartPage() {
 		setCheckoutError("");
 
 		try {
+			const supabase = createClient();
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+
 			const response = await fetch("/api/checkout", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ items }),
+				body: JSON.stringify({
+					items,
+					customerEmail: user?.email,
+					shippingAddress: user?.user_metadata?.shipping_address,
+				}),
 			});
 
 			const text = await response.text();
