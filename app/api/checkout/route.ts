@@ -97,11 +97,7 @@ export async function POST(request: Request) {
 			shipping_address_collection: {
 				allowed_countries: SHIPPING_COUNTRY_CODES as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
 			},
-			shipping_options: [
-				{
-					shipping_rate: "shr_1TyPyqFmx2WPpAr0UkdSjsqd",
-				},
-			],
+
 			allow_promotion_codes: true,
 			success_url: `${origin}/checkout/success`,
 			cancel_url: `${origin}/checkout/cancel`,
