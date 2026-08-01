@@ -102,7 +102,7 @@ export function AccountMenu() {
 
 	if (!user) {
 		return (
-			<Button asChild variant="outline" className="rounded-full px-4 py-2 text-sm">
+			<Button asChild variant="outline" className="rounded-full border-input px-2 py-2 text-xs sm:px-4">
 				<Link href="/login">Sign In</Link>
 			</Button>
 		);

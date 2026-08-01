@@ -20,7 +20,7 @@ export function HomeCategoryProductsSection({ title, href, products }: HomeCateg
 			{products.length === 0 ? (
 				<div className="mt-8 rounded-[1.75rem] border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-600">No products in this category yet. Visit the shop page or check back soon.</div>
 			) : (
-				<div className="-mx-4 mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden px-4 pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+				<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
 					{products.map((product) => (
 						<div key={product.id} className="flex h-full w-[72vw] max-w-70 shrink-0 snap-start flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:w-70 md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
 							<Link href={`/product/${product.slug}`} className="block">

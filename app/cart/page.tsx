@@ -22,10 +22,14 @@ export default function CartPage() {
 		setIsMounted(true);
 		window.addEventListener("storage", syncItems);
 		window.addEventListener("cart:updated", syncItems);
+		// Re-sync when the page is restored from the back-forward cache so a
+		// stale (pre-purchase) cart isn't shown after navigating back.
+		window.addEventListener("pageshow", syncItems);
 
 		return () => {
 			window.removeEventListener("storage", syncItems);
 			window.removeEventListener("cart:updated", syncItems);
+			window.removeEventListener("pageshow", syncItems);
 		};
 	}, []);
 

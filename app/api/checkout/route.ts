@@ -108,6 +108,14 @@ export async function POST(request: Request) {
 			metadata: {
 				items: compactItems,
 			},
+			invoice_creation: {
+				enabled: true,
+			},
+			payment_intent_data: body.customerEmail
+				? {
+						receipt_email: body.customerEmail,
+					}
+				: undefined,
 			...(customer
 				? {
 						customer: customer.id,

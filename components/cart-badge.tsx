@@ -19,11 +19,16 @@ export function CartBadge() {
 		document.addEventListener("visibilitychange", handleVisibility);
 		window.addEventListener("storage", updateCount);
 		window.addEventListener("cart:updated", updateCount);
+		// Re-sync when the page is restored from the back-forward cache (e.g. a
+		// user pressing back after completing checkout), since bfcache restores
+		// the previous React state instead of re-running mount effects.
+		window.addEventListener("pageshow", updateCount);
 
 		return () => {
 			document.removeEventListener("visibilitychange", handleVisibility);
 			window.removeEventListener("storage", updateCount);
 			window.removeEventListener("cart:updated", updateCount);
+			window.removeEventListener("pageshow", updateCount);
 		};
 	}, []);
 
