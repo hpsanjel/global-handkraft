@@ -18,8 +18,10 @@ export default function CartPage() {
 
 	useEffect(() => {
 		const syncItems = () => setItems(getCartItems());
-		syncItems();
-		setIsMounted(true);
+		const initialSyncId = window.setTimeout(() => {
+			syncItems();
+			setIsMounted(true);
+		}, 0);
 		window.addEventListener("storage", syncItems);
 		window.addEventListener("cart:updated", syncItems);
 		// Re-sync when the page is restored from the back-forward cache so a
@@ -27,6 +29,7 @@ export default function CartPage() {
 		window.addEventListener("pageshow", syncItems);
 
 		return () => {
+			window.clearTimeout(initialSyncId);
 			window.removeEventListener("storage", syncItems);
 			window.removeEventListener("cart:updated", syncItems);
 			window.removeEventListener("pageshow", syncItems);

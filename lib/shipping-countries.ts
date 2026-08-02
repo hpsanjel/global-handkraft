@@ -15,3 +15,6 @@ export const SHIPPING_COUNTRIES: { code: string; name: string }[] = [
 ];
 
 export const SHIPPING_COUNTRY_CODES = SHIPPING_COUNTRIES.map((country) => country.code);
+
+/** Sentinel "country" code used to store the fallback rate applied to any country without its own zone. */
+export const DEFAULT_SHIPPING_ZONE_CODE = "DEFAULT";

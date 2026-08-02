@@ -9,7 +9,16 @@ function categorySlug(name: string) {
 		.replace(/(^-|-$)/g, "");
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+	const seedSecret = process.env.SEED_SECRET;
+	const token = new URL(request.url).searchParams.get("token");
+
+	if (process.env.NODE_ENV === "production" || seedSecret) {
+		if (!seedSecret || token !== seedSecret) {
+			return NextResponse.json({ error: "Seed route is not available." }, { status: 404 });
+		}
+	}
+
 	if (!process.env.DATABASE_URL) {
 		return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
 	}

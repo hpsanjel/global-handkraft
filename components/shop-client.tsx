@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useProductsCatalog } from "@/lib/products-catalog";
 
@@ -45,7 +45,7 @@ export function ShopClient() {
 		};
 	}, [availablePrices]);
 
-	const getProductPrice = (product: (typeof products)[number]) => product.variants[0]?.price ?? 0;
+	const getProductPrice = useCallback((product: (typeof products)[number]) => product.variants[0]?.price ?? 0, []);
 
 	const materialOptions = useMemo(() => {
 		const set = new Set<string>();
@@ -87,24 +87,36 @@ export function ShopClient() {
 	}, [products]);
 
 	useEffect(() => {
-		setMinPrice(availablePriceRange.min);
-		setMaxPrice(availablePriceRange.max);
+		const timeoutId = window.setTimeout(() => {
+			setMinPrice(availablePriceRange.min);
+			setMaxPrice(availablePriceRange.max);
+		}, 0);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+		};
 	}, [availablePriceRange.max, availablePriceRange.min]);
 
 	useEffect(() => {
-		if (!categoryParam) {
-			setSelectedCategorySlug((current) => (current === "All" ? current : "All"));
-			return;
-		}
-
-		const matchedCategory = categories.find((category) => category.slug === categoryParam || category.name.toLowerCase() === categoryParam.toLowerCase());
-		setSelectedCategorySlug((current) => {
-			if (!matchedCategory) {
-				return current === "All" ? current : "All";
+		const timeoutId = window.setTimeout(() => {
+			if (!categoryParam) {
+				setSelectedCategorySlug((current) => (current === "All" ? current : "All"));
+				return;
 			}
 
-			return current === matchedCategory.slug ? current : matchedCategory.slug;
-		});
+			const matchedCategory = categories.find((category) => category.slug === categoryParam || category.name.toLowerCase() === categoryParam.toLowerCase());
+			setSelectedCategorySlug((current) => {
+				if (!matchedCategory) {
+					return current === "All" ? current : "All";
+				}
+
+				return current === matchedCategory.slug ? current : matchedCategory.slug;
+			});
+		}, 0);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+		};
 	}, [categories, categoryParam]);
 
 	const handleCategoryChange = (nextCategorySlug: string) => {
@@ -167,7 +179,7 @@ export function ShopClient() {
 		}
 
 		return sorted;
-	}, [availability, availablePriceRange.max, availablePriceRange.min, maxPrice, minPrice, products, searchQuery, selectedCategorySlug, selectedColor, selectedMaterial, selectedSize, selectedWoodType, sortBy]);
+	}, [availability, availablePriceRange.max, availablePriceRange.min, getProductPrice, maxPrice, minPrice, products, searchQuery, selectedCategorySlug, selectedColor, selectedMaterial, selectedSize, selectedWoodType, sortBy]);
 
 	const resetFilters = () => {
 		setSearchQuery("");
@@ -184,14 +196,20 @@ export function ShopClient() {
 	};
 
 	useEffect(() => {
-		setVisibleCount(PAGE_SIZE);
+		const timeoutId = window.setTimeout(() => {
+			setVisibleCount(PAGE_SIZE);
+		}, 0);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+		};
 	}, [searchQuery, selectedCategorySlug, selectedMaterial, selectedWoodType, selectedSize, selectedColor, availability, sortBy, minPrice, maxPrice]);
 
 	const visibleProducts = useMemo(() => filteredProducts.slice(0, visibleCount), [filteredProducts, visibleCount]);
 	const hasMoreProducts = visibleCount < filteredProducts.length;
 	const matchingResultsCount = filteredProducts.length;
 
-	const loadMoreProducts = () => {
+	const loadMoreProducts = useCallback(() => {
 		if (isLoadingMore || !hasMoreProducts) {
 			return;
 		}
@@ -205,7 +223,7 @@ export function ShopClient() {
 			setVisibleCount((current) => Math.min(current + PAGE_SIZE, filteredProducts.length));
 			setIsLoadingMore(false);
 		}, 220);
-	};
+	}, [filteredProducts.length, hasMoreProducts, isLoadingMore]);
 
 	const renderFilters = (options: { showCloseButton: boolean }) => (
 		<div className="space-y-5">
@@ -233,8 +251,87 @@ export function ShopClient() {
 					Sort by
 				</label>
 				<select id="shop-sort" value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
+					<option value="newest">Newest</option>
+					<option value="popularity">Popularity</option>
+					<option value="best-rated">Best Rated</option>
 					<option value="highest">Highest Price</option>
 					<option value="lowest">Lowest Price</option>
+				</select>
+			</div>
+
+			{materialOptions.length > 0 ? (
+				<div>
+					<label className="text-sm font-medium text-stone-700" htmlFor="shop-material">
+						Material
+					</label>
+					<select id="shop-material" value={selectedMaterial} onChange={(event) => setSelectedMaterial(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
+						<option>All</option>
+						{materialOptions.map((material) => (
+							<option key={material} value={material}>
+								{material}
+							</option>
+						))}
+					</select>
+				</div>
+			) : null}
+
+			{woodTypeOptions.length > 0 ? (
+				<div>
+					<label className="text-sm font-medium text-stone-700" htmlFor="shop-wood-type">
+						Wood type
+					</label>
+					<select id="shop-wood-type" value={selectedWoodType} onChange={(event) => setSelectedWoodType(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
+						<option>All</option>
+						{woodTypeOptions.map((woodType) => (
+							<option key={woodType} value={woodType}>
+								{woodType}
+							</option>
+						))}
+					</select>
+				</div>
+			) : null}
+
+			{sizeOptions.length > 0 ? (
+				<div>
+					<label className="text-sm font-medium text-stone-700" htmlFor="shop-size">
+						Size
+					</label>
+					<select id="shop-size" value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
+						<option>All</option>
+						{sizeOptions.map((size) => (
+							<option key={size} value={size}>
+								{size}
+							</option>
+						))}
+					</select>
+				</div>
+			) : null}
+
+			{colorOptions.length > 0 ? (
+				<div>
+					<label className="text-sm font-medium text-stone-700" htmlFor="shop-color">
+						Color
+					</label>
+					<select id="shop-color" value={selectedColor} onChange={(event) => setSelectedColor(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
+						<option>All</option>
+						{colorOptions.map((color) => (
+							<option key={color} value={color}>
+								{color}
+							</option>
+						))}
+					</select>
+				</div>
+			) : null}
+
+			<div>
+				<label className="text-sm font-medium text-stone-700" htmlFor="shop-availability">
+					Availability
+				</label>
+				<select id="shop-availability" value={availability} onChange={(event) => setAvailability(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
+					<option>All</option>
+					<option>In stock</option>
+					<option>Low stock</option>
+					<option>Out of stock</option>
 				</select>
 			</div>
 
@@ -291,7 +388,7 @@ export function ShopClient() {
 		return () => {
 			observer.disconnect();
 		};
-	}, [hasMoreProducts, isLoadingMore, filteredProducts.length]);
+	}, [filteredProducts.length, hasMoreProducts, isLoadingMore, loadMoreProducts]);
 
 	return (
 		<>

@@ -7,7 +7,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { type CategorySummary } from "@/lib/category-utils";
 import { refreshProductsCatalog } from "@/lib/products-catalog";
-import { createClient } from "@/lib/supabase/client";
 import type { Product, ProductAddon, ProductVariant } from "@/types/store";
 
 // Shared Tailwind fragments — avoids repeating the same class string across the form.
@@ -21,7 +20,6 @@ const DEFAULT_SIZE_LABEL = "Standard";
 const DEFAULT_DIMENSIONS = "Add product dimensions";
 const DEFAULT_WEIGHT = "Add product weight";
 
-const STORAGE_BUCKET = "products";
 const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
 
@@ -92,14 +90,6 @@ function createEmptyAddon(): ProductAddon {
 	return { id: generateId("addon"), name: "New add-on", price: 0, description: "" };
 }
 
-// Extracts the storage path from a Supabase public URL so we can delete the
-// underlying file when an image is removed from the gallery.
-function extractStoragePath(url: string): string | null {
-	const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
-	const index = url.indexOf(marker);
-	return index === -1 ? null : url.slice(index + marker.length);
-}
-
 export default function AdminProductsPage() {
 	const [productsState, setProductsState] = useState<Product[]>([]);
 	const [categories, setCategories] = useState<CategorySummary[]>([]);
@@ -140,24 +130,6 @@ export default function AdminProductsPage() {
 
 		void loadProducts();
 	}, []);
-
-	useEffect(() => {
-		if (!productsState.length) {
-			setSelectedProductId("");
-			setDraftProduct(null);
-			return;
-		}
-
-		const activeProduct = productsState.find((product) => product.id === selectedProductId);
-		if (activeProduct) {
-			setDraftProduct(activeProduct);
-			return;
-		}
-
-		const fallback = productsState[0];
-		setSelectedProductId(fallback.id);
-		setDraftProduct(fallback);
-	}, [productsState, selectedProductId]);
 
 	const selectProduct = (productId: string) => {
 		setSelectedProductId(productId);
@@ -228,24 +200,22 @@ export default function AdminProductsPage() {
 
 		setIsUploadingImages(true);
 		try {
-			const supabase = createClient();
 			const productFolder = draftProduct.slug || draftProduct.id;
-			const uploadedUrls: string[] = [];
+			const formData = new FormData();
+			formData.set("folder", productFolder);
+			files.forEach((file) => formData.append("images", file));
 
-			for (const file of files) {
-				const extension = file.name.split(".").pop() ?? "jpg";
-				const filePath = `${productFolder}/${generateId("img")}.${extension}`;
+			const response = await fetch("/api/admin/product-images", {
+				method: "POST",
+				body: formData,
+			});
+			const payload = (await response.json()) as { images?: Array<{ url: string }>; error?: string };
 
-				const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, file, {
-					cacheControl: "3600",
-					upsert: false,
-				});
-				if (uploadError) throw uploadError;
-
-				const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
-				uploadedUrls.push(data.publicUrl);
+			if (!response.ok || !payload.images) {
+				throw new Error(payload.error || "Image upload failed. Please try again.");
 			}
 
+			const uploadedUrls = payload.images.map((image) => image.url);
 			setDraftProduct((current) => {
 				if (!current) return current;
 				const nextGallery = [...current.gallery, ...uploadedUrls];
@@ -267,8 +237,7 @@ export default function AdminProductsPage() {
 
 		// Best-effort cleanup in storage; harmless if it fails (e.g. externally hosted URL).
 		try {
-			const path = extractStoragePath(url);
-			if (path) await createClient().storage.from(STORAGE_BUCKET).remove([path]);
+			await fetch(`/api/admin/product-images?url=${encodeURIComponent(url)}`, { method: "DELETE" });
 		} catch {
 			// Non-fatal — the URL is already removed from the product's gallery.
 		}
