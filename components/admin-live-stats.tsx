@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { useProductsCatalog } from "@/lib/products-catalog";
 
-const currencyFormatter = new Intl.NumberFormat("en-GB", {
+const currencyFormatter = new Intl.NumberFormat("nb-NO", {
 	style: "currency",
-	currency: "EUR",
+	currency: "NOK",
 	maximumFractionDigits: 0,
 });
 

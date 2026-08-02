@@ -23,10 +23,12 @@ type AccountOrder = {
 	items: AccountOrderItem[];
 };
 
-const currencyFormatter = new Intl.NumberFormat("en-GB", {
-	style: "currency",
-	currency: "EUR",
-});
+function formatCurrency(amount: number, currency: string) {
+	return new Intl.NumberFormat("en-GB", {
+		style: "currency",
+		currency: currency || "NOK",
+	}).format(amount);
+}
 
 export default function AccountOrdersPage() {
 	const [orders, setOrders] = useState<AccountOrder[] | null>(null);
@@ -99,17 +101,20 @@ export default function AccountOrdersPage() {
 									</p>
 								</div>
 								<div className="text-right">
-									<p className="font-semibold text-stone-900">{currencyFormatter.format(order.total)}</p>
+									<p className="font-semibold text-stone-900">{formatCurrency(order.total, order.currency)}</p>
 									<p className="mt-1 text-sm text-stone-500">{order.status}</p>
 								</div>
 							</div>
-							<div className="mt-4 space-y-2 border-t border-stone-200 pt-4">
+							<div className="mt-4 space-y-3 border-t border-stone-200 pt-4">
 								{order.items.map((item) => (
-									<div key={item.id} className="flex items-center justify-between text-sm text-stone-700">
-										<span>
-											{item.product?.name ?? "Product"} · {item.variant?.name ?? "Variant"} × {item.quantity}
-										</span>
-										<span>{currencyFormatter.format(item.unitPrice * item.quantity)}</span>
+									<div key={item.id} className="text-sm text-stone-700">
+										<div className="flex items-center justify-between gap-3">
+											<span>
+												{item.product?.name ?? "Product"} · {item.variant?.name ?? "Variant"} × {item.quantity}
+											</span>
+											<span>{formatCurrency(item.unitPrice * item.quantity, order.currency)}</span>
+										</div>
+										{item.addonNames.length > 0 ? <p className="mt-0.5 pl-0 text-xs text-stone-500">Add-ons: {item.addonNames.join(", ")}</p> : null}
 									</div>
 								))}
 							</div>

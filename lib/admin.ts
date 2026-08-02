@@ -43,6 +43,7 @@ export interface AdminOrder {
 	variant: string;
 	status: string;
 	amount: number;
+	currency: string;
 	date: string;
 }
 
@@ -78,6 +79,7 @@ export async function getRecentOrders(limit = 10): Promise<AdminOrder[]> {
 			variant: firstItem?.variant.name || "Selected option",
 			status: order.status,
 			amount: order.total,
+			currency: order.currency || "NOK",
 			date: order.createdAt.toLocaleString("en-GB", {
 				day: "numeric",
 				month: "short",

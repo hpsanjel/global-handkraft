@@ -96,7 +96,7 @@ model Order {
   vat             Float
   shipping        Float
   total           Float
-  currency        String      @default("EUR")
+  currency        String      @default("NOK")
   paymentId       String?
   invoiceNumber   String?
   shippingCountry String

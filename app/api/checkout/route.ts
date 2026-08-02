@@ -7,6 +7,20 @@ import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 
 export const runtime = "nodejs";
 
+const DEFAULT_CURRENCY = "nok";
+// Fixed EUR/NOK exchange rate used as a display reference on the Stripe
+// checkout page. Stripe charges the exact amount in NOK; the EUR amount is
+// shown as an informational equivalent.
+const EUR_PER_NOK = 0.095;
+
+function formatEurEquivalent(nokAmount: number) {
+	return new Intl.NumberFormat("en-GB", {
+		style: "currency",
+		currency: "EUR",
+		maximumFractionDigits: 2,
+	}).format(nokAmount * EUR_PER_NOK);
+}
+
 type SavedShippingAddress = {
 	fullName?: string;
 	phone?: string;
@@ -32,7 +46,12 @@ function normalizeCheckoutItems(items: CheckoutItem[]) {
 	return items.map((item) => ({
 		productId: String(item.productId ?? "").trim(),
 		variantId: String(item.variantId ?? "").trim(),
-		addonIds: Array.isArray(item.addonIds) ? item.addonIds.map((id) => String(id).trim()).filter(Boolean).sort() : [],
+		addonIds: Array.isArray(item.addonIds)
+			? item.addonIds
+					.map((id) => String(id).trim())
+					.filter(Boolean)
+					.sort()
+			: [],
 		quantity: Math.max(1, Math.min(99, Number(item.quantity) || 1)),
 	}));
 }
@@ -150,9 +169,10 @@ export async function POST(request: Request) {
 		const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 		const line_items = pricedItems.map((item) => ({
 			price_data: {
-				currency: "eur",
+				currency: DEFAULT_CURRENCY,
 				product_data: {
 					name: item.name,
+					description: `Equivalent: ${formatEurEquivalent(item.unitAmountCents / 100)} EUR`,
 				},
 				unit_amount: item.unitAmountCents,
 			},
@@ -194,9 +214,9 @@ export async function POST(request: Request) {
 						type: "fixed_amount",
 						fixed_amount: {
 							amount: shippingRateAmountCents,
-							currency: "eur",
+							currency: DEFAULT_CURRENCY,
 						},
-						display_name: shippingRateAmountCents === 0 ? "Free shipping" : "Standard shipping",
+						display_name: shippingRateAmountCents === 0 ? "Free shipping" : `Standard shipping (${formatEurEquivalent(shippingRateAmountCents / 100)} EUR)`,
 						delivery_estimate: {
 							minimum: { unit: "business_day", value: 3 },
 							maximum: { unit: "business_day", value: 10 },

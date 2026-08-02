@@ -5,11 +5,13 @@ import { AdminLiveStats } from "@/components/admin-live-stats";
 import { Button } from "@/components/ui/button";
 import { getRecentOrders } from "@/lib/admin";
 
-const currencyFormatter = new Intl.NumberFormat("en-GB", {
-	style: "currency",
-	currency: "EUR",
-	maximumFractionDigits: 0,
-});
+function formatCurrency(amount: number, currency: string) {
+	return new Intl.NumberFormat("en-GB", {
+		style: "currency",
+		currency: currency || "NOK",
+		maximumFractionDigits: 0,
+	}).format(amount);
+}
 
 export default async function AdminPage() {
 	const recentOrders = await getRecentOrders(10);
@@ -46,7 +48,7 @@ export default async function AdminPage() {
 											<p className="text-sm text-stone-500">{order.email}</p>
 										</div>
 										<div className="text-left sm:text-right">
-											<p className="font-medium text-stone-900">{currencyFormatter.format(order.amount)}</p>
+											<p className="font-medium text-stone-900">{formatCurrency(order.amount, order.currency)}</p>
 											<p className="mt-1 text-stone-500">{order.status}</p>
 										</div>
 									</div>

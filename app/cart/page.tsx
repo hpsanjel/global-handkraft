@@ -178,7 +178,7 @@ export default function CartPage() {
 														+
 													</button>
 												</div>
-												<p className="font-semibold text-stone-900">EUR {item.price * item.quantity}</p>
+												<p className="font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
 												<button type="button" onClick={() => handleRemoveItem(item)} className="text-sm font-medium text-stone-500 transition hover:text-stone-900">
 													Remove
 												</button>
@@ -190,7 +190,7 @@ export default function CartPage() {
 									<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">Summary</p>
 									<div className="mt-4 flex items-center justify-between text-sm text-stone-600">
 										<span>Subtotal</span>
-										<span>EUR {subtotal}</span>
+										<span>NOK {subtotal}</span>
 									</div>
 									<button type="button" onClick={handleCheckout} disabled={isCheckingOut || items.length === 0} className="mt-6 w-full rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
 										{isCheckingOut ? "Preparing checkout..." : "Checkout"}
@@ -219,7 +219,7 @@ export default function CartPage() {
 												<div className="aspect-5/6 w-full bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
 												<div className="p-3 sm:p-4">
 													<p className="line-clamp-2 text-sm font-semibold text-stone-900">{product.name}</p>
-													<p className="mt-2 text-sm font-semibold text-[#1B365D]">EUR {product.variants[0]?.price ?? 0}</p>
+													<p className="mt-2 text-sm font-semibold text-[#1B365D]">NOK {product.variants[0]?.price ?? 0}</p>
 												</div>
 											</Link>
 										))}

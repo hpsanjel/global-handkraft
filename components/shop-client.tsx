@@ -477,7 +477,7 @@ export function ShopClient() {
 											{product.shortDescription}
 										</p> */}
 										<div className="mt-3 flex items-center justify-between gap-3">
-											<p className="text-sm font-semibold text-stone-900">{product.variants[0] ? `From €${product.variants[0].price}` : "View details"}</p>
+											<p className="text-sm font-semibold text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
 											<span className="inline-flex items-center rounded-full bg-[#F7931E] px-3 py-1 text-xs font-semibold text-white">Buy</span>
 										</div>
 

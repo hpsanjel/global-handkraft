@@ -221,7 +221,7 @@ export function ProductClient({ product }: { product: Product }) {
 						</label>
 						<label className="space-y-2 text-sm text-stone-600">
 							<span className="font-medium text-stone-700">Expected Cost Range *</span>
-							<input value={mandapExpectedCostRange} onChange={(event) => setMandapExpectedCostRange(event.target.value)} placeholder="e.g. EUR 2,000 - 3,500" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input value={mandapExpectedCostRange} onChange={(event) => setMandapExpectedCostRange(event.target.value)} placeholder="e.g. NOK 20,000 - 35,000" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 					</div>
 
@@ -299,7 +299,7 @@ export function ProductClient({ product }: { product: Product }) {
 				<div className="mt-5 rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 					<div className="flex items-center justify-between gap-3">
 						<p className="text-sm font-medium text-stone-500">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
-						<p className="text-3xl font-semibold text-stone-900">€{totalPrice}</p>
+						<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
 					</div>
 					{!hasMultipleVariants ? (
 						""
@@ -345,7 +345,7 @@ export function ProductClient({ product }: { product: Product }) {
 											<button type="button" key={addon.id} className={`flex w-full flex-col gap-2 rounded-2xl border px-4 py-3 text-left text-sm transition sm:flex-row sm:items-center sm:justify-between ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-700 hover:border-stone-400"}`} onClick={() => toggleAddon(addon.id)}>
 												<div>
 													<p className="font-medium">
-														{addon.name} {isSelected ? "✓" : "+€" + addon.price}
+														{addon.name} {isSelected ? "✓" : "+NOK " + addon.price}
 													</p>
 													<p className={`text-xs ${isSelected ? "text-stone-200" : "text-stone-500"}`}>{addon.description}</p>
 												</div>
@@ -381,7 +381,7 @@ export function ProductClient({ product }: { product: Product }) {
 				<div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
 					<div>
 						<p className="text-xs text-stone-500">Total</p>
-						<p className="text-lg font-semibold text-stone-900">€{totalPrice}</p>
+						<p className="text-lg font-semibold text-stone-900">NOK {totalPrice}</p>
 					</div>
 					<div className="flex flex-col items-end gap-2">
 						<Button className="rounded-full px-6" onClick={handleAddToCart} disabled={!selectedVariant}>

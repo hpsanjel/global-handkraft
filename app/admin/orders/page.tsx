@@ -3,11 +3,13 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getRecentOrders, getMandapInquiries } from "@/lib/admin";
 
-const currencyFormatter = new Intl.NumberFormat("en-GB", {
-	style: "currency",
-	currency: "EUR",
-	maximumFractionDigits: 0,
-});
+function formatCurrency(amount: number, currency: string) {
+	return new Intl.NumberFormat("en-GB", {
+		style: "currency",
+		currency: currency || "NOK",
+		maximumFractionDigits: 0,
+	}).format(amount);
+}
 
 export default async function AdminOrdersPage() {
 	const orders = await getRecentOrders(20);
@@ -47,7 +49,7 @@ export default async function AdminOrdersPage() {
 											<p className="text-sm text-stone-500">{order.email}</p>
 										</div>
 										<div className="text-left sm:text-right">
-											<p className="font-semibold text-stone-900">{currencyFormatter.format(order.amount)}</p>
+											<p className="font-semibold text-stone-900">{formatCurrency(order.amount, order.currency)}</p>
 											<p className="mt-1 text-stone-500">{order.status}</p>
 										</div>
 									</div>

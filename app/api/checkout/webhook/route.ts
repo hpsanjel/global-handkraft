@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 						vat: ((session.total_details?.amount_tax ?? 0) || 0) / 100,
 						shipping: ((session.total_details?.amount_shipping ?? 0) || 0) / 100,
 						total: (session.amount_total ?? 0) / 100,
-						currency: (session.currency || "eur").toUpperCase(),
+						currency: (session.currency || "nok").toUpperCase(),
 						paymentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
 						shippingCountry: session.customer_details?.address?.country || "",
 						addressId: address.id,

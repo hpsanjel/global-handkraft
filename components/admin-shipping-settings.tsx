@@ -164,7 +164,7 @@ export function AdminShippingSettings() {
 							</div>
 							<div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
 								<label className="space-y-1 text-xs text-stone-500">
-									<span>Shipping cost (EUR)</span>
+									<span>Shipping cost (NOK)</span>
 									<Input
 										type="number"
 										min="0"
@@ -179,7 +179,7 @@ export function AdminShippingSettings() {
 									/>
 								</label>
 								<label className="space-y-1 text-xs text-stone-500">
-									<span>Free shipping from (EUR, 0 to disable)</span>
+									<span>Free shipping from (NOK, 0 to disable)</span>
 									<Input
 										type="number"
 										min="0"
@@ -218,11 +218,11 @@ export function AdminShippingSettings() {
 								</select>
 							</label>
 							<label className="space-y-1 text-xs text-stone-500">
-								<span>Shipping cost (EUR)</span>
+								<span>Shipping cost (NOK)</span>
 								<Input type="number" min="0" step="0.01" value={newCost} onChange={(event) => setNewCost(event.target.value)} />
 							</label>
 							<label className="space-y-1 text-xs text-stone-500">
-								<span>Free shipping from (EUR)</span>
+								<span>Free shipping from (NOK)</span>
 								<Input type="number" min="0" step="0.01" value={newFreeFrom} onChange={(event) => setNewFreeFrom(event.target.value)} />
 							</label>
 							<div className="flex items-end">
