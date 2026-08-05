@@ -4,6 +4,7 @@ import type { CartItem } from "@/types/store";
 import { prisma } from "@/lib/prisma";
 import { getShippingRate } from "@/lib/shipping";
 import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
+import { getBringOptionsForCheckout } from "@/lib/bring-shipping-integration";
 
 export const runtime = "nodejs";
 
@@ -32,7 +33,7 @@ type SavedShippingAddress = {
 
 type CheckoutItem = Pick<CartItem, "productId" | "variantId" | "addonIds" | "quantity">;
 
-type PricedCheckoutItem = {
+export type PricedCheckoutItem = {
 	productId: string;
 	variantId: string;
 	quantity: number;
@@ -40,6 +41,14 @@ type PricedCheckoutItem = {
 	name: string;
 	unitAmountCents: number;
 	lineSubtotal: number;
+	/** Weight in kg as stored on the Variant (e.g. "10 kg") */
+	weight: string;
+	/** Width in cm as stored on the Variant (e.g. "40 cm") */
+	width: string;
+	/** Height in cm as stored on the Variant (e.g. "62 cm") */
+	height: string;
+	/** Depth in cm as stored on the Variant (e.g. "30 cm") */
+	depth: string;
 };
 
 function normalizeCheckoutItems(items: CheckoutItem[]) {
@@ -109,6 +118,10 @@ async function priceCheckoutItems(items: CheckoutItem[]): Promise<PricedCheckout
 				name,
 				unitAmountCents: Math.round(unitAmount * 100),
 				lineSubtotal: unitAmount * item.quantity,
+				weight: variant.weight,
+				width: variant.width,
+				height: variant.height,
+				depth: variant.depth,
 			};
 		}),
 	);
@@ -147,9 +160,81 @@ async function findOrCreateCustomer(stripe: Stripe, email: string, shippingAddre
 	return stripe.customers.create(customerParams);
 }
 
+/**
+ * Builds Stripe shipping options from Bring shipping products.
+ * When Bring API is available, creates multiple shipping options
+ * based on real Bring rates. Falls back to static rates otherwise.
+ */
+async function buildShippingOptions(shippingAddress: SavedShippingAddress | undefined, pricedItems: PricedCheckoutItem[], subtotal: number): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
+	const bringConfigured = process.env.BRING_API_UID && process.env.BRING_API_KEY;
+
+	// Try to use Bring API if credentials are available and we have postal code + country
+	if (bringConfigured && shippingAddress?.postalCode && shippingAddress?.country) {
+		try {
+			const bringProducts = await getBringOptionsForCheckout(shippingAddress.postalCode, shippingAddress.country, pricedItems);
+
+			if (bringProducts.length > 0) {
+				// Convert Bring products to Stripe shipping options
+				return bringProducts.map((product) => ({
+					shipping_rate_data: {
+						type: "fixed_amount" as const,
+						fixed_amount: {
+							amount: product.priceCents,
+							currency: DEFAULT_CURRENCY,
+						},
+						display_name: product.displayName,
+						delivery_estimate: product.maxDays
+							? {
+									minimum: { unit: "business_day" as const, value: 1 },
+									maximum: { unit: "business_day" as const, value: product.maxDays },
+								}
+							: undefined,
+						metadata: {
+							bring_product_id: product.productId,
+							bring_delivery_type: product.deliveryType,
+						},
+					},
+				}));
+			}
+		} catch {
+			// Fall through to static rate if Bring API fails
+			console.warn("Bring API failed, falling back to static shipping rate.");
+		}
+	}
+
+	// Fallback: static shipping rate from DB
+	let shippingRateAmountCents = 0;
+	try {
+		shippingRateAmountCents = (await getShippingRate(shippingAddress?.country, subtotal)).amountCents;
+	} catch {
+		shippingRateAmountCents = 0;
+	}
+
+	return [
+		{
+			shipping_rate_data: {
+				type: "fixed_amount",
+				fixed_amount: {
+					amount: shippingRateAmountCents,
+					currency: DEFAULT_CURRENCY,
+				},
+				display_name: shippingRateAmountCents === 0 ? "Free shipping" : `Standard shipping (${formatEurEquivalent(shippingRateAmountCents / 100)} EUR)`,
+				delivery_estimate: {
+					minimum: { unit: "business_day", value: 3 },
+					maximum: { unit: "business_day", value: 10 },
+				},
+			},
+		},
+	];
+}
+
 export async function POST(request: Request) {
 	try {
-		const body = (await request.json()) as { items?: CheckoutItem[]; customerEmail?: string; shippingAddress?: SavedShippingAddress };
+		const body = (await request.json()) as {
+			items?: CheckoutItem[];
+			customerEmail?: string;
+			shippingAddress?: SavedShippingAddress;
+		};
 		const items = body.items;
 
 		if (!items?.length) {
@@ -183,12 +268,8 @@ export async function POST(request: Request) {
 
 		const subtotal = pricedItems.reduce((sum, item) => sum + item.lineSubtotal, 0);
 
-		let shippingRateAmountCents = 0;
-		try {
-			shippingRateAmountCents = (await getShippingRate(body.shippingAddress?.country, subtotal)).amountCents;
-		} catch {
-			shippingRateAmountCents = 0;
-		}
+		// Build shipping options - uses Bring API if configured, falls back to static
+		const shippingOptions = await buildShippingOptions(body.shippingAddress, pricedItems, subtotal);
 
 		let customer: Stripe.Customer | undefined;
 		if (body.customerEmail) {
@@ -208,22 +289,7 @@ export async function POST(request: Request) {
 			shipping_address_collection: {
 				allowed_countries: SHIPPING_COUNTRY_CODES as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
 			},
-			shipping_options: [
-				{
-					shipping_rate_data: {
-						type: "fixed_amount",
-						fixed_amount: {
-							amount: shippingRateAmountCents,
-							currency: DEFAULT_CURRENCY,
-						},
-						display_name: shippingRateAmountCents === 0 ? "Free shipping" : `Standard shipping (${formatEurEquivalent(shippingRateAmountCents / 100)} EUR)`,
-						delivery_estimate: {
-							minimum: { unit: "business_day", value: 3 },
-							maximum: { unit: "business_day", value: 10 },
-						},
-					},
-				},
-			],
+			shipping_options: shippingOptions,
 
 			allow_promotion_codes: true,
 			success_url: `${origin}/checkout/success`,

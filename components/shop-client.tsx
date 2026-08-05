@@ -31,6 +31,7 @@ export function ShopClient() {
 	const loadMoreRef = useRef<HTMLDivElement | null>(null);
 	const loadMoreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const categoryParam = searchParams.get("category");
+	const [loading, setLoading] = useState(false);
 
 	const availablePrices = useMemo(() => products.flatMap((product) => product.variants.map((variant) => variant.price)), [products]);
 
@@ -46,45 +47,6 @@ export function ShopClient() {
 	}, [availablePrices]);
 
 	const getProductPrice = useCallback((product: (typeof products)[number]) => product.variants[0]?.price ?? 0, []);
-
-	const materialOptions = useMemo(() => {
-		const set = new Set<string>();
-		products.forEach((product) => {
-			(product.materials ?? [product.material]).forEach((material) => set.add(material));
-		});
-		return Array.from(set).sort();
-	}, [products]);
-
-	const woodTypeOptions = useMemo(() => {
-		const set = new Set<string>();
-		products.forEach((product) => {
-			if (product.woodType && product.woodType !== "Not Applicable") {
-				set.add(product.woodType);
-			}
-		});
-		return Array.from(set).sort();
-	}, [products]);
-
-	const sizeOptions = useMemo(() => {
-		const set = new Set<string>();
-		products.forEach((product) => {
-			if (product.sizeLabel) {
-				set.add(product.sizeLabel);
-			}
-			product.variants.forEach((variant) => set.add(variant.name));
-		});
-		return Array.from(set).sort();
-	}, [products]);
-
-	const colorOptions = useMemo(() => {
-		const set = new Set<string>();
-		products.forEach((product) => {
-			if (product.color) {
-				set.add(product.color);
-			}
-		});
-		return Array.from(set).sort();
-	}, [products]);
 
 	useEffect(() => {
 		const timeoutId = window.setTimeout(() => {
@@ -166,12 +128,7 @@ export function ShopClient() {
 			case "highest":
 				sorted.sort((a, b) => getProductPrice(b) - getProductPrice(a));
 				break;
-			case "best-rated":
-				sorted.sort((a, b) => b.rating - a.rating);
-				break;
-			case "popularity":
-				sorted.sort((a, b) => b.reviewCount - a.reviewCount);
-				break;
+
 			case "newest":
 			default:
 				sorted.sort((a, b) => b.id.localeCompare(a.id));
@@ -252,86 +209,8 @@ export function ShopClient() {
 				</label>
 				<select id="shop-sort" value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
 					<option value="newest">Newest</option>
-					<option value="popularity">Popularity</option>
-					<option value="best-rated">Best Rated</option>
 					<option value="highest">Highest Price</option>
 					<option value="lowest">Lowest Price</option>
-				</select>
-			</div>
-
-			{materialOptions.length > 0 ? (
-				<div>
-					<label className="text-sm font-medium text-stone-700" htmlFor="shop-material">
-						Material
-					</label>
-					<select id="shop-material" value={selectedMaterial} onChange={(event) => setSelectedMaterial(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
-						<option>All</option>
-						{materialOptions.map((material) => (
-							<option key={material} value={material}>
-								{material}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
-
-			{woodTypeOptions.length > 0 ? (
-				<div>
-					<label className="text-sm font-medium text-stone-700" htmlFor="shop-wood-type">
-						Wood type
-					</label>
-					<select id="shop-wood-type" value={selectedWoodType} onChange={(event) => setSelectedWoodType(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
-						<option>All</option>
-						{woodTypeOptions.map((woodType) => (
-							<option key={woodType} value={woodType}>
-								{woodType}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
-
-			{sizeOptions.length > 0 ? (
-				<div>
-					<label className="text-sm font-medium text-stone-700" htmlFor="shop-size">
-						Size
-					</label>
-					<select id="shop-size" value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
-						<option>All</option>
-						{sizeOptions.map((size) => (
-							<option key={size} value={size}>
-								{size}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
-
-			{colorOptions.length > 0 ? (
-				<div>
-					<label className="text-sm font-medium text-stone-700" htmlFor="shop-color">
-						Color
-					</label>
-					<select id="shop-color" value={selectedColor} onChange={(event) => setSelectedColor(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
-						<option>All</option>
-						{colorOptions.map((color) => (
-							<option key={color} value={color}>
-								{color}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
-
-			<div>
-				<label className="text-sm font-medium text-stone-700" htmlFor="shop-availability">
-					Availability
-				</label>
-				<select id="shop-availability" value={availability} onChange={(event) => setAvailability(event.target.value)} className="mt-2 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900">
-					<option>All</option>
-					<option>In stock</option>
-					<option>Low stock</option>
-					<option>Out of stock</option>
 				</select>
 			</div>
 
@@ -464,21 +343,12 @@ export function ShopClient() {
 								<Link key={product.id} href={`/product/${product.slug}`} className={`relative rounded-[1.75rem] bg-white  md:transition md:hover:-translate-y-1 ${viewMode === "list" ? "flex gap-5" : ""}`}>
 									<div className={`${viewMode === "list" ? "h-28 w-28 shrink-0" : "mx-auto aspect-4/5"} rounded-t-[1.25rem] bg-cover bg-center`} style={{ backgroundImage: `url('${product.image}')` }} />
 									<div className="min-w-0 flex-1 p-4 sm:px-6 sm:py-4">
-										<h2 className="text-lg font-semibold text-stone-900">{product.name}</h2>
-										{/* <p
-											className="mt-2 text-sm md:leading-7 text-stone-600"
-											style={{
-												display: "-webkit-box",
-												WebkitLineClamp: 2,
-												WebkitBoxOrient: "vertical",
-												overflow: "hidden",
-											}}
-										>
-											{product.shortDescription}
-										</p> */}
+										<h2 className="text-lg font-semibold text-stone-900 line-clamp-1" title={product.name}>
+											{product.name}
+										</h2>
 										<div className="mt-3 flex items-center justify-between gap-3">
 											<p className="text-sm font-semibold text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
-											<span className="inline-flex items-center rounded-full bg-[#F7931E] px-3 py-1 text-xs font-semibold text-white">Buy</span>
+											<span className={`${loading ? "opacity-50 cursor-not-allowed" : ""} inline-flex items-center rounded-full bg-[#F7931E] px-3 py-1 text-xs font-semibold text-white`}>Buy</span>
 										</div>
 
 										<div className="mt-3 flex flex-wrap gap-2 text-xs text-stone-600">

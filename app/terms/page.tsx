@@ -32,14 +32,22 @@ export default function TermsPage() {
 					<section>
 						<h2 className="text-2xl font-semibold mb-2">Shipping</h2>
 						<p>
-							Shipping times are estimates and may vary depending on the destination, customs clearance, and other factors beyond our control. Please refer to our <a href="/shipping">Shipping Policy</a> for more details.
+							Shipping times are estimates and may vary depending on the destination, customs clearance, and other factors beyond our control. Please refer to our{" "}
+							<a href="/shipping" className="underline text-blue-700">
+								Shipping Policy
+							</a>{" "}
+							for more details.
 						</p>
 					</section>
 
 					<section>
 						<h2 className="text-2xl font-semibold mb-2">Returns & Refunds</h2>
 						<p>
-							Returns and refunds are handled according to our <a href="/returns">Return & Refund Policy</a>. Please review the policy before requesting a return.
+							Returns and refunds are handled according to our{" "}
+							<a href="/returns" className="underline text-blue-700">
+								Return & Refund Policy
+							</a>
+							. Please review the policy before requesting a return.
 						</p>
 					</section>
 

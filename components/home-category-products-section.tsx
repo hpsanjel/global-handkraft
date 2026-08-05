@@ -26,7 +26,9 @@ export function HomeCategoryProductsSection({ title, href, products }: HomeCateg
 							<Link href={`/product/${product.slug}`} className="block">
 								<div className="w-full aspect-5/6 bg-stone-100 bg-cover" style={{ backgroundImage: `url('${product.image}')` }} />
 								<div className="px-3 pt-3 sm:px-5 sm:pt-4">
-									<p className="text-sm font-semibold text-stone-900 sm:text-base">{product.name}</p>
+									<p className="text-sm font-semibold text-stone-900 sm:text-base line-clamp-1" title={product.name}>
+										{product.name}
+									</p>
 								</div>
 							</Link>
 							<div className="mt-auto flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-5 sm:pb-5">

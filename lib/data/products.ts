@@ -395,9 +395,4 @@ export const testimonials = [
 		quote: "Our mandap and pooja set were beautifully crafted and arrived on schedule. The team understood our cultural requirements perfectly.",
 		image: "/images/testimonial-2.avif",
 	},
-	{
-		name: "Satakkar Singh, Berlin",
-		quote: "The saree and gift collection were elegant and authentic. This is the first store that feels both modern and deeply cultural.",
-		image: "/images/testimonial-3.webp",
-	},
 ];

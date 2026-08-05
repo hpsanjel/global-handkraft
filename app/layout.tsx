@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { CartDrawerProvider } from "@/components/cart-drawer-provider";
 
 export const metadata: Metadata = {
 	title: "Global Handcrafts AS",
@@ -24,7 +25,10 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" className="h-full antialiased" suppressHydrationWarning>
-			<body className="min-h-full flex flex-col">{children}</body>
+			<body className="min-h-full flex flex-col">
+				{children}
+				<CartDrawerProvider />
+			</body>
 		</html>
 	);
 }

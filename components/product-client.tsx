@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
+import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -91,6 +92,7 @@ export function ProductClient({ product }: { product: Product }) {
 		saveCartItems(nextItems);
 		setCartFeedback("Added to Cart");
 		window.dispatchEvent(new Event("cart:updated"));
+		window.dispatchEvent(new Event("cart:drawer:open"));
 	};
 
 	const handleMandapSampleImagesChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -301,12 +303,10 @@ export function ProductClient({ product }: { product: Product }) {
 						<p className="text-sm font-medium text-stone-500">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
 						<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
 					</div>
-					{!hasMultipleVariants ? (
-						""
-					) : (
-						<div className="mt-6 space-y-4">
-							<div>
-								<p className="text-sm font-semibold text-stone-900">Select size</p>
+					<div className="mt-6 space-y-4">
+						<div>
+							<p className="text-sm font-semibold text-stone-900">Size</p>
+							{hasMultipleVariants ? (
 								<div className="mt-3 flex flex-wrap gap-3">
 									{product.variants.map((variant) => {
 										const isSelected = selectedVariant?.id === variant.id;
@@ -324,18 +324,59 @@ export function ProductClient({ product }: { product: Product }) {
 										);
 									})}
 								</div>
-								<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
-									<p className="font-medium text-stone-900">{selectedVariant?.name ?? "Select a size"}</p>
-									<p className="mt-1">
-										{selectedVariant?.width} × {selectedVariant?.height} · {selectedVariant?.depth}
-									</p>
-									{selectedVariant?.weight || selectedVariant?.stock !== undefined ? (
-										<p className="mt-1">
-											{selectedVariant?.weight} · {selectedVariant?.stock} in stock
-										</p>
-									) : null}
+							) : (
+								<p className="mt-3 text-sm font-medium text-stone-900">{selectedVariant?.name ?? "Standard"}</p>
+							)}
+
+							{selectedVariant?.width || selectedVariant?.height || selectedVariant?.depth || selectedVariant?.weight ? (
+								<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+									<p className="text-xs font-semibold uppercase tracking-[0.15em] text-stone-500">Dimensions &amp; Weight</p>
+
+									<div className="mt-3 grid gap-3 sm:grid-cols-2">
+										{(selectedVariant?.width || selectedVariant?.height || selectedVariant?.depth) && (
+											<div className="flex items-start gap-2.5">
+												<div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white border border-stone-200">
+													<Ruler className="h-4 w-4 text-[#1B365D]" />
+												</div>
+												<div>
+													<p className="text-[11px] uppercase tracking-[0.1em] text-stone-500">W × H × D</p>
+													<p className="mt-0.5 text-sm font-medium text-stone-900">{[selectedVariant?.width, selectedVariant?.height, selectedVariant?.depth].filter(Boolean).join(" × ")}</p>
+												</div>
+											</div>
+										)}
+
+										{selectedVariant?.weight && (
+											<div className="flex items-start gap-2.5">
+												<div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white border border-stone-200">
+													<Weight className="h-4 w-4 text-[#1B365D]" />
+												</div>
+												<div>
+													<p className="text-[11px] uppercase tracking-[0.1em] text-stone-500">Weight</p>
+													<p className="mt-0.5 text-sm font-medium text-stone-900">{selectedVariant.weight}</p>
+												</div>
+											</div>
+										)}
+									</div>
+
+									{selectedVariant?.stock !== undefined && (
+										<div className="mt-4 flex items-center gap-2 border-t border-stone-200 pt-3">
+											{selectedVariant.stock > 0 ? (
+												<>
+													<PackageCheck className="h-4 w-4 text-emerald-600" />
+													<span className="text-sm font-medium text-emerald-700">{selectedVariant.stock} in stock</span>
+												</>
+											) : (
+												<>
+													<PackageX className="h-4 w-4 text-red-500" />
+													<span className="text-sm font-medium text-red-600">Out of stock</span>
+												</>
+											)}
+										</div>
+									)}
 								</div>
-							</div>
+							) : null}
+						</div>
+						{product.addons.length > 0 ? (
 							<div>
 								<p className="text-sm font-semibold text-stone-900">Optional add-ons</p>
 								<div className="mt-3 space-y-2">
@@ -354,8 +395,9 @@ export function ProductClient({ product }: { product: Product }) {
 									})}
 								</div>
 							</div>
-						</div>
-					)}
+						) : null}
+					</div>
+
 					<Button className="mt-8 w-full cursor-pointer" onClick={handleAddToCart} disabled={!selectedVariant}>
 						Add to Cart
 					</Button>

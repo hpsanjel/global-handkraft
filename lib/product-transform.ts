@@ -1,7 +1,7 @@
 import type { Product } from "@/types/store";
 
-const DEFAULT_SHIPPING_INFO = "Delivery in 3-7 business days across Norway and Europe.";
-const DEFAULT_RETURN_POLICY = "Returns within 14 days for unused items in original packaging.";
+const DEFAULT_SHIPPING_INFO = "Delivery in 1-3 business days across Norway and in 1-3 weeks across Europe.";
+const DEFAULT_RETURN_POLICY = "No return policy. All sales are final.";
 
 function inferWoodType(material: string) {
 	const value = material.toLowerCase();
