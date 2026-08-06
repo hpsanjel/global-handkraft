@@ -51,39 +51,55 @@ function getSenderPostalCode(): string {
  */
 const DOMESTIC_PRODUCT_CODES = ["PA_DOREN", "SERVICEPAKKE", "BUSINESS_PARCEL", "EKSPRESS09"];
 
+type BringConsignmentRequestBody = {
+	language: string;
+	withPrice: boolean;
+	withExpectedDelivery: boolean;
+	withGuiInformation: boolean;
+	consignments: Array<{
+		id: number;
+		fromCountryCode: string;
+		fromPostalCode: string;
+		toCountryCode: string;
+		toPostalCode: string;
+		products: Array<{ id: string }>;
+		packages: Array<{ id: string; length: number; width: number; height: number; grossWeight: number }>;
+	}>;
+};
+
 /**
- * Builds the query parameters for the Bring Shipping Guide API v2.
+ * Builds the JSON request body for the Bring Shipping Guide API v2 POST endpoint.
  *
- * The v2 API is a GET endpoint where each query parameter is a scalar
- * (not nested JSON). Product codes can be repeated to query multiple
- * shipping products in a single request.
+ * Unlike the simpler GET variant (which only accepts one package's measurements),
+ * this endpoint accepts a full `packages` array per consignment, so multi-item
+ * carts are quoted as the real combination of parcels rather than one
+ * approximated, consolidated box. grossWeight is in kilograms; length/width/height
+ * are in centimeters (verified against known-good responses).
  */
-function buildQueryParams(toPostalCode: string, toCountry: string, packages: BringPackage[]): URLSearchParams {
-	const params = new URLSearchParams();
-	params.set("fromCountry", "NO");
-	params.set("fromPostalCode", getSenderPostalCode());
-	params.set("toCountry", toCountry.toUpperCase());
-	params.set("toPostalCode", toPostalCode);
-
-	// The v2 API accepts a single package per request (one set of measurement params).
-	// Use the first package's weight/dimensions for the query.
-	const primaryPackage = packages[0];
-	if (primaryPackage) {
-		params.set("weight", String(primaryPackage.weightInGrams));
-
-		// Bring v2 expects dimensions in cm
-		if (primaryPackage.length) params.set("length", String(primaryPackage.length));
-		if (primaryPackage.width) params.set("width", String(primaryPackage.width));
-		if (primaryPackage.height) params.set("height", String(primaryPackage.height));
-	}
-
-	// The API accepts multiple `product` query params to fetch several products
-	// in a single request. Query the common domestic product codes.
-	for (const code of DOMESTIC_PRODUCT_CODES) {
-		params.append("product", code);
-	}
-
-	return params;
+function buildRequestBody(toPostalCode: string, toCountry: string, packages: BringPackage[]): BringConsignmentRequestBody {
+	return {
+		language: "no",
+		withPrice: true,
+		withExpectedDelivery: true,
+		withGuiInformation: true,
+		consignments: [
+			{
+				id: 1,
+				fromCountryCode: "NO",
+				fromPostalCode: getSenderPostalCode(),
+				toCountryCode: toCountry.toUpperCase(),
+				toPostalCode,
+				products: DOMESTIC_PRODUCT_CODES.map((code) => ({ id: code })),
+				packages: packages.map((pkg, index) => ({
+					id: String(index + 1),
+					length: pkg.length || 30,
+					width: pkg.width || 20,
+					height: pkg.height || 15,
+					grossWeight: pkg.weightInGrams / 1000,
+				})),
+			},
+		],
+	};
 }
 
 /**
@@ -105,18 +121,19 @@ export async function getBringShippingOptions(toPostalCode: string, toCountry: s
 		throw new Error("Bring API credentials are not configured. Set BRING_API_UID and BRING_API_KEY.");
 	}
 
-	const url = "https://api.bring.com/shippingguide/v2/products";
-	const queryParams = buildQueryParams(toPostalCode, toCountry, packages);
-	const fullUrl = `${url}?${queryParams.toString()}`;
+	const url = "https://api.bring.com/shippingguide/api/v2/products";
+	const requestBody = buildRequestBody(toPostalCode, toCountry, packages);
 
 	try {
-		const response = await fetch(fullUrl, {
-			method: "GET",
+		const response = await fetch(url, {
+			method: "POST",
 			headers: {
 				"X-MyBring-API-Uid": apiUid,
 				"X-MyBring-API-Key": apiKey,
+				"Content-Type": "application/json",
 				Accept: "application/json",
 			},
+			body: JSON.stringify(requestBody),
 		});
 
 		if (!response.ok) {

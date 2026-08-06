@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { X, ShoppingCart, Trash2 } from "lucide-react";
+import { X, ShoppingCart, Trash2, Truck, MapPin, Package, Loader2, Check } from "lucide-react";
 import { getCartItems, updateCartItemQuantity, removeCartItem, clearCart } from "@/lib/cart";
 import { createClient } from "@/lib/supabase/client";
+import { useProductsCatalog } from "@/lib/products-catalog";
+import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
+import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
 import type { CartItem } from "@/types/store";
 
 type CartDrawerProps = {
@@ -13,14 +16,29 @@ type CartDrawerProps = {
 };
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+	const products = useProductsCatalog();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
+
+	// Bring shipping state
+	const [showShippingForm, setShowShippingForm] = useState(false);
+	const [shippingPostalCode, setShippingPostalCode] = useState("");
+	const [shippingCountry, setShippingCountry] = useState("NO");
+	const [bringOptions, setBringOptions] = useState<BringShippingOption[]>([]);
+	const [selectedShippingId, setSelectedShippingId] = useState<string | null>(STORE_PICKUP_ID);
+	const [isLoadingBring, setIsLoadingBring] = useState(false);
+	const [bringError, setBringError] = useState("");
 
 	useEffect(() => {
 		if (isOpen) {
 			setItems(getCartItems());
 			setCheckoutError("");
+			setShowShippingForm(false);
+			setShippingPostalCode("");
+			setBringOptions([]);
+			setSelectedShippingId(STORE_PICKUP_ID);
+			setBringError("");
 		}
 	}, [isOpen]);
 
@@ -77,6 +95,67 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 		setItems(getCartItems());
 	};
 
+	const handleFetchBringOptions = async () => {
+		if (!shippingPostalCode.trim()) {
+			setBringError("Please enter a postal code.");
+			return;
+		}
+
+		setIsLoadingBring(true);
+		setBringError("");
+
+		try {
+			const lines = items.map((item) => {
+				const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
+				return { weight: variant?.weight, width: variant?.width, height: variant?.height, depth: variant?.depth, quantity: item.quantity };
+			});
+			const packages = buildPackagesFromLines(lines);
+
+			const response = await fetch("/api/bring-shipping", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					toPostalCode: shippingPostalCode.trim(),
+					toCountry: shippingCountry,
+					packages,
+				}),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || "Unable to fetch shipping options.");
+			}
+
+			setBringOptions(data.products || []);
+
+			if (data.products?.length > 0) {
+				const cheapest = data.products.reduce((min: BringShippingOption, p: BringShippingOption) => (p.priceCents < min.priceCents ? p : min));
+				setSelectedShippingId(cheapest.productId);
+			}
+		} catch (error) {
+			setBringError(error instanceof Error ? error.message : "Unable to fetch shipping options.");
+			setBringOptions([]);
+		} finally {
+			setIsLoadingBring(false);
+		}
+	};
+
+	const selectedShippingOption = [...bringOptions, STORE_PICKUP_OPTION].find((option) => option.productId === selectedShippingId);
+	const selectedShippingCost = selectedShippingOption ? selectedShippingOption.priceCents / 100 : 0;
+	const estimatedTotal = subtotal + selectedShippingCost;
+
+	const getDeliveryIcon = (type: string) => {
+		switch (type) {
+			case "PICKUP":
+				return <MapPin className="h-4 w-4" />;
+			case "MAILBOX":
+				return <Package className="h-4 w-4" />;
+			default:
+				return <Truck className="h-4 w-4" />;
+		}
+	};
+
 	const handleCheckout = async () => {
 		setIsCheckingOut(true);
 		setCheckoutError("");
@@ -93,7 +172,12 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 				body: JSON.stringify({
 					items,
 					customerEmail: user?.email,
-					shippingAddress: user?.user_metadata?.shipping_address,
+					shippingAddress: {
+						...(user?.user_metadata?.shipping_address || {}),
+						postalCode: shippingPostalCode || undefined,
+						country: shippingCountry || undefined,
+					},
+					selectedShippingId,
 				}),
 			});
 
@@ -203,12 +287,124 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
 				{/* Footer */}
 				{items.length > 0 ? (
-					<div className="border-t border-stone-200 px-5 py-4">
+					<div className="max-h-[70vh] overflow-y-auto border-t border-stone-200 px-5 py-4">
 						<div className="flex items-center justify-between text-sm">
 							<span className="text-stone-600">Subtotal</span>
 							<span className="text-lg font-semibold text-stone-900">NOK {subtotal}</span>
 						</div>
-						<p className="mt-1 text-xs text-stone-500">Shipping and taxes calculated at checkout.</p>
+
+						{selectedShippingOption ? (
+							<div className="mt-1 flex items-center justify-between text-sm">
+								<span className="text-stone-600">Shipping</span>
+								<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost}`}</span>
+							</div>
+						) : (
+							<p className="mt-1 text-xs text-stone-500">Shipping and taxes calculated at checkout.</p>
+						)}
+
+						{selectedShippingOption ? (
+							<div className="mt-1 flex items-center justify-between text-sm font-semibold text-stone-900">
+								<span>Estimated total</span>
+								<span>NOK {estimatedTotal}</span>
+							</div>
+						) : null}
+
+						{/* Bring shipping calculator */}
+						<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3">
+							<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery method</p>
+
+							<button
+								type="button"
+								onClick={() => setSelectedShippingId(STORE_PICKUP_ID)}
+								className={`mt-2 w-full rounded-xl border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}
+							>
+								<div className="flex items-start justify-between gap-3">
+									<div className="flex items-center gap-2">
+										<MapPin className="h-4 w-4" />
+										<div>
+											<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
+											<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
+										</div>
+									</div>
+									<p className="text-sm font-semibold text-stone-900">Free</p>
+								</div>
+								{selectedShippingId === STORE_PICKUP_ID ? (
+									<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+										<Check className="h-3.5 w-3.5" />
+										Selected
+									</div>
+								) : null}
+							</button>
+
+							{!showShippingForm && bringOptions.length === 0 ? (
+								<button type="button" onClick={() => setShowShippingForm(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium text-stone-700 transition hover:bg-stone-100">
+									<Truck className="h-3.5 w-3.5" />
+									Calculate delivery costs
+								</button>
+							) : null}
+
+							{bringOptions.length === 0 && showShippingForm ? (
+								<div className="mt-2 rounded-xl border border-stone-200 bg-white p-3">
+									<div className="grid grid-cols-2 gap-2">
+										<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900">
+											{SHIPPING_COUNTRIES.map((c) => (
+												<option key={c.code} value={c.code}>
+													{c.name}
+												</option>
+											))}
+										</select>
+										<input type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900" />
+									</div>
+									{bringError ? <p className="mt-2 text-xs text-red-600">{bringError}</p> : null}
+									<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
+										{isLoadingBring ? (
+											<>
+												<Loader2 className="h-3.5 w-3.5 animate-spin" />
+												Calculating...
+											</>
+										) : (
+											"Get shipping rates"
+										)}
+									</button>
+								</div>
+							) : null}
+
+							{bringOptions.length > 0 ? (
+								<div className="mt-2 space-y-2">
+									{bringOptions.map((option) => (
+										<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-xl border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+											<div className="flex items-start justify-between gap-3">
+												<div className="flex items-center gap-2">
+													{getDeliveryIcon(option.deliveryType)}
+													<div>
+														<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
+														{option.expectedDelivery ? <p className="text-xs text-stone-500">{option.expectedDelivery}</p> : null}
+													</div>
+												</div>
+												<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
+											</div>
+											{selectedShippingId === option.productId ? (
+												<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+													<Check className="h-3.5 w-3.5" />
+													Selected
+												</div>
+											) : null}
+										</button>
+									))}
+									<button
+										type="button"
+										onClick={() => {
+											setBringOptions([]);
+											setSelectedShippingId(STORE_PICKUP_ID);
+										}}
+										className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700"
+									>
+										Change location
+									</button>
+								</div>
+							) : null}
+						</div>
+
 						<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
 							{isCheckingOut ? "Preparing checkout..." : "Proceed to Checkout"}
 						</button>

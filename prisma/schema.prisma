@@ -31,20 +31,20 @@ model Category {
 }
 
 model Product {
-  id               String        @id @default(cuid())
+  id               String      @id @default(cuid())
   name             String
-  slug             String        @unique
+  slug             String      @unique
   shortDescription String
   description      String
   material         String
   categoryId       String
-  category         Category      @relation(fields: [categoryId], references: [id])
+  category         Category    @relation(fields: [categoryId], references: [id])
   image            String
   gallery          String[]
-  featured         Boolean       @default(false)
-  active           Boolean       @default(true)
-  rating           Float         @default(0)
-  reviewCount      Int           @default(0)
+  featured         Boolean     @default(false)
+  active           Boolean     @default(true)
+  rating           Float       @default(0)
+  reviewCount      Int         @default(0)
   dimensions       String?
   weight           String?
   seoTitle         String?
@@ -52,7 +52,7 @@ model Product {
   variants         Variant[]
   addons           Addon[]
   orderItems       OrderItem[]
-  createdAt        DateTime      @default(now())
+  createdAt        DateTime    @default(now())
 }
 
 model Variant {
@@ -71,16 +71,16 @@ model Variant {
 }
 
 model Addon {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   productId   String
-  product     Product  @relation(fields: [productId], references: [id])
+  product     Product @relation(fields: [productId], references: [id])
   name        String
   price       Float
   description String
 }
 
 model Address {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   fullName    String
   phone       String
   email       String
@@ -95,21 +95,23 @@ model Address {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  status          String      @default("PENDING")
-  subtotal        Float
-  vat             Float
-  shipping        Float
-  total           Float
-  currency        String      @default("NOK")
-  paymentId       String?
-  invoiceNumber   String?
-  shippingCountry String
-  addressId       String
-  address         Address     @relation(fields: [addressId], references: [id])
-  items           OrderItem[]
-  createdAt       DateTime    @default(now())
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  status            String      @default("PENDING")
+  subtotal          Float
+  vat               Float
+  shipping          Float
+  total             Float
+  currency          String      @default("NOK")
+  paymentId         String?
+  invoiceNumber     String?
+  shippingCountry   String
+  shippingMethod    String?
+  shippingProductId String?
+  addressId         String
+  address           Address     @relation(fields: [addressId], references: [id])
+  items             OrderItem[]
+  createdAt         DateTime    @default(now())
 }
 
 model OrderItem {

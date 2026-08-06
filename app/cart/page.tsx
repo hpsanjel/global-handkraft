@@ -7,34 +7,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "@/lib/cart";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { createClient } from "@/lib/supabase/client";
+import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
+import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
 import { Package, MapPin, Truck, Loader2, Check } from "lucide-react";
 import type { CartItem } from "@/types/store";
-
-type BringShippingOption = {
-	productId: string;
-	displayName: string;
-	priceCents: number;
-	expectedDelivery: string | null;
-	maxDays: number | null;
-	deliveryType: "HOME" | "PICKUP" | "MAILBOX";
-	guiInformation: string | null;
-};
-
-const SUPPORTED_COUNTRIES = [
-	{ code: "NO", name: "Norway" },
-	{ code: "SE", name: "Sweden" },
-	{ code: "DK", name: "Denmark" },
-	{ code: "FI", name: "Finland" },
-	{ code: "DE", name: "Germany" },
-	{ code: "NL", name: "Netherlands" },
-	{ code: "BE", name: "Belgium" },
-	{ code: "FR", name: "France" },
-	{ code: "ES", name: "Spain" },
-	{ code: "IT", name: "Italy" },
-	{ code: "AT", name: "Austria" },
-	{ code: "CH", name: "Switzerland" },
-	{ code: "GB", name: "United Kingdom" },
-];
 
 export default function CartPage() {
 	const products = useProductsCatalog();
@@ -48,7 +24,7 @@ export default function CartPage() {
 	const [shippingPostalCode, setShippingPostalCode] = useState("");
 	const [shippingCountry, setShippingCountry] = useState("NO");
 	const [bringOptions, setBringOptions] = useState<BringShippingOption[]>([]);
-	const [selectedBringOption, setSelectedBringOption] = useState<string | null>(null);
+	const [selectedShippingId, setSelectedShippingId] = useState<string | null>(STORE_PICKUP_ID);
 	const [isLoadingBring, setIsLoadingBring] = useState(false);
 	const [bringError, setBringError] = useState("");
 
@@ -81,40 +57,14 @@ export default function CartPage() {
 
 		setIsLoadingBring(true);
 		setBringError("");
-		setSelectedBringOption(null);
+		setSelectedShippingId(STORE_PICKUP_ID);
 
 		try {
-			// Look up real weight/dimensions from the product catalog
-			let totalWeightGrams = 0;
-			let maxLength = 0;
-			let maxWidth = 0;
-			let maxHeight = 0;
-
-			for (const item of items) {
-				const product = products.find((p) => p.id === item.productId);
-				const variant = product?.variants.find((v) => v.id === item.variantId);
-
-				// Parse weight from "10 kg" -> 10000 grams
-				const weightMatch = variant?.weight?.match(/-?\d+(\.\d+)?/);
-				const weightKg = weightMatch ? Number(weightMatch[0]) : null;
-				totalWeightGrams += weightKg !== null ? weightKg * 1000 * item.quantity : item.quantity * 500;
-
-				// Parse dimensions from "40 cm" -> 40
-				const lengthMatch = variant?.depth?.match(/-?\d+(\.\d+)?/);
-				const widthMatch = variant?.width?.match(/-?\d+(\.\d+)?/);
-				const heightMatch = variant?.height?.match(/-?\d+(\.\d+)?/);
-
-				if (lengthMatch) maxLength = Math.max(maxLength, Number(lengthMatch[0]));
-				if (widthMatch) maxWidth = Math.max(maxWidth, Number(widthMatch[0]));
-				if (heightMatch) maxHeight = Math.max(maxHeight, Number(heightMatch[0]));
-			}
-
-			// Fallback dimensions if no real dimensions were found
-			if (maxLength === 0 && maxWidth === 0 && maxHeight === 0) {
-				maxLength = 30;
-				maxWidth = 20;
-				maxHeight = 15;
-			}
+			const lines = items.map((item) => {
+				const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
+				return { weight: variant?.weight, width: variant?.width, height: variant?.height, depth: variant?.depth, quantity: item.quantity };
+			});
+			const packages = buildPackagesFromLines(lines);
 
 			const response = await fetch("/api/bring-shipping", {
 				method: "POST",
@@ -122,14 +72,7 @@ export default function CartPage() {
 				body: JSON.stringify({
 					toPostalCode: shippingPostalCode.trim(),
 					toCountry: shippingCountry,
-					packages: [
-						{
-							weightInGrams: Math.max(totalWeightGrams, 200),
-							length: maxLength,
-							width: maxWidth,
-							height: maxHeight,
-						},
-					],
+					packages,
 				}),
 			});
 
@@ -143,7 +86,7 @@ export default function CartPage() {
 
 			if (data.products?.length > 0) {
 				const cheapest = data.products.reduce((min: BringShippingOption, p: BringShippingOption) => (p.priceCents < min.priceCents ? p : min));
-				setSelectedBringOption(cheapest.productId);
+				setSelectedShippingId(cheapest.productId);
 			}
 		} catch (error) {
 			setBringError(error instanceof Error ? error.message : "Unable to fetch shipping options.");
@@ -200,8 +143,8 @@ export default function CartPage() {
 	};
 
 	const getSelectedShippingCost = (): number => {
-		if (!selectedBringOption) return 0;
-		const option = bringOptions.find((o: BringShippingOption) => o.productId === selectedBringOption);
+		if (!selectedShippingId) return 0;
+		const option = [...bringOptions, STORE_PICKUP_OPTION].find((o: BringShippingOption) => o.productId === selectedShippingId);
 		return option ? option.priceCents / 100 : 0;
 	};
 
@@ -226,6 +169,7 @@ export default function CartPage() {
 						postalCode: shippingPostalCode || undefined,
 						country: shippingCountry || undefined,
 					},
+					selectedShippingId,
 				}),
 			});
 
@@ -349,7 +293,7 @@ export default function CartPage() {
 												<span>Subtotal</span>
 												<span>NOK {subtotal}</span>
 											</div>
-											{selectedBringOption && bringOptions.length > 0 ? (
+											{selectedShippingId ? (
 												<div className="flex items-center justify-between text-sm">
 													<span className="text-stone-600">Shipping</span>
 													<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost}`}</span>
@@ -368,6 +312,30 @@ export default function CartPage() {
 											</div>
 										</div>
 
+										{/* Store pickup option — always available regardless of Bring quote state */}
+										<button
+											type="button"
+											onClick={() => setSelectedShippingId(STORE_PICKUP_ID)}
+											className={`mt-4 w-full rounded-[1rem] border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}
+										>
+											<div className="flex items-start justify-between gap-3">
+												<div className="flex items-center gap-2">
+													<MapPin className="h-4 w-4" />
+													<div>
+														<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
+														<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
+													</div>
+												</div>
+												<p className="text-sm font-semibold text-stone-900">Free</p>
+											</div>
+											{selectedShippingId === STORE_PICKUP_ID ? (
+												<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+													<Check className="h-3.5 w-3.5" />
+													Selected
+												</div>
+											) : null}
+										</button>
+
 										{/* Bring Shipping Calculator */}
 										{!showShippingForm && bringOptions.length === 0 ? (
 											<button type="button" onClick={() => setShowShippingForm(true)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50">
@@ -382,7 +350,7 @@ export default function CartPage() {
 												<div className="mt-2 grid grid-cols-2 gap-2">
 													<div>
 														<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-[0.75rem] border border-stone-200 p-2.5 text-sm text-stone-900">
-															{SUPPORTED_COUNTRIES.map((c) => (
+															{SHIPPING_COUNTRIES.map((c) => (
 																<option key={c.code} value={c.code}>
 																	{c.name}
 																</option>
@@ -412,7 +380,7 @@ export default function CartPage() {
 											<div className="mt-4 space-y-2">
 												<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Select shipping method</p>
 												{bringOptions.map((option) => (
-													<button key={option.productId} type="button" onClick={() => setSelectedBringOption(option.productId)} className={`w-full rounded-[1rem] border p-3 text-left transition ${selectedBringOption === option.productId ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
+													<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-[1rem] border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
 														<div className="flex items-start justify-between gap-3">
 															<div className="flex items-center gap-2">
 																{getDeliveryIcon(option.deliveryType)}
@@ -426,7 +394,7 @@ export default function CartPage() {
 																{option.expectedDelivery && <p className="text-xs text-stone-500">{option.expectedDelivery}</p>}
 															</div>
 														</div>
-														{selectedBringOption === option.productId && (
+														{selectedShippingId === option.productId && (
 															<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
 																<Check className="h-3.5 w-3.5" />
 																Selected
@@ -439,7 +407,7 @@ export default function CartPage() {
 													type="button"
 													onClick={() => {
 														setBringOptions([]);
-														setSelectedBringOption(null);
+														setSelectedShippingId(STORE_PICKUP_ID);
 													}}
 													className="mt-1 text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700"
 												>

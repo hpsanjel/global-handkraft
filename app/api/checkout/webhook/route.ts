@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 		}
 
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-			apiVersion: "2026-06-24.dahlia",
+			apiVersion: "2026-07-29.dahlia",
 		});
 
 		const event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
@@ -35,6 +35,13 @@ export async function POST(request: Request) {
 			if (existingOrder) {
 				return NextResponse.json({ received: true, orderId: existingOrder.id });
 			}
+
+			const sessionWithShipping = await stripe.checkout.sessions.retrieve(session.id, {
+				expand: ["shipping_cost.shipping_rate"],
+			});
+			const shippingRate = sessionWithShipping.shipping_cost?.shipping_rate;
+			const shippingMethod = typeof shippingRate === "object" && shippingRate ? shippingRate.display_name : null;
+			const shippingProductId = typeof shippingRate === "object" && shippingRate ? (shippingRate.metadata?.bring_product_id ?? null) : null;
 
 			const itemsMetadata = session.metadata?.items || "";
 			const parsedItems = itemsMetadata
@@ -98,6 +105,8 @@ export async function POST(request: Request) {
 						currency: (session.currency || "nok").toUpperCase(),
 						paymentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
 						shippingCountry: session.customer_details?.address?.country || "",
+						shippingMethod,
+						shippingProductId,
 						addressId: address.id,
 						items: {
 							create: pricedItems,

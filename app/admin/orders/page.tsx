@@ -57,6 +57,7 @@ export default async function AdminOrdersPage() {
 										{order.item} · {order.variant}
 									</p>
 									<p className="text-sm text-stone-500">{order.address}</p>
+									<p className="mt-1 text-sm font-medium text-stone-600">Ship via: {order.shippingMethod}</p>
 									<p className="mt-2 text-xs uppercase tracking-[0.2em] text-stone-400">{order.date}</p>
 								</div>
 							))

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getShippingRate } from "@/lib/shipping";
 import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 import { getBringOptionsForCheckout } from "@/lib/bring-shipping-integration";
+import { STORE_PICKUP_ID, STORE_PICKUP_DISPLAY_NAME } from "@/lib/shipping-client";
 
 export const runtime = "nodejs";
 
@@ -165,7 +166,27 @@ async function findOrCreateCustomer(stripe: Stripe, email: string, shippingAddre
  * When Bring API is available, creates multiple shipping options
  * based on real Bring rates. Falls back to static rates otherwise.
  */
-async function buildShippingOptions(shippingAddress: SavedShippingAddress | undefined, pricedItems: PricedCheckoutItem[], subtotal: number): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
+async function buildShippingOptions(shippingAddress: SavedShippingAddress | undefined, pricedItems: PricedCheckoutItem[], subtotal: number, selectedShippingId?: string | null): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
+	// Store pickup: skip Bring entirely, single free option.
+	if (selectedShippingId === STORE_PICKUP_ID) {
+		return [
+			{
+				shipping_rate_data: {
+					type: "fixed_amount",
+					fixed_amount: {
+						amount: 0,
+						currency: DEFAULT_CURRENCY,
+					},
+					display_name: STORE_PICKUP_DISPLAY_NAME,
+					metadata: {
+						bring_product_id: STORE_PICKUP_ID,
+						bring_delivery_type: "PICKUP",
+					},
+				},
+			},
+		];
+	}
+
 	const bringConfigured = process.env.BRING_API_UID && process.env.BRING_API_KEY;
 
 	// Try to use Bring API if credentials are available and we have postal code + country
@@ -174,8 +195,15 @@ async function buildShippingOptions(shippingAddress: SavedShippingAddress | unde
 			const bringProducts = await getBringOptionsForCheckout(shippingAddress.postalCode, shippingAddress.country, pricedItems);
 
 			if (bringProducts.length > 0) {
+				// Re-fetched live from Bring (never trust client-supplied price). If the
+				// customer had already picked a method in the cart drawer/page and it's
+				// still on offer, move it to the front so Stripe's hosted Checkout page
+				// (which defaults to the first shipping_options entry) shows it pre-selected.
+				const matchIndex = selectedShippingId ? bringProducts.findIndex((product) => product.productId === selectedShippingId) : -1;
+				const orderedProducts = matchIndex > 0 ? [bringProducts[matchIndex], ...bringProducts.slice(0, matchIndex), ...bringProducts.slice(matchIndex + 1)] : bringProducts;
+
 				// Convert Bring products to Stripe shipping options
-				return bringProducts.map((product) => ({
+				return orderedProducts.map((product) => ({
 					shipping_rate_data: {
 						type: "fixed_amount" as const,
 						fixed_amount: {
@@ -223,6 +251,10 @@ async function buildShippingOptions(shippingAddress: SavedShippingAddress | unde
 					minimum: { unit: "business_day", value: 3 },
 					maximum: { unit: "business_day", value: 10 },
 				},
+				metadata: {
+					bring_product_id: "STATIC_FALLBACK",
+					bring_delivery_type: "HOME",
+				},
 			},
 		},
 	];
@@ -234,6 +266,7 @@ export async function POST(request: Request) {
 			items?: CheckoutItem[];
 			customerEmail?: string;
 			shippingAddress?: SavedShippingAddress;
+			selectedShippingId?: string | null;
 		};
 		const items = body.items;
 
@@ -247,7 +280,7 @@ export async function POST(request: Request) {
 		}
 
 		const stripe = new Stripe(secretKey, {
-			apiVersion: "2026-06-24.dahlia",
+			apiVersion: "2026-07-29.dahlia",
 		});
 
 		const pricedItems = await priceCheckoutItems(items);
@@ -269,7 +302,7 @@ export async function POST(request: Request) {
 		const subtotal = pricedItems.reduce((sum, item) => sum + item.lineSubtotal, 0);
 
 		// Build shipping options - uses Bring API if configured, falls back to static
-		const shippingOptions = await buildShippingOptions(body.shippingAddress, pricedItems, subtotal);
+		const shippingOptions = await buildShippingOptions(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId);
 
 		let customer: Stripe.Customer | undefined;
 		if (body.customerEmail) {

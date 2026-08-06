@@ -44,6 +44,7 @@ export interface AdminOrder {
 	status: string;
 	amount: number;
 	currency: string;
+	shippingMethod: string;
 	date: string;
 }
 
@@ -80,6 +81,7 @@ export async function getRecentOrders(limit = 10): Promise<AdminOrder[]> {
 			status: order.status,
 			amount: order.total,
 			currency: order.currency || "NOK",
+			shippingMethod: order.shippingMethod || "Not recorded",
 			date: order.createdAt.toLocaleString("en-GB", {
 				day: "numeric",
 				month: "short",
