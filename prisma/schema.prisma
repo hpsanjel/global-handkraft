@@ -210,6 +210,7 @@ model MandapInquiry {
   productId         String
   productName       String
   productSlug       String
+  category          String   @default("Mandap")
   length            String
   width             String
   height            String

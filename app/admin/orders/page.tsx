@@ -73,8 +73,8 @@ export default async function AdminOrdersPage() {
 				<div className="mt-8 rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
 					<div className="flex flex-col gap-2 border-b border-stone-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
 						<div>
-							<h2 className="text-xl font-semibold text-stone-900">Custom mandap requests</h2>
-							<p className="mt-1 text-sm text-stone-500">Inquiries submitted from custom mandap product pages.</p>
+							<h2 className="text-xl font-semibold text-stone-900">Custom mandap &amp; temple requests</h2>
+							<p className="mt-1 text-sm text-stone-500">Inquiries submitted from custom mandap and temple product pages.</p>
 						</div>
 						<p className="text-sm font-medium text-stone-600">{mandapInquiries.length} requests</p>
 					</div>
@@ -85,7 +85,10 @@ export default async function AdminOrdersPage() {
 								<div key={inquiry.id} className="rounded-2xl border border-stone-200 p-4">
 									<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 										<div>
-											<p className="font-semibold text-stone-900">{inquiry.productName}</p>
+											<div className="flex items-center gap-2">
+												<p className="font-semibold text-stone-900">{inquiry.productName}</p>
+												<span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-stone-600">{inquiry.category}</span>
+											</div>
 											<p className="mt-1 text-sm text-stone-600">
 												{inquiry.length} x {inquiry.width} x {inquiry.height} · {inquiry.material}
 											</p>
@@ -121,7 +124,7 @@ export default async function AdminOrdersPage() {
 								</div>
 							))
 						) : (
-							<div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm text-stone-500">No custom mandap requests have been submitted yet.</div>
+							<div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm text-stone-500">No custom mandap or temple requests have been submitted yet.</div>
 						)}
 					</div>
 				</div>

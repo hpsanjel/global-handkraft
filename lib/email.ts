@@ -5,6 +5,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const SENDER = "Global Handcrafts <contact@handcraftsglobal.com>";
 
+function getAdminEmails(): string[] {
+	const raw = process.env.ADMIN_EMAILS ?? "";
+	return raw
+		.split(/[\n,;\s]+/)
+		.map((value) => value.trim())
+		.filter(Boolean);
+}
+
 type OrderConfirmationItem = {
 	name: string;
 	variantName: string;
@@ -154,6 +162,71 @@ export async function sendOrderStatusUpdateEmail(params: OrderStatusUpdateParams
 		from: SENDER,
 		to: params.to,
 		subject: meta.emailSubject.replace("{orderNumber}", params.orderNumber),
+		html,
+	});
+}
+
+type CustomInquiryNotificationParams = {
+	category: string;
+	productName: string;
+	productSlug: string;
+	length: string;
+	width: string;
+	height: string;
+	material: string;
+	expectedCostRange: string;
+	description: string;
+	whatsapp: string | null;
+	email: string | null;
+	sampleImages: string[];
+};
+
+/**
+ * Notifies admins by email when a buyer submits a custom Mandap or Temple order inquiry.
+ * Failures are the caller's responsibility to catch — a failed email should
+ * never fail the inquiry submission itself.
+ */
+export async function sendCustomInquiryAdminNotification(params: CustomInquiryNotificationParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping custom inquiry admin notification email.");
+		return;
+	}
+
+	const adminEmails = getAdminEmails();
+	if (adminEmails.length === 0) {
+		console.warn("ADMIN_EMAILS not configured; skipping custom inquiry admin notification email.");
+		return;
+	}
+
+	const sampleImagesHtml = params.sampleImages.length
+		? `<p style="margin-top:12px;"><strong>Sample images:</strong><br/>${params.sampleImages.map((url) => `<a href="${url}" style="color:#1B365D;">${url}</a>`).join("<br/>")}</p>`
+		: "";
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:#1B365D; margin-bottom:4px;">New custom ${params.category.toLowerCase()} order request</h2>
+			<p>A buyer has requested a custom <strong>${params.category}</strong> order for <strong>${params.productName}</strong>.</p>
+
+			<table style="width:100%; margin-top:16px; border-collapse:collapse;">
+				<tr><td style="padding:4px 0; color:#57534e;">Product</td><td style="padding:4px 0; text-align:right;">${params.productName} (${params.productSlug})</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">Dimensions</td><td style="padding:4px 0; text-align:right;">${params.length} x ${params.width} x ${params.height}</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">Material</td><td style="padding:4px 0; text-align:right;">${params.material}</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">Expected budget</td><td style="padding:4px 0; text-align:right;">${params.expectedCostRange}</td></tr>
+				${params.whatsapp ? `<tr><td style="padding:4px 0; color:#57534e;">WhatsApp</td><td style="padding:4px 0; text-align:right;">${params.whatsapp}</td></tr>` : ""}
+				${params.email ? `<tr><td style="padding:4px 0; color:#57534e;">Email</td><td style="padding:4px 0; text-align:right;">${params.email}</td></tr>` : ""}
+			</table>
+
+			<p style="margin-top:16px;"><strong>Description:</strong><br/>${params.description}</p>
+			${sampleImagesHtml}
+
+			<p style="margin-top:28px;">View and manage this request in the <a href="https://handcraftsglobal.com/admin/orders" style="color:#1B365D;">admin dashboard</a>.</p>
+		</div>
+	`;
+
+	await resend.emails.send({
+		from: SENDER,
+		to: adminEmails,
+		subject: `New custom ${params.category.toLowerCase()} order request — ${params.productName}`,
 		html,
 	});
 }

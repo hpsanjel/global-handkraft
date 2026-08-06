@@ -42,6 +42,7 @@ export function ProductClient({ product }: { product: Product }) {
 	const [mandapFormSuccess, setMandapFormSuccess] = useState("");
 	const [isSubmittingMandap, setIsSubmittingMandap] = useState(false);
 	const [cartFeedback, setCartFeedback] = useState("");
+	const [showCustomTempleForm, setShowCustomTempleForm] = useState(false);
 
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
 
@@ -61,7 +62,9 @@ export function ProductClient({ product }: { product: Product }) {
 	const categoryName = product.category?.toLowerCase() ?? "";
 	const categorySlug = product.categorySlug?.toLowerCase() ?? "";
 	const isMandapCategory = categoryName.includes("mandap") || categorySlug.includes("mandap");
-	const customInquiryEnabled = isMandapCategory || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom inquiry")) || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom request")) || product.slug.includes("custom");
+	const isTempleCategory = categoryName.includes("temple") || categorySlug.includes("temple");
+	const customInquiryEnabled = isMandapCategory || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom inquiry")) || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom request")) || product.slug.includes("custom") || showCustomTempleForm;
+	const inquiryCategory = isTempleCategory ? "Temple" : "Mandap";
 
 	const handleAddToCart = () => {
 		const existingItems = getCartItems();
@@ -150,6 +153,7 @@ export function ProductClient({ product }: { product: Product }) {
 			formData.set("productId", product.id);
 			formData.set("productName", product.name);
 			formData.set("productSlug", product.slug);
+			formData.set("category", inquiryCategory);
 			formData.set("length", trimmedLength);
 			formData.set("width", trimmedWidth);
 			formData.set("height", trimmedHeight);
@@ -198,9 +202,14 @@ export function ProductClient({ product }: { product: Product }) {
 				</div>
 
 				<div className="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
+					{showCustomTempleForm && !isMandapCategory ? (
+						<button type="button" onClick={() => setShowCustomTempleForm(false)} className="mb-4 text-sm font-medium text-stone-500 hover:text-stone-800">
+							&larr; Back to product
+						</button>
+					) : null}
 					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Custom Request</p>
-					<h1 className="mt-3 text-3xl font-semibold text-stone-900 sm:text-4xl">Request a custom {product.name}</h1>
-					<p className="mt-4 mb-6 text-sm leading-7 text-stone-600">We do not keep this product as a fixed ready-made option. Share your preferred size, material, budget, and references so our team can guide you with personalized options and next steps.</p>
+					<h1 className="mt-3 text-3xl font-semibold text-stone-900 sm:text-4xl">Request a custom {isTempleCategory ? "temple" : product.name}</h1>
+					<p className="mt-4 mb-6 text-sm leading-7 text-stone-600">{isTempleCategory ? "Want a temple in a different size, material, or design than what's shown? Share your preferred dimensions, material, budget, and references so our team can guide you with personalized options and next steps." : "We do not keep this product as a fixed ready-made option. Share your preferred size, material, budget, and references so our team can guide you with personalized options and next steps."}</p>
 					<div className="grid gap-4 sm:grid-cols-3">
 						<label className="space-y-2 text-sm text-stone-600">
 							<span className="font-medium text-stone-700">Length *</span>
@@ -305,7 +314,14 @@ export function ProductClient({ product }: { product: Product }) {
 					</div>
 					<div className="mt-6 space-y-4">
 						<div>
-							<p className="text-sm font-semibold text-stone-900">Size</p>
+							<div className="flex gap-3">
+								<p className="text-sm font-semibold text-stone-900">Size</p>
+								{isTempleCategory ? (
+									<button type="button" onClick={() => setShowCustomTempleForm(true)} className="cursor-pointer text-center text-sm font-medium text-stone-600 underline underline-offset-4 hover:text-stone-900">
+										(Click here to order custom temple)
+									</button>
+								) : null}
+							</div>
 							{hasMultipleVariants ? (
 								<div className="mt-3 flex flex-wrap gap-3">
 									{product.variants.map((variant) => {
@@ -401,16 +417,16 @@ export function ProductClient({ product }: { product: Product }) {
 					<Button className="mt-8 w-full cursor-pointer" onClick={handleAddToCart} disabled={!selectedVariant}>
 						Add to Cart
 					</Button>
-					{cartFeedback ? (
-						<div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-							<p className="font-medium">Added to Cart</p>
-							<Link href="/cart" className="mt-2 inline-flex items-center font-semibold text-emerald-800 hover:underline">
-								View Basket
-							</Link>
-						</div>
-					) : null}
 				</div>
 				<p className="mt-5 text-sm leading-7 text-stone-600 sm:text-base p-4">{product.description}</p>
+				{isTempleCategory ? (
+					<p className="px-4 text-sm text-stone-600">
+						Need a different size or design?{" "}
+						<button type="button" onClick={() => setShowCustomTempleForm(true)} className="font-semibold text-stone-900 underline underline-offset-4 hover:text-stone-700">
+							Click here to order custom temple
+						</button>
+					</p>
+				) : null}
 				<div className="mt-2">
 					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 						<p className="text-sm font-semibold text-stone-900">Shipping</p>
@@ -429,6 +445,11 @@ export function ProductClient({ product }: { product: Product }) {
 						<Button className="rounded-full px-6" onClick={handleAddToCart} disabled={!selectedVariant}>
 							Add to Cart
 						</Button>
+						{isTempleCategory ? (
+							<button type="button" onClick={() => setShowCustomTempleForm(true)} className="text-xs font-medium text-stone-600 underline underline-offset-4">
+								Order custom temple
+							</button>
+						) : null}
 						{cartFeedback ? (
 							<div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-700">
 								<p className="font-medium">Added to Cart</p>

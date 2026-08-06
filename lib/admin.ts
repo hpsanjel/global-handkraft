@@ -5,6 +5,7 @@ export interface AdminMandapInquiry {
 	productId: string;
 	productName: string;
 	productSlug: string;
+	category: string;
 	length: string;
 	width: string;
 	height: string;

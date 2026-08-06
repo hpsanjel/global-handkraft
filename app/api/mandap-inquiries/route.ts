@@ -4,11 +4,13 @@ import { hasAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { sendCustomInquiryAdminNotification } from "@/lib/email";
 
 const MANDAP_INQUIRY_BUCKET = "mandap-inquiries";
 const MAX_IMAGE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_SAMPLE_IMAGES = 3;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]);
+const ALLOWED_INQUIRY_CATEGORIES = new Set(["Mandap", "Temple"]);
 
 async function requireAdmin() {
 	const supabase = await createClient();
@@ -98,6 +100,8 @@ export async function POST(request: Request) {
 		const productId = String(formData.get("productId") ?? "").trim();
 		const productName = String(formData.get("productName") ?? "").trim();
 		const productSlug = String(formData.get("productSlug") ?? "").trim();
+		const rawCategory = String(formData.get("category") ?? "").trim();
+		const category = ALLOWED_INQUIRY_CATEGORIES.has(rawCategory) ? rawCategory : "Mandap";
 		const length = String(formData.get("length") ?? "").trim();
 		const width = String(formData.get("width") ?? "").trim();
 		const height = String(formData.get("height") ?? "").trim();
@@ -126,8 +130,9 @@ export async function POST(request: Request) {
 		const inquiry = await prisma.mandapInquiry.create({
 			data: {
 				productId,
-				productName: productName || "Custom Mandap",
+				productName: productName || `Custom ${category}`,
 				productSlug,
+				category,
 				length,
 				width,
 				height,
@@ -138,6 +143,23 @@ export async function POST(request: Request) {
 				email: email || null,
 				sampleImages: sampleImageUrls,
 			},
+		});
+
+		sendCustomInquiryAdminNotification({
+			category: inquiry.category,
+			productName: inquiry.productName,
+			productSlug: inquiry.productSlug,
+			length: inquiry.length,
+			width: inquiry.width,
+			height: inquiry.height,
+			material: inquiry.material,
+			expectedCostRange: inquiry.expectedCostRange,
+			description: inquiry.description,
+			whatsapp: inquiry.whatsapp,
+			email: inquiry.email,
+			sampleImages: inquiry.sampleImages,
+		}).catch((error) => {
+			console.error("Unable to send custom inquiry admin notification email:", error);
 		});
 
 		return NextResponse.json({ success: true, id: inquiry.id });
