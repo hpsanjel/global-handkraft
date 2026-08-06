@@ -97,7 +97,7 @@ export async function POST(request: Request) {
 					},
 				});
 
-				return tx.order.create({
+				const newOrder = await tx.order.create({
 					data: {
 						orderNumber,
 						status: "PAID",
@@ -116,6 +116,12 @@ export async function POST(request: Request) {
 						},
 					},
 				});
+
+				await tx.orderStatusEvent.create({
+					data: { orderId: newOrder.id, status: "PAID" },
+				});
+
+				return newOrder;
 			});
 
 			try {

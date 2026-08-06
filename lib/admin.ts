@@ -36,6 +36,7 @@ export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry
 
 export interface AdminOrder {
 	id: string;
+	orderId: string;
 	customer: string;
 	email: string;
 	address: string;
@@ -73,6 +74,7 @@ export async function getRecentOrders(limit = 10): Promise<AdminOrder[]> {
 
 		return {
 			id: order.orderNumber,
+			orderId: order.id,
 			customer: order.address.fullName || "Guest customer",
 			email: order.address.email || "No email provided",
 			address: address || "Address not provided",

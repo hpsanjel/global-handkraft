@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { OrderStatusBadge } from "@/components/order-status-badge";
+import { ORDER_STATUS_META, isOrderStatus } from "@/lib/order-status";
 
 type AccountOrderItem = {
 	id: string;
@@ -13,6 +15,13 @@ type AccountOrderItem = {
 	variant: { name: string } | null;
 };
 
+type AccountOrderStatusEvent = {
+	id: string;
+	status: string;
+	note: string | null;
+	createdAt: string;
+};
+
 type AccountOrder = {
 	id: string;
 	orderNumber: string;
@@ -21,6 +30,7 @@ type AccountOrder = {
 	currency: string;
 	createdAt: string;
 	items: AccountOrderItem[];
+	statusEvents: AccountOrderStatusEvent[];
 };
 
 function formatCurrency(amount: number, currency: string) {
@@ -102,7 +112,9 @@ export default function AccountOrdersPage() {
 								</div>
 								<div className="text-right">
 									<p className="font-semibold text-stone-900">{formatCurrency(order.total, order.currency)}</p>
-									<p className="mt-1 text-sm text-stone-500">{order.status}</p>
+									<div className="mt-1">
+										<OrderStatusBadge status={order.status} />
+									</div>
 								</div>
 							</div>
 							<div className="mt-4 space-y-3 border-t border-stone-200 pt-4">
@@ -118,6 +130,29 @@ export default function AccountOrdersPage() {
 									</div>
 								))}
 							</div>
+							{order.statusEvents.length > 0 ? (
+								<div className="mt-4 border-t border-stone-200 pt-4">
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">Order timeline</p>
+									<ol className="mt-3 space-y-3">
+										{order.statusEvents.map((event, index) => (
+											<li key={event.id} className="relative pl-5">
+												<span
+													className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${index === order.statusEvents.length - 1 ? "bg-[#1B365D]" : "bg-stone-300"}`}
+												/>
+												<p className="text-sm font-medium text-stone-800">{isOrderStatus(event.status) ? ORDER_STATUS_META[event.status].label : event.status}</p>
+												<p className="text-xs text-stone-500">
+													{new Date(event.createdAt).toLocaleString("en-GB", {
+														day: "numeric",
+														month: "short",
+														hour: "numeric",
+														minute: "2-digit",
+													})}
+												</p>
+											</li>
+										))}
+									</ol>
+								</div>
+							) : null}
 						</div>
 					))}
 				</div>

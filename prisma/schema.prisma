@@ -111,7 +111,19 @@ model Order {
   addressId         String
   address           Address     @relation(fields: [addressId], references: [id])
   items             OrderItem[]
+  statusEvents      OrderStatusEvent[]
   createdAt         DateTime    @default(now())
+}
+
+model OrderStatusEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model OrderItem {

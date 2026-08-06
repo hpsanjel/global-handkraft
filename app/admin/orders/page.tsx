@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getRecentOrders, getMandapInquiries } from "@/lib/admin";
+import { OrderStatusControl } from "./OrderStatusControl";
 
 function formatCurrency(amount: number, currency: string) {
 	return new Intl.NumberFormat("en-GB", {
@@ -50,7 +51,9 @@ export default async function AdminOrdersPage() {
 										</div>
 										<div className="text-left sm:text-right">
 											<p className="font-semibold text-stone-900">{formatCurrency(order.amount, order.currency)}</p>
-											<p className="mt-1 text-stone-500">{order.status}</p>
+											<div className="mt-1">
+												<OrderStatusControl orderId={order.orderId} currentStatus={order.status} />
+											</div>
 										</div>
 									</div>
 									<p className="mt-3 text-sm text-stone-600">

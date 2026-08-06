@@ -33,6 +33,9 @@ export async function GET() {
 						variant: { select: { name: true } },
 					},
 				},
+				statusEvents: {
+					orderBy: { createdAt: "asc" },
+				},
 			},
 			orderBy: { createdAt: "desc" },
 		});

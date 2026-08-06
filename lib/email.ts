@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { ORDER_STATUS_META, type OrderStatus } from "@/lib/order-status";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -108,6 +109,51 @@ export async function sendOrderConfirmationEmail(params: OrderConfirmationParams
 		from: SENDER,
 		to: params.to,
 		subject: `Order confirmed — ${params.orderNumber}`,
+		html,
+	});
+}
+
+type OrderStatusUpdateParams = {
+	to: string;
+	customerName: string;
+	orderNumber: string;
+	status: OrderStatus;
+	note?: string | null;
+};
+
+/**
+ * Sends an order status update email via Resend after an admin changes an order's status.
+ * Failures are the caller's responsibility to catch — a failed email should
+ * never roll back or fail the status update itself.
+ */
+export async function sendOrderStatusUpdateEmail(params: OrderStatusUpdateParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping order status update email.");
+		return;
+	}
+
+	if (!params.to) {
+		console.warn(`No recipient email for order ${params.orderNumber}; skipping order status update email.`);
+		return;
+	}
+
+	const meta = ORDER_STATUS_META[params.status];
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:#1B365D; margin-bottom:4px;">${meta.label}: your order ${params.orderNumber}</h2>
+			<p>Hi ${params.customerName || "there"},</p>
+			<p>${meta.customerDescription}</p>
+			${params.note ? `<p style="color:#57534e; font-style:italic;">"${params.note}"</p>` : ""}
+			<p style="margin-top:28px;">Thank you for supporting authentic handcrafted treasures!</p>
+			<p>Warm regards,<br/>Global Handcrafts Team</p>
+		</div>
+	`;
+
+	await resend.emails.send({
+		from: SENDER,
+		to: params.to,
+		subject: meta.emailSubject.replace("{orderNumber}", params.orderNumber),
 		html,
 	});
 }
