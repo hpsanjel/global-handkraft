@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -77,6 +78,8 @@ export async function POST(request: Request) {
 						quantity: Math.max(1, Number(item.quantity) || 1),
 						unitPrice: variant.price + addonTotal,
 						addonNames: addons.map((addon) => addon.name),
+						name: variant.product.name,
+						variantName: variant.name,
 					};
 				}),
 			);
@@ -109,11 +112,34 @@ export async function POST(request: Request) {
 						shippingProductId,
 						addressId: address.id,
 						items: {
-							create: pricedItems,
+							create: pricedItems.map(({ name, variantName, ...orderItem }) => orderItem),
 						},
 					},
 				});
 			});
+
+			try {
+				await sendOrderConfirmationEmail({
+					to: session.customer_details?.email || session.customer_email || "",
+					customerName: session.customer_details?.name || "",
+					orderNumber,
+					items: pricedItems,
+					subtotal: order.subtotal,
+					vat: order.vat,
+					shipping: order.shipping,
+					shippingMethod,
+					total: order.total,
+					currency: order.currency,
+					address: {
+						address: [session.customer_details?.address?.line1, session.customer_details?.address?.line2].filter(Boolean).join(", "),
+						city: session.customer_details?.address?.city || "",
+						postalCode: session.customer_details?.address?.postal_code || "",
+						country: session.customer_details?.address?.country || "",
+					},
+				});
+			} catch (emailError) {
+				console.error("Failed to send order confirmation email:", emailError);
+			}
 
 			return NextResponse.json({ received: true, orderId: order.id });
 		}

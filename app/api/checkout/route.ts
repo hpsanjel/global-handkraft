@@ -325,7 +325,7 @@ export async function POST(request: Request) {
 			shipping_options: shippingOptions,
 
 			allow_promotion_codes: true,
-			success_url: `${origin}/checkout/success`,
+			success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${origin}/checkout/cancel`,
 			metadata: {
 				items: compactItems,
