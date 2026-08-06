@@ -12,11 +12,11 @@ export type BringPackage = {
 export type BringProduct = {
 	/** Product ID (e.g. "5600", "BUSINESS_PARCEL") */
 	productId: string;
-	/** Display name (e.g. "Pakke hjem pluss", "Business Parcel") */
+	/** Display name (e.g. "Home Delivery Parcel", "Business Parcel") */
 	displayName: string;
 	/** Price in cents (NOK) */
 	priceCents: number;
-	/** Expected delivery time description (e.g. "1 virkedag") */
+	/** Expected delivery time description (e.g. "1 business day") */
 	expectedDelivery: string | null;
 	/** Estimated delivery date in ISO format */
 	estimatedDeliveryDate: string | null;
@@ -78,7 +78,7 @@ type BringConsignmentRequestBody = {
  */
 function buildRequestBody(toPostalCode: string, toCountry: string, packages: BringPackage[]): BringConsignmentRequestBody {
 	return {
-		language: "no",
+		language: "en",
 		withPrice: true,
 		withExpectedDelivery: true,
 		withGuiInformation: true,
@@ -216,7 +216,7 @@ function extractProducts(data: Record<string, unknown>): BringProduct[] {
 				// workingDays is a string like "1" or "2-4"
 				const workingDays = expectedDelivery.workingDays;
 				if (typeof workingDays === "string") {
-					deliveryText = workingDays.includes("-") ? `${workingDays} virkedager` : `${workingDays} virkedag`;
+					deliveryText = workingDays.includes("-") ? `${workingDays} business days` : `${workingDays} business day`;
 					const parts = workingDays.split("-");
 					const first = parseInt(parts[0], 10);
 					const last = parts.length > 1 ? parseInt(parts[1], 10) : first;
@@ -224,7 +224,7 @@ function extractProducts(data: Record<string, unknown>): BringProduct[] {
 						maxDays = last;
 					}
 				} else if (typeof workingDays === "number") {
-					deliveryText = `${workingDays} virkedag${workingDays === 1 ? "" : "er"}`;
+					deliveryText = `${workingDays} business day${workingDays === 1 ? "" : "s"}`;
 					maxDays = workingDays;
 				}
 
@@ -248,9 +248,9 @@ function extractProducts(data: Record<string, unknown>): BringProduct[] {
 			const guiDeliveryType = guiInfo?.deliveryType as string | undefined;
 			if (guiDeliveryType) {
 				const dt = guiDeliveryType.toLowerCase();
-				if (dt.includes("post") || dt.includes("butikk") || dt.includes("hentested")) {
+				if (dt.includes("post") || dt.includes("shop") || dt.includes("pickup") || dt.includes("butikk") || dt.includes("hentested")) {
 					deliveryType = "PICKUP";
-				} else if (dt.includes("dør") || dt.includes("dor") || dt.includes("hjem")) {
+				} else if (dt.includes("door") || dt.includes("home") || dt.includes("dør") || dt.includes("dor") || dt.includes("hjem")) {
 					deliveryType = "HOME";
 				}
 			}

@@ -28,6 +28,9 @@
 
 body {
 	background: radial-gradient(circle at 12% 10%, #ffe7a6 0%, rgba(255, 231, 166, 0) 42%), radial-gradient(circle at 88% 0%, #ffd08a 0%, rgba(255, 208, 138, 0) 38%), linear-gradient(180deg, #fff8eb 0%, #fff2d6 100%);
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	background-size: cover;
 	color: var(--foreground);
 	font-family: var(--font-sans, "Segoe UI", sans-serif);
 	transition:

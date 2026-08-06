@@ -109,7 +109,7 @@ export default function HomePage() {
 			<SiteHeader />
 			<main className="flex-1">
 				<section className="hidden sm:relative overflow-hidden">
-					<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_#4CAF5020_0%,_transparent_42%),radial-gradient(circle_at_top_right,_#F7931E2E_0%,_transparent_44%),linear-gradient(180deg,_#FAFAF7_0%,_#ffffff_70%)]" />
+					<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#4CAF5020_0%,transparent_42%),radial-gradient(circle_at_top_right,#F7931E2E_0%,transparent_44%),linear-gradient(180deg,#fff8eb_0%,transparent_100%)]" />
 					<div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
 						<div className="max-w-2xl">
 							<p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-[#1B365D]">Global Handcrafts AS</p>

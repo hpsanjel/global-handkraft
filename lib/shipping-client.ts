@@ -77,7 +77,7 @@ export type BringShippingOption = {
  * never a real Bring product id.
  */
 export const STORE_PICKUP_ID = "STORE_PICKUP" as const;
-export const STORE_PICKUP_DISPLAY_NAME = "Collect Myself — Oslo Store";
+export const STORE_PICKUP_DISPLAY_NAME = "Collect Myself — Bærum Store";
 
 export const STORE_PICKUP_OPTION: BringShippingOption = {
 	productId: STORE_PICKUP_ID,
@@ -86,5 +86,5 @@ export const STORE_PICKUP_OPTION: BringShippingOption = {
 	expectedDelivery: "Ready for pickup today",
 	maxDays: null,
 	deliveryType: "PICKUP",
-	guiInformation: "Pick up your order in person at our Oslo store — we'll email you when it's ready.",
+	guiInformation: "Pick up your order in person at our Bærum store — we'll email you when it's ready.",
 };
