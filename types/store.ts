@@ -41,6 +41,7 @@ export type Product = {
 	color?: string;
 	image: string;
 	gallery: string[];
+	galleryColors?: string[];
 	rating: number;
 	reviewCount: number;
 	featured: boolean;

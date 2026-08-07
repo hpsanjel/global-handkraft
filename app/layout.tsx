@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CartDrawerProvider } from "@/components/cart-drawer-provider";
+import { CouponPopup } from "@/components/coupon-popup";
 
 export const metadata: Metadata = {
 	title: "Global Handcrafts AS",
@@ -28,6 +29,7 @@ export default function RootLayout({
 			<body className="min-h-full flex flex-col">
 				{children}
 				<CartDrawerProvider />
+				<CouponPopup />
 			</body>
 		</html>
 	);

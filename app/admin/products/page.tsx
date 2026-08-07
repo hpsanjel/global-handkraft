@@ -70,6 +70,7 @@ function createEmptyProduct(category: string): Product {
 			material: "",
 			image: "",
 			gallery: [],
+			galleryColors: [],
 			rating: 0,
 			reviewCount: 0,
 			featured: false,
@@ -219,7 +220,8 @@ export default function AdminProductsPage() {
 			setDraftProduct((current) => {
 				if (!current) return current;
 				const nextGallery = [...current.gallery, ...uploadedUrls];
-				return { ...current, gallery: nextGallery, image: current.image || nextGallery[0] };
+				const nextGalleryColors = [...(current.galleryColors ?? current.gallery.map(() => "")), ...uploadedUrls.map(() => "")];
+				return { ...current, gallery: nextGallery, galleryColors: nextGalleryColors, image: current.image || nextGallery[0] };
 			});
 		} catch (error) {
 			setImageUploadError(error instanceof Error ? error.message : "Image upload failed. Please try again.");
@@ -231,8 +233,10 @@ export default function AdminProductsPage() {
 	const removeGalleryImage = async (url: string) => {
 		setDraftProduct((current) => {
 			if (!current) return current;
+			const removedIndex = current.gallery.indexOf(url);
 			const nextGallery = current.gallery.filter((image) => image !== url);
-			return { ...current, gallery: nextGallery, image: current.image === url ? (nextGallery[0] ?? "") : current.image };
+			const nextGalleryColors = (current.galleryColors ?? current.gallery.map(() => "")).filter((_, index) => index !== removedIndex);
+			return { ...current, gallery: nextGallery, galleryColors: nextGalleryColors, image: current.image === url ? (nextGallery[0] ?? "") : current.image };
 		});
 
 		// Best-effort cleanup in storage; harmless if it fails (e.g. externally hosted URL).
@@ -244,6 +248,19 @@ export default function AdminProductsPage() {
 	};
 
 	const setCoverImage = (url: string) => updateDraftField("image", url);
+
+	const updateGalleryImageColor = (url: string, color: string) => {
+		setSaveFeedback(null);
+		setDraftProduct((current) => {
+			if (!current) return current;
+			const baseColors = current.galleryColors ?? current.gallery.map(() => "");
+			const index = current.gallery.indexOf(url);
+			if (index === -1) return current;
+			const nextGalleryColors = [...baseColors];
+			nextGalleryColors[index] = color;
+			return { ...current, galleryColors: nextGalleryColors };
+		});
+	};
 
 	// --- Persistence -----------------------------------------------------------
 
@@ -264,6 +281,7 @@ export default function AdminProductsPage() {
 			...categoryNormalizedProduct,
 			slug: draftProduct.slug || slugify(draftProduct.name),
 			gallery: draftProduct.gallery,
+			galleryColors: draftProduct.gallery.map((_, index) => draftProduct.galleryColors?.[index]?.trim() ?? ""),
 			image: draftProduct.image || draftProduct.gallery[0],
 			materials: (categoryNormalizedProduct.materials ?? [DEFAULT_MATERIAL]).map((entry) => entry.trim()).filter(Boolean),
 			sizeLabel: categoryNormalizedProduct.sizeLabel?.trim() || undefined,
@@ -345,6 +363,7 @@ export default function AdminProductsPage() {
 	};
 
 	const currentProduct = draftProduct ?? productsState.find((product) => product.id === selectedProductId) ?? null;
+	const isClothCategory = (currentProduct?.category ?? "").toLowerCase().includes("cloth");
 
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
@@ -453,22 +472,27 @@ export default function AdminProductsPage() {
 										</span>
 									</div>
 
+									{isClothCategory && <p className="text-xs text-stone-500">Tag each photo with the colour it shows — customers can pick a colour to jump straight to that photo.</p>}
+
 									<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-										{currentProduct.gallery.map((url) => (
-											<div key={url} className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
-												{/* eslint-disable-next-line @next/next/no-img-element */}
-												<img src={url} alt="" className="h-full w-full object-cover" />
-												{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-stone-900/80 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>}
-												<div className="absolute inset-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
-													{currentProduct.image !== url && (
-														<button type="button" onClick={() => setCoverImage(url)} className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-stone-800">
-															Set cover
+										{currentProduct.gallery.map((url, index) => (
+											<div key={url} className="space-y-1.5">
+												<div className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+													{/* eslint-disable-next-line @next/next/no-img-element */}
+													<img src={url} alt="" className="h-full w-full object-cover" />
+													{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-stone-900/80 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>}
+													<div className="absolute inset-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
+														{currentProduct.image !== url && (
+															<button type="button" onClick={() => setCoverImage(url)} className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-stone-800">
+																Set cover
+															</button>
+														)}
+														<button type="button" onClick={() => void removeGalleryImage(url)} className="ml-auto rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-red-600">
+															Remove
 														</button>
-													)}
-													<button type="button" onClick={() => void removeGalleryImage(url)} className="ml-auto rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-red-600">
-														Remove
-													</button>
+													</div>
 												</div>
+												{isClothCategory && <input value={currentProduct.galleryColors?.[index] ?? ""} onChange={(e) => updateGalleryImageColor(url, e.target.value)} placeholder="Colour" className="w-full rounded-lg border border-stone-200 bg-stone-50 px-2 py-1 text-xs text-stone-900 outline-none" />}
 											</div>
 										))}
 

@@ -14,6 +14,7 @@ type ProductRequestPayload = {
 	category: string;
 	image: string;
 	gallery?: string[];
+	galleryColors?: string[];
 	featured?: boolean;
 	rating?: number;
 	reviewCount?: number;
@@ -50,6 +51,10 @@ async function requireAdmin() {
 	}
 
 	return null;
+}
+
+function normalizeGalleryColors(gallery: string[], galleryColors?: string[]) {
+	return gallery.map((_, index) => galleryColors?.[index]?.trim() || "");
 }
 
 function generateVariantSku(productSlug: string, variantName: string, index: number) {
@@ -154,6 +159,7 @@ export async function POST(request: Request) {
 				categoryId: category.id,
 				image: body.image,
 				gallery: body.gallery ?? [body.image],
+				galleryColors: normalizeGalleryColors(body.gallery ?? [body.image], body.galleryColors),
 				featured: Boolean(body.featured),
 				active: true,
 				rating: Number(body.rating ?? 0),
@@ -228,6 +234,7 @@ export async function PUT(request: Request) {
 				categoryId: category.id,
 				image: body.image,
 				gallery: body.gallery ?? [body.image],
+				galleryColors: normalizeGalleryColors(body.gallery ?? [body.image], body.galleryColors),
 				featured: Boolean(body.featured),
 				rating: Number(body.rating ?? 0),
 				reviewCount: Number(body.reviewCount ?? 0),

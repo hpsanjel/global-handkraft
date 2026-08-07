@@ -46,6 +46,21 @@ export function ProductClient({ product }: { product: Product }) {
 
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
 
+	const availableColors = useMemo(() => {
+		const seen = new Set<string>();
+		const colors: Array<{ color: string; image: string }> = [];
+		product.gallery.forEach((image, index) => {
+			const color = product.galleryColors?.[index]?.trim();
+			if (color && !seen.has(color)) {
+				seen.add(color);
+				colors.push({ color, image });
+			}
+		});
+		return colors;
+	}, [product.gallery, product.galleryColors]);
+
+	const selectedColor = useMemo(() => availableColors.find((entry) => entry.image === selectedGalleryImage)?.color ?? "", [availableColors, selectedGalleryImage]);
+
 	const selectedAddons = useMemo(() => product.addons.filter((addon) => selectedAddonIds.includes(addon.id)), [product.addons, selectedAddonIds]);
 
 	const totalPrice = useMemo(() => {
@@ -66,7 +81,13 @@ export function ProductClient({ product }: { product: Product }) {
 	const customInquiryEnabled = isMandapCategory || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom inquiry")) || displaySpecifications.some((spec) => spec.toLowerCase().includes("custom request")) || product.slug.includes("custom") || showCustomTempleForm;
 	const inquiryCategory = isTempleCategory ? "Temple" : "Mandap";
 
+	const isOutOfStock = selectedVariant?.stock !== undefined && selectedVariant.stock <= 0;
+
 	const handleAddToCart = () => {
+		if (isOutOfStock) {
+			return;
+		}
+
 		const existingItems = getCartItems();
 		const selectedVariantName = selectedVariant?.name ?? "Default option";
 		const itemName = hasMultipleVariants ? `${product.name} (${selectedVariantName})` : product.name;
@@ -392,6 +413,29 @@ export function ProductClient({ product }: { product: Product }) {
 								</div>
 							) : null}
 						</div>
+						{availableColors.length > 0 ? (
+							<div>
+								<p className="text-sm font-semibold text-stone-900">Colour</p>
+								<div className="mt-3 flex flex-wrap gap-3">
+									{availableColors.map((entry) => {
+										const isSelected = selectedColor === entry.color;
+										return (
+											<button
+												type="button"
+												key={entry.color}
+												onClick={() => {
+													setSelectedGalleryImage(entry.image);
+													setActivePreviewImage(entry.image);
+												}}
+												className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}
+											>
+												{entry.color}
+											</button>
+										);
+									})}
+								</div>
+							</div>
+						) : null}
 						{product.addons.length > 0 ? (
 							<div>
 								<p className="text-sm font-semibold text-stone-900">Optional add-ons</p>
@@ -414,8 +458,8 @@ export function ProductClient({ product }: { product: Product }) {
 						) : null}
 					</div>
 
-					<Button className="mt-8 w-full cursor-pointer" onClick={handleAddToCart} disabled={!selectedVariant}>
-						Add to Cart
+					<Button className="mt-8 w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" onClick={handleAddToCart} disabled={!selectedVariant || isOutOfStock}>
+						{isOutOfStock ? "Out of Stock" : "Add to Cart"}
 					</Button>
 				</div>
 				<p className="mt-5 text-sm leading-7 text-stone-600 sm:text-base p-4">{product.description}</p>
@@ -442,8 +486,8 @@ export function ProductClient({ product }: { product: Product }) {
 						<p className="text-lg font-semibold text-stone-900">NOK {totalPrice}</p>
 					</div>
 					<div className="flex flex-col items-end gap-2">
-						<Button className="rounded-full px-6" onClick={handleAddToCart} disabled={!selectedVariant}>
-							Add to Cart
+						<Button className="rounded-full px-6 disabled:cursor-not-allowed disabled:opacity-50" onClick={handleAddToCart} disabled={!selectedVariant || isOutOfStock}>
+							{isOutOfStock ? "Out of Stock" : "Add to Cart"}
 						</Button>
 						{isTempleCategory ? (
 							<button type="button" onClick={() => setShowCustomTempleForm(true)} className="text-xs font-medium text-stone-600 underline underline-offset-4">

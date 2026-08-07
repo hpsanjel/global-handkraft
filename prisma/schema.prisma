@@ -41,6 +41,7 @@ model Product {
   category         Category    @relation(fields: [categoryId], references: [id])
   image            String
   gallery          String[]
+  galleryColors    String[]    @default([])
   featured         Boolean     @default(false)
   active           Boolean     @default(true)
   rating           Float       @default(0)

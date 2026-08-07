@@ -48,6 +48,7 @@ type DbProductRecord = {
 	material: string;
 	image: string;
 	gallery: string[];
+	galleryColors: string[];
 	featured: boolean;
 	rating: number;
 	reviewCount: number;
@@ -79,6 +80,10 @@ export function toStoreProduct(record: DbProductRecord): Product {
 	const category = record.category.name;
 	const material = record.material || "Mixed Artisan Materials";
 	const firstVariant = record.variants[0];
+	const gallery = record.gallery.length > 0 ? record.gallery : [record.image];
+	// galleryColors is index-aligned with gallery; pad/truncate to stay in sync
+	// with older records saved before per-photo colour tagging existed.
+	const galleryColors = gallery.map((_, index) => record.galleryColors[index] ?? "");
 
 	return {
 		id: record.id,
@@ -94,7 +99,8 @@ export function toStoreProduct(record: DbProductRecord): Product {
 		sizeLabel: firstVariant?.name ?? "Standard",
 		color: inferColorFromMaterial(material),
 		image: record.image,
-		gallery: record.gallery.length > 0 ? record.gallery : [record.image],
+		gallery,
+		galleryColors,
 		rating: record.rating,
 		reviewCount: record.reviewCount,
 		featured: record.featured,
