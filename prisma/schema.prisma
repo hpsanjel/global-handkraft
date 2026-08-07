@@ -215,6 +215,16 @@ model GalleryImage {
   createdAt DateTime @default(now())
 }
 
+model DocumentCounter {
+  id        String   @id @default(cuid())
+  scope     String
+  year      Int
+  nextValue Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  @@unique([scope, year])
+}
+
 model MandapInquiry {
   id                String   @id @default(cuid())
   productId         String

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { generateDocument } from "@/lib/documents";
 
 export const runtime = "nodejs";
 
@@ -132,6 +133,16 @@ export async function POST(request: Request) {
 				return newOrder;
 			});
 
+			let receiptAttachment: { filename: string; content: Buffer } | undefined;
+			try {
+				const receipt = await generateDocument({ orderId: order.id, type: "RECEIPT", format: "buffer" });
+				receiptAttachment = { filename: receipt.fileName, content: receipt.data };
+			} catch (receiptError) {
+				// A failed PDF should never block order confirmation — the customer
+				// still gets the HTML email either way, just without the attachment.
+				console.error("Failed to generate receipt PDF for order confirmation email:", receiptError);
+			}
+
 			try {
 				await sendOrderConfirmationEmail({
 					to: session.customer_details?.email || session.customer_email || "",
@@ -149,6 +160,7 @@ export async function POST(request: Request) {
 						postalCode: session.customer_details?.address?.postal_code || "",
 						country: session.customer_details?.address?.country || "",
 					},
+					attachment: receiptAttachment,
 				});
 			} catch (emailError) {
 				console.error("Failed to send order confirmation email:", emailError);

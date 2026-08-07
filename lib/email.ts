@@ -28,6 +28,11 @@ type OrderConfirmationAddress = {
 	country: string;
 };
 
+type OrderConfirmationAttachment = {
+	filename: string;
+	content: Buffer;
+};
+
 type OrderConfirmationParams = {
 	to: string;
 	customerName: string;
@@ -39,6 +44,8 @@ type OrderConfirmationParams = {
 	total: number;
 	currency: string;
 	address: OrderConfirmationAddress;
+	/** Optional receipt PDF (from the document generation module) attached to the confirmation email. */
+	attachment?: OrderConfirmationAttachment;
 };
 
 function formatMoney(amount: number, currency: string) {
@@ -116,6 +123,7 @@ export async function sendOrderConfirmationEmail(params: OrderConfirmationParams
 		to: params.to,
 		subject: `Order confirmed — ${params.orderNumber}`,
 		html,
+		attachments: params.attachment ? [{ filename: params.attachment.filename, content: params.attachment.content }] : undefined,
 	});
 }
 
