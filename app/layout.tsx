@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CartDrawerProvider } from "@/components/cart-drawer-provider";
 import { CookieNotice } from "@/components/cookie-notice";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 
 export const metadata: Metadata = {
 	title: "Global Handcrafts AS",
@@ -30,6 +31,7 @@ export default function RootLayout({
 				{children}
 				<CartDrawerProvider />
 				<CookieNotice />
+				<WhatsAppButton />
 			</body>
 		</html>
 	);

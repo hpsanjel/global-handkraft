@@ -18,6 +18,7 @@ export function CookieNotice() {
 	const dismiss = () => {
 		window.localStorage.setItem(STORAGE_KEY, "1");
 		setVisible(false);
+		window.dispatchEvent(new Event("cookie-notice:dismissed"));
 	};
 
 	if (!visible) {
