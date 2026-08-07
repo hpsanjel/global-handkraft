@@ -34,7 +34,6 @@ type OrderConfirmationParams = {
 	orderNumber: string;
 	items: OrderConfirmationItem[];
 	subtotal: number;
-	vat: number;
 	shipping: number;
 	shippingMethod: string | null;
 	total: number;
@@ -93,12 +92,11 @@ export async function sendOrderConfirmationEmail(params: OrderConfirmationParams
 				<tbody>${itemsHtml}</tbody>
 			</table>
 
-			<table style="width:100%; margin-top:16px;">
-				<tr><td style="padding:2px 0; color:#57534e;">Subtotal</td><td style="padding:2px 0; text-align:right;">${formatMoney(params.subtotal, params.currency)}</td></tr>
-				<tr><td style="padding:2px 0; color:#57534e;">VAT</td><td style="padding:2px 0; text-align:right;">${formatMoney(params.vat, params.currency)}</td></tr>
-				<tr><td style="padding:2px 0; color:#57534e;">Shipping (${params.shippingMethod || "Standard"})</td><td style="padding:2px 0; text-align:right;">${formatMoney(params.shipping, params.currency)}</td></tr>
-				<tr style="font-weight:bold; border-top:1px solid #e7e5e4;"><td style="padding-top:8px;">Total</td><td style="text-align:right; padding-top:8px;">${formatMoney(params.total, params.currency)}</td></tr>
-			</table>
+		<table style="width:100%; margin-top:16px;">
+			<tr><td style="padding:2px 0; color:#57534e;">Subtotal</td><td style="padding:2px 0; text-align:right;">${formatMoney(params.subtotal, params.currency)}</td></tr>
+			<tr><td style="padding:2px 0; color:#57534e;">Shipping (${params.shippingMethod || "Standard"})</td><td style="padding:2px 0; text-align:right;">${formatMoney(params.shipping, params.currency)}</td></tr>
+			<tr style="font-weight:bold; border-top:1px solid #e7e5e4;"><td style="padding-top:8px;">Total</td><td style="text-align:right; padding-top:8px;">${formatMoney(params.total, params.currency)}</td></tr>
+		</table>
 
 			<h3 style="margin-top:28px; margin-bottom:6px; color:#1B365D;">Delivery details</h3>
 			<p style="color:#44403c; margin-top:0;">
@@ -198,9 +196,7 @@ export async function sendCustomInquiryAdminNotification(params: CustomInquiryNo
 		return;
 	}
 
-	const sampleImagesHtml = params.sampleImages.length
-		? `<p style="margin-top:12px;"><strong>Sample images:</strong><br/>${params.sampleImages.map((url) => `<a href="${url}" style="color:#1B365D;">${url}</a>`).join("<br/>")}</p>`
-		: "";
+	const sampleImagesHtml = params.sampleImages.length ? `<p style="margin-top:12px;"><strong>Sample images:</strong><br/>${params.sampleImages.map((url) => `<a href="${url}" style="color:#1B365D;">${url}</a>`).join("<br/>")}</p>` : "";
 
 	const html = `
 		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">

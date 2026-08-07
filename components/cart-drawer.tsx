@@ -21,6 +21,12 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
 
+	// Coupon state
+	const [couponCode, setCouponCode] = useState("");
+	const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPct: number; freeShipping: boolean; finalSubtotal: number } | null>(null);
+	const [couponError, setCouponError] = useState("");
+	const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
 	// Bring shipping state
 	const [showShippingForm, setShowShippingForm] = useState(false);
 	const [shippingPostalCode, setShippingPostalCode] = useState("");
@@ -41,6 +47,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 			setBringError("");
 		}
 	}, [isOpen]);
+
+	useEffect(() => {
+		if (appliedCoupon?.freeShipping && selectedShippingId !== STORE_PICKUP_ID) {
+			setSelectedShippingId(STORE_PICKUP_ID);
+			setShowShippingForm(false);
+			setBringOptions([]);
+		}
+	}, [appliedCoupon, selectedShippingId]);
 
 	useEffect(() => {
 		const syncItems = () => setItems(getCartItems());
@@ -95,6 +109,57 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 		setItems(getCartItems());
 	};
 
+	const handleApplyCoupon = async () => {
+		if (!couponCode.trim()) {
+			setCouponError("Please enter a coupon code.");
+			return;
+		}
+
+		setIsValidatingCoupon(true);
+		setCouponError("");
+
+		try {
+			const supabase = createClient();
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+
+			const response = await fetch("/api/coupons/validate", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					code: couponCode,
+					subtotal,
+					email: user?.email,
+				}),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok || !data.valid) {
+				throw new Error(data.error || "Invalid coupon code.");
+			}
+
+			setAppliedCoupon({
+				code: couponCode.toUpperCase(),
+				discountPct: data.discountPct,
+				freeShipping: data.freeShipping,
+				finalSubtotal: data.finalSubtotal,
+			});
+		} catch (error) {
+			setCouponError(error instanceof Error ? error.message : "Unable to apply coupon.");
+			setAppliedCoupon(null);
+		} finally {
+			setIsValidatingCoupon(false);
+		}
+	};
+
+	const handleRemoveCoupon = () => {
+		setCouponCode("");
+		setAppliedCoupon(null);
+		setCouponError("");
+	};
+
 	const handleFetchBringOptions = async () => {
 		if (!shippingPostalCode.trim()) {
 			setBringError("Please enter a postal code.");
@@ -143,7 +208,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
 	const selectedShippingOption = [...bringOptions, STORE_PICKUP_OPTION].find((option) => option.productId === selectedShippingId);
 	const selectedShippingCost = selectedShippingOption ? selectedShippingOption.priceCents / 100 : 0;
-	const estimatedTotal = subtotal + selectedShippingCost;
+	const displaySubtotal = appliedCoupon ? appliedCoupon.finalSubtotal : subtotal;
+	const shippingCostAfterCoupon = appliedCoupon?.freeShipping ? 0 : selectedShippingCost;
+	const estimatedTotal = displaySubtotal + shippingCostAfterCoupon;
 
 	const getDeliveryIcon = (type: string) => {
 		switch (type) {
@@ -177,7 +244,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 						postalCode: shippingPostalCode || undefined,
 						country: shippingCountry || undefined,
 					},
-					selectedShippingId,
+					selectedShippingId: appliedCoupon?.freeShipping ? "FREE_SHIPPING_COUPON" : selectedShippingId,
+					couponCode: appliedCoupon?.code,
 				}),
 			});
 
@@ -299,7 +367,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 								<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost}`}</span>
 							</div>
 						) : (
-							<p className="mt-1 text-xs text-stone-500">Shipping and taxes calculated at checkout.</p>
+							<p className="mt-1 text-xs text-stone-500">Shipping calculated at checkout.</p>
 						)}
 
 						{selectedShippingOption ? (
@@ -309,104 +377,131 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 							</div>
 						) : null}
 
-						{/* Bring shipping calculator */}
-						<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3">
-							<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery method</p>
-
-							<button
-								type="button"
-								onClick={() => setSelectedShippingId(STORE_PICKUP_ID)}
-								className={`mt-2 w-full rounded-xl border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}
-							>
-								<div className="flex items-start justify-between gap-3">
-									<div className="flex items-center gap-2">
-										<MapPin className="h-4 w-4" />
-										<div>
-											<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
-											<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
-										</div>
+						{/* Coupon section */}
+						{appliedCoupon ? (
+							<div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+								<div className="flex items-center justify-between">
+									<div>
+										<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Coupon Applied</p>
+										<p className="mt-1 font-mono text-sm font-semibold text-emerald-900">{appliedCoupon.code}</p>
+										<p className="text-xs text-emerald-700">
+											{appliedCoupon.discountPct}% discount {appliedCoupon.freeShipping && "• Free shipping"}
+										</p>
 									</div>
-									<p className="text-sm font-semibold text-stone-900">Free</p>
+									<button type="button" onClick={handleRemoveCoupon} className="text-xs font-medium text-emerald-700 underline underline-offset-2 hover:text-emerald-900">
+										Remove
+									</button>
 								</div>
-								{selectedShippingId === STORE_PICKUP_ID ? (
-									<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-										<Check className="h-3.5 w-3.5" />
-										Selected
+							</div>
+						) : (
+							<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3">
+								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Have a coupon?</p>
+								<div className="mt-2 flex gap-2">
+									<input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
+									<button type="button" onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
+										{isValidatingCoupon ? "Applying..." : "Apply"}
+									</button>
+								</div>
+								{couponError ? <p className="mt-2 text-xs text-red-600">{couponError}</p> : null}
+							</div>
+						)}
+
+						{/* Bring shipping calculator */}
+						{!appliedCoupon?.freeShipping && (
+							<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3">
+								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery method</p>
+
+								<button type="button" onClick={() => setSelectedShippingId(STORE_PICKUP_ID)} className={`mt-2 w-full rounded-xl border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+									<div className="flex items-start justify-between gap-3">
+										<div className="flex items-center gap-2">
+											<MapPin className="h-4 w-4" />
+											<div>
+												<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
+												<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
+											</div>
+										</div>
+										<p className="text-sm font-semibold text-stone-900">Free</p>
+									</div>
+									{selectedShippingId === STORE_PICKUP_ID ? (
+										<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+											<Check className="h-3.5 w-3.5" />
+											Selected
+										</div>
+									) : null}
+								</button>
+
+								{!showShippingForm && bringOptions.length === 0 ? (
+									<button type="button" onClick={() => setShowShippingForm(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium text-stone-700 transition hover:bg-stone-100">
+										<Truck className="h-3.5 w-3.5" />
+										Calculate delivery costs
+									</button>
+								) : null}
+
+								{bringOptions.length === 0 && showShippingForm ? (
+									<div className="mt-2 rounded-xl border border-stone-200 bg-white p-3">
+										<div className="grid grid-cols-2 gap-2">
+											<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900">
+												{SHIPPING_COUNTRIES.map((c) => (
+													<option key={c.code} value={c.code}>
+														{c.name}
+													</option>
+												))}
+											</select>
+											<input type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900" />
+										</div>
+										{bringError ? <p className="mt-2 text-xs text-red-600">{bringError}</p> : null}
+										<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
+											{isLoadingBring ? (
+												<>
+													<Loader2 className="h-3.5 w-3.5 animate-spin" />
+													Calculating...
+												</>
+											) : (
+												"Get shipping rates"
+											)}
+										</button>
 									</div>
 								) : null}
-							</button>
+							</div>
+						)}
 
-							{!showShippingForm && bringOptions.length === 0 ? (
-								<button type="button" onClick={() => setShowShippingForm(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium text-stone-700 transition hover:bg-stone-100">
-									<Truck className="h-3.5 w-3.5" />
-									Calculate delivery costs
-								</button>
-							) : null}
-
-							{bringOptions.length === 0 && showShippingForm ? (
-								<div className="mt-2 rounded-xl border border-stone-200 bg-white p-3">
-									<div className="grid grid-cols-2 gap-2">
-										<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900">
-											{SHIPPING_COUNTRIES.map((c) => (
-												<option key={c.code} value={c.code}>
-													{c.name}
-												</option>
-											))}
-										</select>
-										<input type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900" />
-									</div>
-									{bringError ? <p className="mt-2 text-xs text-red-600">{bringError}</p> : null}
-									<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
-										{isLoadingBring ? (
-											<>
-												<Loader2 className="h-3.5 w-3.5 animate-spin" />
-												Calculating...
-											</>
-										) : (
-											"Get shipping rates"
-										)}
-									</button>
-								</div>
-							) : null}
-
-							{bringOptions.length > 0 ? (
-								<div className="mt-2 space-y-2">
-									{bringOptions.map((option) => (
-										<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-xl border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
-											<div className="flex items-start justify-between gap-3">
-												<div className="flex items-center gap-2">
-													{getDeliveryIcon(option.deliveryType)}
-													<div>
-														<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
-														{option.expectedDelivery ? <p className="text-xs text-stone-500">{option.expectedDelivery}</p> : null}
-													</div>
+						{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
+							<div className="mt-2 space-y-2">
+								{bringOptions.map((option) => (
+									<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-xl border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+										<div className="flex items-start justify-between gap-3">
+											<div className="flex items-center gap-2">
+												{getDeliveryIcon(option.deliveryType)}
+												<div>
+													<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
+													{option.expectedDelivery ? <p className="text-xs text-stone-500">{option.expectedDelivery}</p> : null}
 												</div>
-												<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
 											</div>
-											{selectedShippingId === option.productId ? (
-												<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-													<Check className="h-3.5 w-3.5" />
-													Selected
-												</div>
-											) : null}
-										</button>
-									))}
-									<button
-										type="button"
-										onClick={() => {
-											setBringOptions([]);
-											setSelectedShippingId(STORE_PICKUP_ID);
-										}}
-										className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700"
-									>
-										Change location
+											<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
+										</div>
+										{selectedShippingId === option.productId ? (
+											<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+												<Check className="h-3.5 w-3.5" />
+												Selected
+											</div>
+										) : null}
 									</button>
-								</div>
-							) : null}
-						</div>
+								))}
+								<button
+									type="button"
+									onClick={() => {
+										setBringOptions([]);
+										setSelectedShippingId(STORE_PICKUP_ID);
+									}}
+									className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700"
+								>
+									Change location
+								</button>
+							</div>
+						) : null}
 
 						<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
-							{isCheckingOut ? "Preparing checkout..." : "Proceed to Checkout"}
+							{isCheckingOut ? "Preparing checkout..." : appliedCoupon?.freeShipping ? "Proceed to Checkout" : "Checkout with Stripe"}
 						</button>
 						{checkoutError ? <p className="mt-2 text-center text-xs text-red-600">{checkoutError}</p> : null}
 						<Link href="/cart" onClick={onClose} className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">

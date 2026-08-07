@@ -42,6 +42,7 @@ export type PricedCheckoutItem = {
 	name: string;
 	unitAmountCents: number;
 	lineSubtotal: number;
+	image: string;
 	/** Weight in kg as stored on the Variant (e.g. "10 kg") */
 	weight: string;
 	/** Width in cm as stored on the Variant (e.g. "40 cm") */
@@ -119,6 +120,7 @@ async function priceCheckoutItems(items: CheckoutItem[]): Promise<PricedCheckout
 				name,
 				unitAmountCents: Math.round(unitAmount * 100),
 				lineSubtotal: unitAmount * item.quantity,
+				image: variant.product.image,
 				weight: variant.weight,
 				width: variant.width,
 				height: variant.height,
@@ -166,9 +168,10 @@ async function findOrCreateCustomer(stripe: Stripe, email: string, shippingAddre
  * When Bring API is available, creates multiple shipping options
  * based on real Bring rates. Falls back to static rates otherwise.
  */
-async function buildShippingOptions(shippingAddress: SavedShippingAddress | undefined, pricedItems: PricedCheckoutItem[], subtotal: number, selectedShippingId?: string | null): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
+async function buildShippingOptions(shippingAddress: SavedShippingAddress | undefined, pricedItems: PricedCheckoutItem[], subtotal: number, selectedShippingId?: string | null, hasFreeShippingCoupon?: boolean): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
 	// Store pickup: skip Bring entirely, single free option.
-	if (selectedShippingId === STORE_PICKUP_ID) {
+	// However, if a free shipping coupon is applied, don't show store pickup option.
+	if (selectedShippingId === STORE_PICKUP_ID && !hasFreeShippingCoupon) {
 		return [
 			{
 				shipping_rate_data: {
@@ -181,6 +184,27 @@ async function buildShippingOptions(shippingAddress: SavedShippingAddress | unde
 					metadata: {
 						bring_product_id: STORE_PICKUP_ID,
 						bring_delivery_type: "PICKUP",
+					},
+				},
+			},
+		];
+	}
+
+	// If free shipping coupon is applied, skip store pickup and return a generic free shipping option
+	// This keeps "Free" in the summary without showing "Collect Myself — Bærum Store"
+	if (hasFreeShippingCoupon) {
+		return [
+			{
+				shipping_rate_data: {
+					type: "fixed_amount",
+					fixed_amount: {
+						amount: 0,
+						currency: DEFAULT_CURRENCY,
+					},
+					display_name: "Free shipping",
+					metadata: {
+						bring_product_id: "FREE_SHIPPING_COUPON",
+						bring_delivery_type: "HOME",
 					},
 				},
 			},
@@ -267,6 +291,7 @@ export async function POST(request: Request) {
 			customerEmail?: string;
 			shippingAddress?: SavedShippingAddress;
 			selectedShippingId?: string | null;
+			couponCode?: string;
 		};
 		const items = body.items;
 
@@ -285,24 +310,79 @@ export async function POST(request: Request) {
 
 		const pricedItems = await priceCheckoutItems(items);
 		const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-		const line_items = pricedItems.map((item) => ({
-			price_data: {
-				currency: DEFAULT_CURRENCY,
-				product_data: {
-					name: item.name,
-					description: `Equivalent: ${formatEurEquivalent(item.unitAmountCents / 100)} EUR`,
+		const line_items = pricedItems.map((item) => {
+			// Stripe Checkout only renders images from publicly reachable https
+			// URLs (product images live in Supabase Storage), so skip local/dev URLs.
+			const images = item.image?.startsWith("https://") ? [item.image] : undefined;
+
+			const specs = [item.weight, [item.width, item.height, item.depth].filter(Boolean).join(" x ")].filter(Boolean).join(" · ");
+			const description = [specs, `Equivalent: ${formatEurEquivalent(item.unitAmountCents / 100)} EUR`].filter(Boolean).join(" — ");
+
+			return {
+				price_data: {
+					currency: DEFAULT_CURRENCY,
+					product_data: {
+						name: item.name,
+						description,
+						images,
+						metadata: {
+							productId: item.productId,
+							image: item.image,
+						},
+					},
+					unit_amount: item.unitAmountCents,
 				},
-				unit_amount: item.unitAmountCents,
-			},
-			quantity: item.quantity,
-		}));
+				quantity: item.quantity,
+			};
+		});
 
 		const compactItems = pricedItems.map((item) => `${item.productId}:${item.variantId}:${item.quantity}:${item.addonIds.join("+")}`).join("|");
 
 		const subtotal = pricedItems.reduce((sum, item) => sum + item.lineSubtotal, 0);
 
+		// Handle coupon if provided - do this before building shipping options
+		let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
+		let hasFreeShippingCoupon = false;
+		if (body.couponCode) {
+			try {
+				const normalizedCode = body.couponCode.trim().toUpperCase();
+				const coupon = await prisma.coupon.findUnique({
+					where: { code: normalizedCode },
+					select: { id: true, code: true, discountPct: true, freeShipping: true, active: true, expiresAt: true, maxUses: true, currentUses: true },
+				});
+
+				if (coupon && coupon.active && (!coupon.expiresAt || coupon.expiresAt >= new Date()) && (!coupon.maxUses || coupon.currentUses < coupon.maxUses)) {
+					hasFreeShippingCoupon = coupon.freeShipping;
+
+					// Only create a Stripe coupon if there's an actual percentage discount
+					if (coupon.discountPct > 0) {
+						const stripeCoupon = await stripe.coupons.create({
+							name: coupon.code,
+							percent_off: coupon.discountPct,
+							duration: "once",
+						});
+
+						discounts = [
+							{
+								coupon: stripeCoupon.id,
+							},
+						];
+					}
+
+					// Increment coupon usage
+					await prisma.coupon.update({
+						where: { id: coupon.id },
+						data: { currentUses: { increment: 1 } },
+					});
+				}
+			} catch (couponError) {
+				console.warn("Failed to apply coupon:", couponError);
+				// Continue without coupon rather than failing the entire checkout
+			}
+		}
+
 		// Build shipping options - uses Bring API if configured, falls back to static
-		const shippingOptions = await buildShippingOptions(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId);
+		const shippingOptions = await buildShippingOptions(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId, hasFreeShippingCoupon);
 
 		let customer: Stripe.Customer | undefined;
 		if (body.customerEmail) {
@@ -316,19 +396,18 @@ export async function POST(request: Request) {
 		const session = await stripe.checkout.sessions.create({
 			mode: "payment",
 			line_items,
-			automatic_tax: {
-				enabled: true,
-			},
 			shipping_address_collection: {
 				allowed_countries: SHIPPING_COUNTRY_CODES as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
 			},
 			shipping_options: shippingOptions,
+			...(discounts && { discounts }),
 
-			allow_promotion_codes: true,
+			allow_promotion_codes: !body.couponCode,
 			success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${origin}/checkout/cancel`,
 			metadata: {
 				items: compactItems,
+				...(body.couponCode && { couponCode: body.couponCode.toUpperCase() }),
 			},
 			invoice_creation: {
 				enabled: true,

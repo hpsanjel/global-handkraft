@@ -99,7 +99,7 @@ model Order {
   orderNumber       String      @unique
   status            String      @default("PENDING")
   subtotal          Float
-  vat               Float
+  vat               Float?      @default(0)
   shipping          Float
   total             Float
   currency          String      @default("NOK")
@@ -149,11 +149,20 @@ model Review {
 }
 
 model Coupon {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  discountPct Float
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id                  String    @id @default(cuid())
+  code                String    @unique
+  discountPct         Float
+  freeShipping        Boolean   @default(false)
+  active              Boolean   @default(true)
+  expiresAt           DateTime?
+  maxUses             Int?      // null = unlimited
+  maxUsesPerCustomer  Int?      // null = unlimited per customer
+  currentUses         Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@index([code])
+  @@index([expiresAt])
 }
 
 model VATRate {

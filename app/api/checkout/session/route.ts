@@ -42,6 +42,7 @@ export async function GET(request: Request) {
 			name: lineItem.description || "Item",
 			quantity: lineItem.quantity || 1,
 			amount: (lineItem.amount_total ?? 0) / 100,
+			image: lineItem.metadata?.image || null,
 		}));
 
 		return NextResponse.json({
@@ -50,9 +51,9 @@ export async function GET(request: Request) {
 			customerName: session.customer_details?.name || "",
 			items,
 			subtotal: (session.amount_subtotal ?? 0) / 100,
-			vat: (session.total_details?.amount_tax ?? 0) / 100,
 			shipping: (session.total_details?.amount_shipping ?? 0) / 100,
 			shippingMethod,
+			couponCode: session.metadata?.couponCode || null,
 			total: (session.amount_total ?? 0) / 100,
 			currency: (session.currency || "nok").toUpperCase(),
 			address: {

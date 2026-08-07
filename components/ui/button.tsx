@@ -5,10 +5,16 @@ import { cn } from "@/lib/utils";
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	asChild?: boolean;
 	variant?: "default" | "outline" | "destructive";
+	size?: "default" | "icon";
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, asChild = false, variant = "default", ...props }, ref) => {
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, asChild = false, variant = "default", size = "default", ...props }, ref) => {
 	const Comp = asChild ? Slot : "button";
+
+	const sizeClasses = {
+		default: "px-5 py-3",
+		icon: "p-2",
+	};
 
 	const variantClasses = {
 		default: "bg-stone-900 text-white hover:bg-stone-700",
@@ -16,7 +22,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, as
 		destructive: "bg-red-600 text-white hover:bg-red-500",
 	};
 
-	return <Comp className={cn("inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60", variantClasses[variant], className)} ref={ref} {...props} />;
+	return <Comp className={cn("inline-flex items-center justify-center rounded-full text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60", sizeClasses[size], variantClasses[variant], className)} ref={ref} {...props} />;
 });
 Button.displayName = "Button";
 

@@ -19,6 +19,12 @@ export default function CartPage() {
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
 
+	// Coupon state
+	const [couponCode, setCouponCode] = useState("");
+	const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPct: number; freeShipping: boolean; finalSubtotal: number } | null>(null);
+	const [couponError, setCouponError] = useState("");
+	const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
 	// Bring shipping state
 	const [showShippingForm, setShowShippingForm] = useState(false);
 	const [shippingPostalCode, setShippingPostalCode] = useState("");
@@ -45,6 +51,14 @@ export default function CartPage() {
 			window.removeEventListener("pageshow", syncItems);
 		};
 	}, []);
+
+	useEffect(() => {
+		if (appliedCoupon?.freeShipping && selectedShippingId !== STORE_PICKUP_ID) {
+			setSelectedShippingId(STORE_PICKUP_ID);
+			setShowShippingForm(false);
+			setBringOptions([]);
+		}
+	}, [appliedCoupon, selectedShippingId]);
 
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
 	const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
@@ -142,6 +156,57 @@ export default function CartPage() {
 		setItems(getCartItems());
 	};
 
+	const handleApplyCoupon = async () => {
+		if (!couponCode.trim()) {
+			setCouponError("Please enter a coupon code.");
+			return;
+		}
+
+		setIsValidatingCoupon(true);
+		setCouponError("");
+
+		try {
+			const supabase = createClient();
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+
+			const response = await fetch("/api/coupons/validate", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					code: couponCode,
+					subtotal,
+					email: user?.email,
+				}),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok || !data.valid) {
+				throw new Error(data.error || "Invalid coupon code.");
+			}
+
+			setAppliedCoupon({
+				code: couponCode.toUpperCase(),
+				discountPct: data.discountPct,
+				freeShipping: data.freeShipping,
+				finalSubtotal: data.finalSubtotal,
+			});
+		} catch (error) {
+			setCouponError(error instanceof Error ? error.message : "Unable to apply coupon.");
+			setAppliedCoupon(null);
+		} finally {
+			setIsValidatingCoupon(false);
+		}
+	};
+
+	const handleRemoveCoupon = () => {
+		setCouponCode("");
+		setAppliedCoupon(null);
+		setCouponError("");
+	};
+
 	const getSelectedShippingCost = (): number => {
 		if (!selectedShippingId) return 0;
 		const option = [...bringOptions, STORE_PICKUP_OPTION].find((o: BringShippingOption) => o.productId === selectedShippingId);
@@ -169,7 +234,8 @@ export default function CartPage() {
 						postalCode: shippingPostalCode || undefined,
 						country: shippingCountry || undefined,
 					},
-					selectedShippingId,
+					selectedShippingId: appliedCoupon?.freeShipping ? "FREE_SHIPPING_COUPON" : selectedShippingId,
+					couponCode: appliedCoupon?.code,
 				}),
 			});
 
@@ -196,7 +262,9 @@ export default function CartPage() {
 	};
 
 	const selectedShippingCost = getSelectedShippingCost();
-	const estimatedTotal = subtotal + selectedShippingCost;
+	const displaySubtotal = appliedCoupon ? appliedCoupon.finalSubtotal : subtotal;
+	const shippingCostAfterCoupon = appliedCoupon?.freeShipping ? 0 : selectedShippingCost;
+	const estimatedTotal = displaySubtotal + shippingCostAfterCoupon;
 
 	const getDeliveryIcon = (type: string) => {
 		switch (type) {
@@ -291,9 +359,9 @@ export default function CartPage() {
 										<div className="mt-4 space-y-3">
 											<div className="flex items-center justify-between text-sm text-stone-600">
 												<span>Subtotal</span>
-												<span>NOK {subtotal}</span>
+												<span>NOK {displaySubtotal}</span>
 											</div>
-											{selectedShippingId ? (
+											{selectedShippingId && !appliedCoupon?.freeShipping ? (
 												<div className="flex items-center justify-between text-sm">
 													<span className="text-stone-600">Shipping</span>
 													<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost}`}</span>
@@ -312,29 +380,56 @@ export default function CartPage() {
 											</div>
 										</div>
 
-										{/* Store pickup option — always available regardless of Bring quote state */}
-										<button
-											type="button"
-											onClick={() => setSelectedShippingId(STORE_PICKUP_ID)}
-											className={`mt-4 w-full rounded-[1rem] border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}
-										>
-											<div className="flex items-start justify-between gap-3">
-												<div className="flex items-center gap-2">
-													<MapPin className="h-4 w-4" />
+										{/* Coupon section */}
+										{appliedCoupon ? (
+											<div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+												<div className="flex items-center justify-between">
 													<div>
-														<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
-														<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
+														<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Coupon Applied</p>
+														<p className="mt-1 font-mono text-sm font-semibold text-emerald-900">{appliedCoupon.code}</p>
+														<p className="text-xs text-emerald-700">
+															{appliedCoupon.discountPct}% discount {appliedCoupon.freeShipping && "• Free shipping"}
+														</p>
 													</div>
+													<button type="button" onClick={handleRemoveCoupon} className="text-xs font-medium text-emerald-700 underline underline-offset-2 hover:text-emerald-900">
+														Remove
+													</button>
 												</div>
-												<p className="text-sm font-semibold text-stone-900">Free</p>
 											</div>
-											{selectedShippingId === STORE_PICKUP_ID ? (
-												<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-													<Check className="h-3.5 w-3.5" />
-													Selected
+										) : (
+											<div className="mt-4 rounded-2xl border border-stone-200 bg-white p-3">
+												<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Have a coupon?</p>
+												<div className="mt-2 flex gap-2">
+													<input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
+													<button type="button" onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
+														{isValidatingCoupon ? "Applying..." : "Apply"}
+													</button>
 												</div>
-											) : null}
-										</button>
+												{couponError ? <p className="mt-2 text-xs text-red-600">{couponError}</p> : null}
+											</div>
+										)}
+
+										{/* Store pickup option — hidden when free shipping coupon is applied */}
+										{!appliedCoupon?.freeShipping && (
+											<button type="button" onClick={() => setSelectedShippingId(STORE_PICKUP_ID)} className={`mt-4 w-full rounded-[1rem] border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
+												<div className="flex items-start justify-between gap-3">
+													<div className="flex items-center gap-2">
+														<MapPin className="h-4 w-4" />
+														<div>
+															<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
+															<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
+														</div>
+													</div>
+													<p className="text-sm font-semibold text-stone-900">Free</p>
+												</div>
+												{selectedShippingId === STORE_PICKUP_ID ? (
+													<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+														<Check className="h-3.5 w-3.5" />
+														Selected
+													</div>
+												) : null}
+											</button>
+										)}
 
 										{/* Bring Shipping Calculator */}
 										{!showShippingForm && bringOptions.length === 0 ? (
@@ -344,7 +439,7 @@ export default function CartPage() {
 											</button>
 										) : null}
 
-										{bringOptions.length === 0 && showShippingForm ? (
+										{!appliedCoupon?.freeShipping && bringOptions.length === 0 && showShippingForm ? (
 											<div className="mt-4 rounded-[1rem] border border-stone-200 bg-white p-4">
 												<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery location</label>
 												<div className="mt-2 grid grid-cols-2 gap-2">
@@ -376,7 +471,7 @@ export default function CartPage() {
 										) : null}
 
 										{/* Available Bring Options */}
-										{bringOptions.length > 0 ? (
+										{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
 											<div className="mt-4 space-y-2">
 												<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Select shipping method</p>
 												{bringOptions.map((option) => (
@@ -417,7 +512,7 @@ export default function CartPage() {
 										) : null}
 
 										<button type="button" onClick={handleCheckout} disabled={isCheckingOut || items.length === 0} className="mt-6 w-full rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
-											{isCheckingOut ? "Redirecting to Stripe..." : "Checkout with Stripe"}
+											{isCheckingOut ? "Redirecting to Stripe..." : appliedCoupon?.freeShipping ? "Proceed to Checkout" : "Checkout with Stripe"}
 										</button>
 										<Link href="/shop" className="mt-3 inline-flex w-full items-center justify-center text-sm font-semibold text-[#1B365D] underline-offset-4 transition hover:text-[#152d4c] hover:underline">
 											Continue shopping

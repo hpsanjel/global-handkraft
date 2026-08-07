@@ -76,6 +76,9 @@ export default async function AdminPage() {
 							<Link href="/admin/settings" className="block rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-700 transition hover:border-stone-300 hover:text-stone-900">
 								Shipping and VAT
 							</Link>
+							<Link href="/admin/coupons" className="block rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-700 transition hover:border-stone-300 hover:text-stone-900">
+								Manage coupon codes
+							</Link>
 						</div>
 					</div>
 				</div>
