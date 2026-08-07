@@ -14,7 +14,7 @@ export const BUSINESS: Business = {
 			countryCode: "NO",
 		},
 		email: "contact@handcraftsglobal.com",
-		supportEmail: "hello@handcraftsglobal.com",
+		supportEmail: "contact@handcraftsglobal.com",
 		supportPhone: "+47 912 67 612",
 		website: "handcraftsglobal.com",
 	},

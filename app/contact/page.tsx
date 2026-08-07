@@ -20,7 +20,7 @@ export default function ContactPage() {
 					<div className="mt-8 rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
 						<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-900">Business details</p>
 						<ul className="mt-4 space-y-3 text-sm text-stone-600">
-							<li>Email: hello@handcraftsglobal.com</li>
+							<li>Email: contact@handcraftsglobal.com</li>
 							<li>WhatsApp: +47 91267612</li>
 							<li>Address: Oslo, Norway</li>
 						</ul>

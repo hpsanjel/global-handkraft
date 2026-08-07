@@ -16,7 +16,7 @@ export default function ShippingPage() {
 
 				<div className="space-y-6 text-gray-700 leading-7">
 					<p>
-						At <strong>Global Handkraft</strong>, we take pride in delivering authentic handcrafted products safely and efficiently to customers worldwide.
+						At <strong>Global Handcrafts</strong>, we take pride in delivering authentic handcrafted products safely and efficiently to customers worldwide.
 					</p>
 
 					<section>
@@ -64,7 +64,7 @@ export default function ShippingPage() {
 						<p>If you have any questions about shipping, delivery, or your order, please contact us through our website or our official support email.</p>
 					</section>
 
-					<p className="text-sm text-gray-500 pt-6 border-t">By placing an order with Global Handkraft, you agree to this Shipping Policy.</p>
+					<p className="text-sm text-gray-500 pt-6 border-t">By placing an order with Global Handcrafts, you agree to this Shipping Policy.</p>
 				</div>
 			</main>
 			<SiteFooter />

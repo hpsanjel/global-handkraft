@@ -16,7 +16,7 @@ export default function PrivacyPage() {
 
 				<div className="space-y-6 text-gray-700 leading-7">
 					<p>
-						At <strong>Global Handkraft</strong>, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.
+						At <strong>Global Handcrafts</strong>, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.
 					</p>
 
 					<section>
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
 						<p>If you have any questions about this Privacy Policy, please contact us through our website or via our official support email.</p>
 					</section>
 
-					<p className="text-sm text-gray-500 pt-6 border-t">By using Global Handkraft, you agree to the terms of this Privacy Policy.</p>
+					<p className="text-sm text-gray-500 pt-6 border-t">By using Global Handcrafts, you agree to the terms of this Privacy Policy.</p>
 				</div>
 			</main>
 

@@ -32,7 +32,7 @@ export default function ReturnsPage() {
 					<section>
 						<h2 className="text-2xl font-semibold mb-2">Contact Us</h2>
 						<p>
-							If you have any questions regarding this policy, please contact us through our website&apos;s <a href="/contact">contact form</a> or our official support <a href="mailto:hello@handcraftsglobal.com">email</a>.
+							If you have any questions regarding this policy, please contact us through our website&apos;s <a href="/contact">contact form</a> or our official support <a href="mailto:contact@handcraftsglobal.com">email</a>.
 						</p>
 					</section>
 

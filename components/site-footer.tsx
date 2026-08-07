@@ -34,7 +34,7 @@ export function SiteFooter() {
 					<div>
 						<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-900">Contact</p>
 						<ul className="mt-3 space-y-2 text-sm text-stone-600">
-							<li>hello@handcraftsglobal.com</li>
+							<li>contact@handcraftsglobal.com</li>
 							<li>+47 91267612</li>
 							<li>Oslo, Norway</li>
 						</ul>

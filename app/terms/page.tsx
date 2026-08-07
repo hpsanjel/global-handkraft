@@ -16,7 +16,7 @@ export default function TermsPage() {
 
 				<div className="space-y-6 text-gray-700 leading-7">
 					<p>
-						Welcome to <strong>Global Handkraft</strong>. By accessing our website or placing an order, you agree to these Terms & Conditions. Please read them carefully before making a purchase.
+						Welcome to <strong>Global Handcrafts</strong>. By accessing our website or placing an order, you agree to these Terms & Conditions. Please read them carefully before making a purchase.
 					</p>
 
 					<section>
@@ -58,12 +58,12 @@ export default function TermsPage() {
 
 					<section>
 						<h2 className="text-2xl font-semibold mb-2">Intellectual Property</h2>
-						<p>All website content, including text, images, logos, and designs, is the property of Global Handkraft and may not be copied, reproduced, or distributed without written permission.</p>
+						<p>All website content, including text, images, logos, and designs, is the property of Global Handcrafts and may not be copied, reproduced, or distributed without written permission.</p>
 					</section>
 
 					<section>
 						<h2 className="text-2xl font-semibold mb-2">Limitation of Liability</h2>
-						<p>Global Handkraft is not responsible for indirect or consequential damages arising from the use of our website or products, to the extent permitted by applicable law.</p>
+						<p>Global Handcrafts is not responsible for indirect or consequential damages arising from the use of our website or products, to the extent permitted by applicable law.</p>
 					</section>
 
 					<section>
@@ -77,7 +77,7 @@ export default function TermsPage() {
 					</section>
 
 					<p className="text-sm text-gray-500 pt-6 border-t">
-						By purchasing from <strong>Global Handkraft</strong>, you agree to these Terms & Conditions, as well as our Privacy Policy, Shipping Policy, and Return & Refund Policy.
+						By purchasing from <strong>Global Handcrafts</strong>, you agree to these Terms & Conditions, as well as our Privacy Policy, Shipping Policy, and Return & Refund Policy.
 					</p>
 				</div>
 			</main>
