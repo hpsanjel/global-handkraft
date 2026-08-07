@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getRecentOrders, getMandapInquiries } from "@/lib/admin";
 import { OrderStatusControl } from "./OrderStatusControl";
+import { OrderDocumentsMenu } from "./OrderDocumentsMenu";
 
 function formatCurrency(amount: number, currency: string) {
 	return new Intl.NumberFormat("en-GB", {
@@ -51,8 +52,9 @@ export default async function AdminOrdersPage() {
 										</div>
 										<div className="text-left sm:text-right">
 											<p className="font-semibold text-stone-900">{formatCurrency(order.amount, order.currency)}</p>
-											<div className="mt-1">
+											<div className="mt-1 flex flex-col items-start gap-2 sm:items-end">
 												<OrderStatusControl orderId={order.orderId} currentStatus={order.status} />
+												<OrderDocumentsMenu orderId={order.orderId} />
 											</div>
 										</div>
 									</div>

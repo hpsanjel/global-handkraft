@@ -117,6 +117,23 @@ export default function AccountOrdersPage() {
 									</div>
 								</div>
 							</div>
+							<div className="mt-4 flex flex-wrap gap-2 border-t border-stone-200 pt-4">
+								{([
+									["RECEIPT", "Receipt"],
+									["COMMERCIAL_INVOICE", "Invoice"],
+									["ORDER_SUMMARY", "Order summary"],
+								] as const).map(([type, label]) => (
+									<a
+										key={type}
+										href={`/api/account/orders/${order.id}/documents/${type}`}
+										target="_blank"
+										rel="noreferrer"
+										className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 transition hover:bg-stone-100"
+									>
+										{label}
+									</a>
+								))}
+							</div>
 							<div className="mt-4 space-y-3 border-t border-stone-200 pt-4">
 								{order.items.map((item) => (
 									<div key={item.id} className="text-sm text-stone-700">
