@@ -120,6 +120,15 @@ export async function POST(request: Request) {
 					data: { orderId: newOrder.id, status: "PAID" },
 				});
 
+				await Promise.all(
+					pricedItems.map((item) =>
+						tx.variant.update({
+							where: { id: item.variantId },
+							data: { stock: { decrement: item.quantity } },
+						}),
+					),
+				);
+
 				return newOrder;
 			});
 

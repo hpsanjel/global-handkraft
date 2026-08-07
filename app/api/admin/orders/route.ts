@@ -83,7 +83,7 @@ export async function PATCH(request: Request) {
 
 		const existingOrder = await prisma.order.findUnique({
 			where: { id: orderId },
-			include: { address: true },
+			include: { address: true, items: true },
 		});
 
 		if (!existingOrder) {
@@ -94,9 +94,20 @@ export async function PATCH(request: Request) {
 			return NextResponse.json({ order: existingOrder, message: "Status unchanged." });
 		}
 
+		const restockingStatuses = ["CANCELLED", "REFUNDED"];
+		const isReturn = restockingStatuses.includes(status) && !restockingStatuses.includes(existingOrder.status);
+
 		const [updatedOrder] = await prisma.$transaction([
 			prisma.order.update({ where: { id: orderId }, data: { status } }),
 			prisma.orderStatusEvent.create({ data: { orderId, status, note: note?.trim() || null } }),
+			...(isReturn
+				? existingOrder.items.map((item) =>
+						prisma.variant.update({
+							where: { id: item.variantId },
+							data: { stock: { increment: item.quantity } },
+						}),
+					)
+				: []),
 		]);
 
 		try {
