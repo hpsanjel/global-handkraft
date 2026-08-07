@@ -18,13 +18,6 @@ export const BUSINESS: Business = {
 		supportPhone: "+47 912 67 612",
 		website: "handcraftsglobal.com",
 	},
-	returnAddress: {
-		line1: "Belsetveien 80",
-		city: "Rykkinn",
-		postalCode: "1348",
-		country: "Norway",
-		countryCode: "NO",
-	},
 	defaultCountryOfOrigin: "IN",
 	defaultCurrency: { code: "NOK", symbol: "kr", decimalDigits: 2 },
 };

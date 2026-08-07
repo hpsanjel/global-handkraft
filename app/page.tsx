@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import Image from "next/image";
 import { HomeCategoryProductsSection } from "@/components/home-category-products-section";
+import { CouponPopup } from "@/components/coupon-popup";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
@@ -106,6 +107,7 @@ export default function HomePage() {
 
 	return (
 		<div className="flex min-h-screen flex-col bg-saffron text-stone-800">
+			<CouponPopup />
 			<SiteHeader />
 			<main className="flex-1">
 				<section className="hidden sm:relative overflow-hidden">

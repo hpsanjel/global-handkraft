@@ -23,6 +23,8 @@ export interface Shipment {
 
 export interface ShippingInformation {
 	method: string | null;
+	/** True when the customer chose in-store pickup rather than a shipped delivery. */
+	isPickup: boolean;
 	estimatedDelivery: string | null;
 	address: Address;
 	shipment: Shipment | null;

@@ -2,7 +2,7 @@ import { Document, Text, View } from "@react-pdf/renderer";
 import type { OrderDocumentData } from "../../types";
 import { sharedStyles } from "../../styles/stylesheet";
 import { colors, spacing } from "../../styles/theme";
-import { DocumentPage, CompanyHeader, CompanyFooter, OrderMetaBlock, ItemsTable, PageNumber } from "../components";
+import { DocumentPage, CompanyHeader, CompanyFooter, OrderMetaBlock, ItemsTable } from "../components";
 
 interface GiftReceiptTemplateProps {
 	data: OrderDocumentData;
@@ -14,7 +14,7 @@ export function GiftReceiptTemplate({ data }: GiftReceiptTemplateProps) {
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Gift Receipt`} author={business.seller.legalName}>
-			<DocumentPage footer={<><CompanyFooter seller={business.seller} /><PageNumber /></>}>
+			<DocumentPage footer={<CompanyFooter seller={business.seller} />}>
 				<CompanyHeader seller={business.seller} documentTitle="Gift Receipt" documentNumber={data.metadata.documentNumber} issuedAt={data.metadata.issuedAt} />
 
 				<View style={[sharedStyles.sectionSpacing, { padding: spacing.sm, backgroundColor: colors.neutral[50] }]}>

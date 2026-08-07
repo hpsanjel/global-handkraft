@@ -1,3 +1,4 @@
+import { DEFAULT_RETURN_POLICY } from "@/lib/product-transform";
 import type { Product } from "@/types/store";
 
 const baseProducts: Product[] = [
@@ -15,7 +16,7 @@ const baseProducts: Product[] = [
 		reviewCount: 84,
 		featured: true,
 		shippingInfo: "Norway: 3-5 days. Sweden/Denmark: 4-7 days. Finland/Germany: 5-10 days.",
-		returnPolicy: "Returns within 14 days for unused items in original packaging.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "small", name: "Standard", price: 2490, width: "40 cm", height: "62 cm", depth: "30 cm", weight: "10 kg", stock: 14 },
 			{ id: "small-deluxe", name: "Deluxe", price: 3190, width: "45 cm", height: "70 cm", depth: "34 cm", weight: "12 kg", stock: 8 },
@@ -39,7 +40,7 @@ const baseProducts: Product[] = [
 		reviewCount: 112,
 		featured: true,
 		shippingInfo: "Delivered in 4-8 days across Scandinavia and 5-10 days in Germany.",
-		returnPolicy: "Returns within 14 days. Custom engraving items are exchange-only.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "medium-std", name: "Standard", price: 4490, width: "58 cm", height: "96 cm", depth: "40 cm", weight: "18 kg", stock: 9 },
 			{ id: "medium-prem", name: "Premium", price: 5790, width: "65 cm", height: "108 cm", depth: "44 cm", weight: "22 kg", stock: 5 },
@@ -63,7 +64,7 @@ const baseProducts: Product[] = [
 		reviewCount: 63,
 		featured: true,
 		shippingInfo: "White-glove pallet shipping with tracking. Delivery 5-10 business days.",
-		returnPolicy: "Returns accepted within 14 days. White-glove return pickup available.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "regal-m", name: "Regal Medium", price: 8990, width: "78 cm", height: "128 cm", depth: "52 cm", weight: "34 kg", stock: 4 },
 			{ id: "regal-l", name: "Regal Large", price: 11990, width: "92 cm", height: "152 cm", depth: "60 cm", weight: "46 kg", stock: 2 },
@@ -87,7 +88,7 @@ const baseProducts: Product[] = [
 		reviewCount: 57,
 		featured: false,
 		shippingInfo: "Ships in reinforced packaging with mounting template. Delivery in 3-7 days.",
-		returnPolicy: "14-day return policy for standard variants.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "wall-s", name: "Small", price: 1990, width: "36 cm", height: "52 cm", depth: "24 cm", weight: "7 kg", stock: 15 },
 			{ id: "wall-m", name: "Medium", price: 2690, width: "45 cm", height: "62 cm", depth: "28 cm", weight: "9 kg", stock: 10 },
@@ -108,7 +109,7 @@ const baseProducts: Product[] = [
 		reviewCount: 91,
 		featured: true,
 		shippingInfo: "Carbon-aware shipping partners across Norway and EU.",
-		returnPolicy: "14-day standard returns, 30-day structural warranty support.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "teak-std", name: "Standard", price: 5290, width: "62 cm", height: "102 cm", depth: "42 cm", weight: "19 kg", stock: 8 },
 			{ id: "teak-xl", name: "XL", price: 6990, width: "76 cm", height: "122 cm", depth: "50 cm", weight: "28 kg", stock: 4 },
@@ -129,7 +130,7 @@ const baseProducts: Product[] = [
 		reviewCount: 66,
 		featured: false,
 		shippingInfo: "Tracked shipping with moisture-control wrapping for long-distance delivery.",
-		returnPolicy: "14-day returns for non-custom variants.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "rose-m", name: "Medium", price: 5990, width: "64 cm", height: "106 cm", depth: "45 cm", weight: "23 kg", stock: 6 },
 			{ id: "rose-l", name: "Large", price: 7790, width: "82 cm", height: "136 cm", depth: "54 cm", weight: "33 kg", stock: 3 },
@@ -150,7 +151,7 @@ const baseProducts: Product[] = [
 		reviewCount: 41,
 		featured: true,
 		shippingInfo: "Production 3-6 weeks. Delivery 5-10 days after completion.",
-		returnPolicy: "Custom builds are non-refundable after production begins.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "custom-consult", name: "Design Consultation", price: 990, width: "Custom", height: "Custom", depth: "Custom", weight: "Custom", stock: 20 },
 			{ id: "custom-build", name: "Custom Build Deposit", price: 8990, width: "Custom", height: "Custom", depth: "Custom", weight: "Custom", stock: 12 },
@@ -171,7 +172,7 @@ const baseProducts: Product[] = [
 		reviewCount: 38,
 		featured: false,
 		shippingInfo: "Ships in 3-6 days across Norway and EU.",
-		returnPolicy: "Size exchanges within 14 days.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "m-size-m", name: "Size M", price: 1290, width: "M", height: "Regular", depth: "N/A", weight: "0.8 kg", stock: 20 },
 			{ id: "m-size-l", name: "Size L", price: 1290, width: "L", height: "Regular", depth: "N/A", weight: "0.85 kg", stock: 16 },
@@ -192,7 +193,7 @@ const baseProducts: Product[] = [
 		reviewCount: 49,
 		featured: true,
 		shippingInfo: "Gift-ready packaging. Delivery in 4-8 business days.",
-		returnPolicy: "Returns accepted within 14 days for unworn items.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "saree-red", name: "Ruby Red", price: 1590, width: "5.5 m", height: "Standard", depth: "N/A", weight: "0.7 kg", stock: 12 },
 			{ id: "saree-gold", name: "Gold Beige", price: 1690, width: "5.5 m", height: "Standard", depth: "N/A", weight: "0.72 kg", stock: 10 },
@@ -213,7 +214,7 @@ const baseProducts: Product[] = [
 		reviewCount: 35,
 		featured: false,
 		shippingInfo: "Ships within 2-4 business days.",
-		returnPolicy: "14-day returns for unused items.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "shawl-earth", name: "Earth Tones", price: 690, width: "200 cm", height: "70 cm", depth: "N/A", weight: "0.5 kg", stock: 24 },
 			{ id: "shawl-royal", name: "Royal Tones", price: 790, width: "200 cm", height: "70 cm", depth: "N/A", weight: "0.52 kg", stock: 18 },
@@ -234,7 +235,7 @@ const baseProducts: Product[] = [
 		reviewCount: 77,
 		featured: true,
 		shippingInfo: "Ships in protective anti-tarnish packing. Delivery 3-7 days.",
-		returnPolicy: "14-day return policy.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "brass-set-s", name: "3-Piece Set", price: 590, width: "Standard", height: "Standard", depth: "Standard", weight: "1.3 kg", stock: 25 },
 			{ id: "brass-set-l", name: "5-Piece Set", price: 890, width: "Standard", height: "Standard", depth: "Standard", weight: "2.1 kg", stock: 18 },
@@ -255,7 +256,7 @@ const baseProducts: Product[] = [
 		reviewCount: 52,
 		featured: false,
 		shippingInfo: "Ships within 2-5 days with anti-dent packaging.",
-		returnPolicy: "14-day return policy.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "copper-basic", name: "Basic", price: 490, width: "Standard", height: "Standard", depth: "Standard", weight: "1.1 kg", stock: 30 },
 			{ id: "copper-prem", name: "Premium", price: 750, width: "Standard", height: "Standard", depth: "Standard", weight: "1.6 kg", stock: 19 },
@@ -276,7 +277,7 @@ const baseProducts: Product[] = [
 		reviewCount: 68,
 		featured: true,
 		shippingInfo: "Ships in 1-3 days. Secure pouch packaging.",
-		returnPolicy: "Returns accepted for unopened packs only.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "acc-basic", name: "Basic Pack", price: 290, width: "N/A", height: "N/A", depth: "N/A", weight: "0.4 kg", stock: 44 },
 			{ id: "acc-festive", name: "Festive Pack", price: 450, width: "N/A", height: "N/A", depth: "N/A", weight: "0.7 kg", stock: 31 },
@@ -297,7 +298,7 @@ const baseProducts: Product[] = [
 		reviewCount: 27,
 		featured: false,
 		shippingInfo: "Flat-pack shipping with guided assembly support. Delivery in 5-10 days.",
-		returnPolicy: "Returns within 14 days for unopened kits.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "indoor-s", name: "2m x 2m", price: 7990, width: "200 cm", height: "240 cm", depth: "200 cm", weight: "38 kg", stock: 6 },
 			{ id: "indoor-m", name: "3m x 3m", price: 11990, width: "300 cm", height: "270 cm", depth: "300 cm", weight: "56 kg", stock: 3 },
@@ -318,7 +319,7 @@ const baseProducts: Product[] = [
 		reviewCount: 19,
 		featured: true,
 		shippingInfo: "Freight shipping with setup coordination available.",
-		returnPolicy: "Commercial/event orders are exchange-only after dispatch.",
+		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
 			{ id: "outdoor-m", name: "Standard Event", price: 14990, width: "350 cm", height: "300 cm", depth: "350 cm", weight: "74 kg", stock: 2 },
 			{ id: "outdoor-l", name: "Grand Event", price: 19990, width: "450 cm", height: "340 cm", depth: "450 cm", weight: "102 kg", stock: 1 },

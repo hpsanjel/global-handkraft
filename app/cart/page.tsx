@@ -33,6 +33,7 @@ export default function CartPage() {
 	const [selectedShippingId, setSelectedShippingId] = useState<string | null>(STORE_PICKUP_ID);
 	const [isLoadingBring, setIsLoadingBring] = useState(false);
 	const [bringError, setBringError] = useState("");
+	const [savedAddressUsed, setSavedAddressUsed] = useState<{ postalCode: string; city?: string } | null>(null);
 
 	useEffect(() => {
 		const syncItems = () => setItems(getCartItems());
@@ -52,29 +53,12 @@ export default function CartPage() {
 		};
 	}, []);
 
-	useEffect(() => {
-		if (appliedCoupon?.freeShipping && selectedShippingId !== STORE_PICKUP_ID) {
-			setSelectedShippingId(STORE_PICKUP_ID);
-			setShowShippingForm(false);
-			setBringOptions([]);
-		}
-	}, [appliedCoupon, selectedShippingId]);
-
-	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
-	const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
-
-	const handleFetchBringOptions = async () => {
-		if (!shippingPostalCode.trim()) {
-			setBringError("Please enter a postal code.");
-			return;
-		}
-
+	const fetchBringOptions = async (postalCode: string, country: string, cartItems: CartItem[]) => {
 		setIsLoadingBring(true);
 		setBringError("");
-		setSelectedShippingId(STORE_PICKUP_ID);
 
 		try {
-			const lines = items.map((item) => {
+			const lines = cartItems.map((item) => {
 				const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
 				return { weight: variant?.weight, width: variant?.width, height: variant?.height, depth: variant?.depth, quantity: item.quantity };
 			});
@@ -84,8 +68,8 @@ export default function CartPage() {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					toPostalCode: shippingPostalCode.trim(),
-					toCountry: shippingCountry,
+					toPostalCode: postalCode.trim(),
+					toCountry: country,
 					packages,
 				}),
 			});
@@ -108,6 +92,58 @@ export default function CartPage() {
 		} finally {
 			setIsLoadingBring(false);
 		}
+	};
+
+	// Returning, signed-in customers shouldn't have to retype an address they've already saved —
+	// prefill and auto-calculate real Bring rates from their saved shipping address on load.
+	useEffect(() => {
+		let active = true;
+		const supabase = createClient();
+		supabase.auth.getUser().then(({ data }) => {
+			if (!active) return;
+			const saved = data.user?.user_metadata?.shipping_address as { postalCode?: string; country?: string; city?: string } | undefined;
+			if (!saved?.postalCode || !saved?.country) return;
+
+			setShippingPostalCode(saved.postalCode);
+			setShippingCountry(saved.country);
+
+			const cartItems = getCartItems();
+			if (cartItems.length > 0) {
+				setSavedAddressUsed({ postalCode: saved.postalCode, city: saved.city });
+				void fetchBringOptions(saved.postalCode, saved.country, cartItems);
+			}
+		});
+		return () => {
+			active = false;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const useDifferentAddress = () => {
+		setSavedAddressUsed(null);
+		setBringOptions([]);
+		setSelectedShippingId(STORE_PICKUP_ID);
+		setShowShippingForm(true);
+	};
+
+	useEffect(() => {
+		if (appliedCoupon?.freeShipping && selectedShippingId !== STORE_PICKUP_ID) {
+			setSelectedShippingId(STORE_PICKUP_ID);
+			setShowShippingForm(false);
+			setBringOptions([]);
+		}
+	}, [appliedCoupon, selectedShippingId]);
+
+	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+	const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
+
+	const handleFetchBringOptions = () => {
+		if (!shippingPostalCode.trim()) {
+			setBringError("Please enter a postal code.");
+			return;
+		}
+		setSavedAddressUsed(null);
+		void fetchBringOptions(shippingPostalCode, shippingCountry, items);
 	};
 
 	const recommendedProducts = useMemo(() => {
@@ -223,6 +259,8 @@ export default function CartPage() {
 				data: { user },
 			} = await supabase.auth.getUser();
 
+			const savedAddress = (user?.user_metadata?.shipping_address as { postalCode?: string; country?: string } | undefined) || {};
+
 			const response = await fetch("/api/checkout", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -230,9 +268,12 @@ export default function CartPage() {
 					items,
 					customerEmail: user?.email,
 					shippingAddress: {
-						...(user?.user_metadata?.shipping_address || {}),
-						postalCode: shippingPostalCode || undefined,
-						country: shippingCountry || undefined,
+						...savedAddress,
+						// Form fields reflect what's on screen (prefilled from the saved address
+						// when available); only fall back to the saved value if the form is empty,
+						// so an unfinished manual edit never silently overwrites a good saved address.
+						postalCode: shippingPostalCode || savedAddress.postalCode || undefined,
+						country: shippingCountry || savedAddress.country || undefined,
 					},
 					selectedShippingId: appliedCoupon?.freeShipping ? "FREE_SHIPPING_COUPON" : selectedShippingId,
 					couponCode: appliedCoupon?.code,
@@ -432,7 +473,14 @@ export default function CartPage() {
 										)}
 
 										{/* Bring Shipping Calculator */}
-										{!showShippingForm && bringOptions.length === 0 ? (
+										{isLoadingBring && bringOptions.length === 0 ? (
+											<p className="mt-4 flex items-center gap-1.5 text-xs text-stone-500">
+												<Loader2 className="h-3.5 w-3.5 animate-spin" />
+												Checking rates for your saved address...
+											</p>
+										) : null}
+
+										{!showShippingForm && !isLoadingBring && bringOptions.length === 0 ? (
 											<button type="button" onClick={() => setShowShippingForm(true)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50">
 												<Truck className="h-4 w-4" />
 												Calculate shipping costs
@@ -473,7 +521,15 @@ export default function CartPage() {
 										{/* Available Bring Options */}
 										{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
 											<div className="mt-4 space-y-2">
-												<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Select shipping method</p>
+												<div className="flex flex-wrap items-center justify-between gap-2">
+													<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Select shipping method</p>
+													{savedAddressUsed ? (
+														<p className="text-xs text-stone-500">
+															Using saved address ({savedAddressUsed.city ? `${savedAddressUsed.city}, ` : ""}
+															{savedAddressUsed.postalCode})
+														</p>
+													) : null}
+												</div>
 												{bringOptions.map((option) => (
 													<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-[1rem] border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
 														<div className="flex items-start justify-between gap-3">
@@ -498,14 +554,7 @@ export default function CartPage() {
 													</button>
 												))}
 
-												<button
-													type="button"
-													onClick={() => {
-														setBringOptions([]);
-														setSelectedShippingId(STORE_PICKUP_ID);
-													}}
-													className="mt-1 text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700"
-												>
+												<button type="button" onClick={useDifferentAddress} className="mt-1 text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700">
 													Change location
 												</button>
 											</div>

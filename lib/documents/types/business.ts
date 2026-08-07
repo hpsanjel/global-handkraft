@@ -38,7 +38,6 @@ export interface Seller {
 export interface Business {
 	seller: Seller;
 	bankDetails?: BankDetails;
-	returnAddress: BusinessAddress;
 	/** Default declared country of origin for customs documents; individual order items may override it. */
 	defaultCountryOfOrigin: string;
 	defaultCurrency: Currency;

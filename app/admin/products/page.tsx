@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { AdminPageHeader } from "@/components/admin/page-header";
 import { type CategorySummary } from "@/lib/category-utils";
 import { refreshProductsCatalog } from "@/lib/products-catalog";
+import { DEFAULT_SHIPPING_INFO, DEFAULT_RETURN_POLICY } from "@/lib/product-transform";
 import type { Product, ProductAddon, ProductVariant } from "@/types/store";
 
 // Shared Tailwind fragments — avoids repeating the same class string across the form.
-const FIELD_INPUT = "w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0";
-const SUBFIELD_INPUT = "w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-0";
-const FIELD_LABEL = "space-y-2 text-sm text-stone-600";
+const FIELD_INPUT = "w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100";
+const SUBFIELD_INPUT = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100";
+const FIELD_LABEL = "space-y-2 text-sm text-slate-600";
 
 // All categories currently share the same defaults — no per-category config needed.
 const DEFAULT_MATERIAL = "Mixed Artisan Materials";
@@ -76,8 +76,8 @@ function createEmptyProduct(category: string): Product {
 			featured: false,
 			variants: [],
 			addons: [],
-			shippingInfo: "Ships within 3-5 business days",
-			returnPolicy: "Free returns within 14 days",
+			shippingInfo: DEFAULT_SHIPPING_INFO,
+			returnPolicy: DEFAULT_RETURN_POLICY,
 		},
 		category,
 	);
@@ -118,10 +118,13 @@ export default function AdminProductsPage() {
 					throw new Error(!Array.isArray(categoriesPayload) && categoriesPayload.error ? categoriesPayload.error : "Unable to load categories.");
 				}
 
+				const requestedProductId = new URLSearchParams(window.location.search).get("product");
+				const initialProduct = (requestedProductId && productsPayload.find((product) => product.id === requestedProductId)) || productsPayload[0] || null;
+
 				setCategories(categoriesPayload);
 				setProductsState(productsPayload);
-				setSelectedProductId(productsPayload[0]?.id ?? "");
-				setDraftProduct(productsPayload[0] ?? null);
+				setSelectedProductId(initialProduct?.id ?? "");
+				setDraftProduct(initialProduct);
 			} catch (error) {
 				setSaveFeedback({ type: "error", message: error instanceof Error ? error.message : "Unable to load products." });
 			} finally {
@@ -366,84 +369,78 @@ export default function AdminProductsPage() {
 	const isClothCategory = (currentProduct?.category ?? "").toLowerCase().includes("cloth");
 
 	return (
-		<div className="min-h-screen bg-stone-50 text-stone-800">
-			<SiteHeader />
-			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-				<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-					<div>
-						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Admin</p>
-						<h1 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Manage products</h1>
-						<p className="mt-2 max-w-2xl text-sm text-stone-600">Create, update, and remove products, variants, and add-ons from a single admin workspace. Categories are managed separately.</p>
-					</div>
-					<div className="flex flex-wrap gap-3">
-						<Button onClick={addNewProduct} disabled={isLoadingCatalog || isSaving || categories.length === 0}>
+		<div className="space-y-6">
+			<AdminPageHeader
+				title="Products"
+				description="Create, update, and remove products, variants, and add-ons from a single admin workspace. Categories are managed separately."
+				actions={
+					<>
+						<Button variant="primary" onClick={addNewProduct} disabled={isLoadingCatalog || isSaving || categories.length === 0}>
 							Add product
 						</Button>
-						<Button asChild variant="outline">
+						<Button asChild variant="secondary">
 							<Link href="/admin/categories">Manage categories</Link>
 						</Button>
-						<Button asChild variant="outline">
-							<Link href="/admin">Back to dashboard</Link>
-						</Button>
+					</>
+				}
+			/>
+
+			<div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+				<div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+					<div>
+						<h2 className="text-base font-semibold text-slate-900">Products</h2>
+						<p className="mt-1 text-sm text-slate-500">{productsState.length} products in the catalog</p>
+						<p className="mt-1 text-xs text-slate-400">Categories available: {categories.length}</p>
+					</div>
+					<div className="mt-6 space-y-2.5">
+						{isLoadingCatalog && <p className="text-sm text-slate-500">Loading products...</p>}
+						{productsState.map((product) => {
+							const isSelected = selectedProductId === product.id;
+							return (
+								<button key={product.id} type="button" onClick={() => selectProduct(product.id)} className={`w-full rounded-xl border p-4 text-left transition ${isSelected ? "border-[#1B365D] bg-[#1B365D] text-white" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}`}>
+									<div className="flex items-center justify-between gap-3">
+										<div>
+											<p className="font-semibold">{product.name}</p>
+											<p className={`mt-1 text-sm ${isSelected ? "text-slate-300" : "text-slate-500"}`}>{product.category}</p>
+										</div>
+										<div className={`text-sm ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+											{product.variants.length} sizes • {product.addons.length} add-ons
+										</div>
+									</div>
+								</button>
+							);
+						})}
 					</div>
 				</div>
 
-				<div className="mt-8 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<div>
-							<h2 className="text-xl font-semibold text-stone-900">Products</h2>
-							<p className="mt-1 text-sm text-stone-500">{productsState.length} products in the catalog</p>
-							<p className="mt-1 text-xs text-stone-500">Categories available: {categories.length}</p>
-						</div>
-						<div className="mt-6 space-y-3">
-							{isLoadingCatalog && <p className="text-sm text-stone-500">Loading products...</p>}
-							{productsState.map((product) => {
-								const isSelected = selectedProductId === product.id;
-								return (
-									<button key={product.id} type="button" onClick={() => selectProduct(product.id)} className={`w-full rounded-2xl border p-4 text-left transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-stone-50 hover:border-stone-300"}`}>
-										<div className="flex items-center justify-between gap-3">
-											<div>
-												<p className="font-semibold">{product.name}</p>
-												<p className={`mt-1 text-sm ${isSelected ? "text-stone-200" : "text-stone-600"}`}>{product.category}</p>
-											</div>
-											<div className={`text-sm ${isSelected ? "text-stone-200" : "text-stone-500"}`}>
-												{product.variants.length} sizes • {product.addons.length} add-ons
-											</div>
-										</div>
-									</button>
-								);
-							})}
-						</div>
-					</div>
-
-					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-						{!currentProduct ? (
-							<div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-8 text-center text-sm text-stone-500">Create a product to begin editing variants and add-ons.</div>
-						) : (
-							<div className="space-y-8">
-								<div className="flex flex-wrap items-center justify-between gap-3">
-									<div>
-										<h2 className="text-xl font-semibold text-stone-900">{currentProduct.name}</h2>
-										<p className="mt-1 text-sm text-stone-500">Update the visible product details and inventory settings.</p>
-									</div>
-									<Button variant="destructive" onClick={() => deleteProduct(currentProduct.id)}>
-										Delete
-									</Button>
+				<div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+					{!currentProduct ? (
+						<div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">Create a product to begin editing variants and add-ons.</div>
+					) : (
+						<div className="space-y-8">
+							<div className="flex flex-wrap items-center justify-between gap-3">
+								<div>
+									<h2 className="text-base font-semibold text-slate-900">{currentProduct.name}</h2>
+									<p className="mt-1 text-sm text-slate-500">Update the visible product details and inventory settings.</p>
 								</div>
+								<Button variant="destructive" onClick={() => deleteProduct(currentProduct.id)}>
+									Delete
+								</Button>
+							</div>
 
-								{saveFeedback && <div className={`rounded-2xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{saveFeedback.message}</div>}
+							{saveFeedback && <div className={`rounded-xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{saveFeedback.message}</div>}
 
 								<div className="grid gap-4 md:grid-cols-2">
 									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Product name</span>
+										<span className="font-medium text-slate-700">Product name</span>
 										<input value={currentProduct.name} onChange={(e) => updateDraftField("name", e.target.value)} className={FIELD_INPUT} />
 									</label>
 									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Slug</span>
+										<span className="font-medium text-slate-700">Slug</span>
 										<input value={currentProduct.slug} onChange={(e) => updateDraftField("slug", e.target.value)} className={FIELD_INPUT} />
 									</label>
 									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Category</span>
+										<span className="font-medium text-slate-700">Category</span>
 										<select value={currentProduct.category} onChange={(e) => updateProductCategory(e.target.value)} className={FIELD_INPUT}>
 											{!categories.some((c) => c.name === currentProduct.category) && <option value={currentProduct.category}>{currentProduct.category}</option>}
 											{categories.map((category) => (
@@ -454,11 +451,11 @@ export default function AdminProductsPage() {
 										</select>
 									</label>
 									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Size label</span>
+										<span className="font-medium text-slate-700">Size label</span>
 										<input value={currentProduct.sizeLabel ?? ""} onChange={(e) => updateDraftField("sizeLabel", e.target.value)} placeholder={DEFAULT_SIZE_LABEL} className={FIELD_INPUT} />
 									</label>
-									<label className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700 md:col-span-2">
-										<input type="checkbox" checked={currentProduct.featured} onChange={(e) => updateDraftField("featured", e.target.checked)} className="h-4 w-4 rounded border-stone-300" />
+									<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
+										<input type="checkbox" checked={currentProduct.featured} onChange={(e) => updateDraftField("featured", e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
 										<span>Featured on storefront</span>
 									</label>
 								</div>
@@ -466,24 +463,24 @@ export default function AdminProductsPage() {
 								{/* Image uploads */}
 								<div className={FIELD_LABEL}>
 									<div className="flex items-center justify-between">
-										<span className="font-medium text-stone-700">Product images</span>
-										<span className="text-xs text-stone-500">
+										<span className="font-medium text-slate-700">Product images</span>
+										<span className="text-xs text-slate-500">
 											{currentProduct.gallery.length}/{MAX_IMAGES} · max 3MB each
 										</span>
 									</div>
 
-									{isClothCategory && <p className="text-xs text-stone-500">Tag each photo with the colour it shows — customers can pick a colour to jump straight to that photo.</p>}
+									{isClothCategory && <p className="text-xs text-slate-500">Tag each photo with the colour it shows — customers can pick a colour to jump straight to that photo.</p>}
 
 									<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
 										{currentProduct.gallery.map((url, index) => (
 											<div key={url} className="space-y-1.5">
-												<div className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+												<div className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
 													{/* eslint-disable-next-line @next/next/no-img-element */}
 													<img src={url} alt="" className="h-full w-full object-cover" />
-													{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-stone-900/80 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>}
-													<div className="absolute inset-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
+													{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>}
+													<div className="absolute inset-0 flex items-end justify-between gap-1 bg-linear-to-t from-black/50 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
 														{currentProduct.image !== url && (
-															<button type="button" onClick={() => setCoverImage(url)} className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-stone-800">
+															<button type="button" onClick={() => setCoverImage(url)} className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-slate-700">
 																Set cover
 															</button>
 														)}
@@ -492,12 +489,12 @@ export default function AdminProductsPage() {
 														</button>
 													</div>
 												</div>
-												{isClothCategory && <input value={currentProduct.galleryColors?.[index] ?? ""} onChange={(e) => updateGalleryImageColor(url, e.target.value)} placeholder="Colour" className="w-full rounded-lg border border-stone-200 bg-stone-50 px-2 py-1 text-xs text-stone-900 outline-none" />}
+												{isClothCategory && <input value={currentProduct.galleryColors?.[index] ?? ""} onChange={(e) => updateGalleryImageColor(url, e.target.value)} placeholder="Colour" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-900 outline-none" />}
 											</div>
 										))}
 
 										{currentProduct.gallery.length < MAX_IMAGES && (
-											<button type="button" onClick={() => imageInputRef.current?.click()} disabled={isUploadingImages} className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-stone-300 text-xs font-medium text-stone-500 hover:border-stone-400 hover:text-stone-700 disabled:opacity-50">
+											<button type="button" onClick={() => imageInputRef.current?.click()} disabled={isUploadingImages} className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-slate-300 text-xs font-medium text-slate-500 hover:border-slate-400 hover:text-slate-700 disabled:opacity-50">
 												<span className="text-xl leading-none">+</span>
 												<span>{isUploadingImages ? "Uploading..." : "Add image"}</span>
 											</button>
@@ -520,79 +517,68 @@ export default function AdminProductsPage() {
 								</div>
 
 								<label className={`block ${FIELD_LABEL}`}>
-									<span className="font-medium text-stone-700">Short description</span>
+									<span className="font-medium text-slate-700">Short description</span>
 									<input value={currentProduct.shortDescription} onChange={(e) => updateDraftField("shortDescription", e.target.value)} className={FIELD_INPUT} />
 								</label>
 								<label className={`block ${FIELD_LABEL}`}>
-									<span className="font-medium text-stone-700">Description</span>
+									<span className="font-medium text-slate-700">Description</span>
 									<textarea value={currentProduct.description} onChange={(e) => updateDraftField("description", e.target.value)} rows={4} className={FIELD_INPUT} />
 								</label>
 
 								<div className="grid gap-4 md:grid-cols-2">
 									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Dimensions</span>
+										<span className="font-medium text-slate-700">Dimensions</span>
 										<input value={currentProduct.dimensions ?? ""} onChange={(e) => updateDraftField("dimensions", e.target.value)} placeholder={DEFAULT_DIMENSIONS} className={FIELD_INPUT} />
 									</label>
 									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Weight</span>
+										<span className="font-medium text-slate-700">Weight</span>
 										<input value={currentProduct.weight ?? ""} onChange={(e) => updateDraftField("weight", e.target.value)} placeholder={DEFAULT_WEIGHT} className={FIELD_INPUT} />
 									</label>
 								</div>
 
-								<div className="grid gap-4 md:grid-cols-2">
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Shipping info</span>
-										<input value={currentProduct.shippingInfo} onChange={(e) => updateDraftField("shippingInfo", e.target.value)} className={FIELD_INPUT} />
-									</label>
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-stone-700">Return policy</span>
-										<input value={currentProduct.returnPolicy} onChange={(e) => updateDraftField("returnPolicy", e.target.value)} className={FIELD_INPUT} />
-									</label>
-								</div>
-
-								<div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+								<div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
 									<div className="flex items-center justify-between gap-3">
-										<h3 className="text-lg font-semibold text-stone-900">Variants</h3>
-										<Button type="button" onClick={addVariant}>
+										<h3 className="text-lg font-semibold text-slate-900">Variants</h3>
+										<Button type="button" variant="secondary" onClick={addVariant}>
 											Add size
 										</Button>
 									</div>
 									<div className="mt-4 space-y-3">
 										{currentProduct.variants.map((variant) => (
-											<div key={variant.id} className="rounded-2xl border border-stone-200 bg-white p-4">
+											<div key={variant.id} className="rounded-2xl border border-slate-200 bg-white p-4">
 												<div className="flex items-center justify-between gap-3">
-													<p className="font-semibold text-stone-900">{variant.name || "Untitled variant"}</p>
-													<button type="button" onClick={() => removeVariant(variant.id)} className="text-sm font-semibold text-stone-500">
+													<p className="font-semibold text-slate-900">{variant.name || "Untitled variant"}</p>
+													<button type="button" onClick={() => removeVariant(variant.id)} className="text-sm font-semibold text-slate-500">
 														Remove
 													</button>
 												</div>
 												<div className="mt-3 grid gap-3 md:grid-cols-2">
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Name</span>
+														<span className="font-medium text-slate-700">Name</span>
 														<input value={variant.name} onChange={(e) => updateVariant(variant.id, "name", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Price</span>
+														<span className="font-medium text-slate-700">Price</span>
 														<input type="number" value={variant.price} onChange={(e) => updateVariant(variant.id, "price", Number(e.target.value))} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Stock</span>
+														<span className="font-medium text-slate-700">Stock</span>
 														<input type="number" value={variant.stock} onChange={(e) => updateVariant(variant.id, "stock", Number(e.target.value))} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Width</span>
+														<span className="font-medium text-slate-700">Width</span>
 														<input value={variant.width} onChange={(e) => updateVariant(variant.id, "width", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Height</span>
+														<span className="font-medium text-slate-700">Height</span>
 														<input value={variant.height} onChange={(e) => updateVariant(variant.id, "height", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Depth</span>
+														<span className="font-medium text-slate-700">Depth</span>
 														<input value={variant.depth} onChange={(e) => updateVariant(variant.id, "depth", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Weight</span>
+														<span className="font-medium text-slate-700">Weight</span>
 														<input value={variant.weight} onChange={(e) => updateVariant(variant.id, "weight", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
 												</div>
@@ -601,33 +587,33 @@ export default function AdminProductsPage() {
 									</div>
 								</div>
 
-								<div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+								<div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
 									<div className="flex items-center justify-between gap-3">
-										<h3 className="text-lg font-semibold text-stone-900">Add-ons</h3>
-										<Button type="button" onClick={addAddon}>
+										<h3 className="text-lg font-semibold text-slate-900">Add-ons</h3>
+										<Button type="button" variant="secondary" onClick={addAddon}>
 											Add add-on
 										</Button>
 									</div>
 									<div className="mt-4 space-y-3">
 										{currentProduct.addons.map((addon) => (
-											<div key={addon.id} className="rounded-2xl border border-stone-200 bg-white p-4">
+											<div key={addon.id} className="rounded-2xl border border-slate-200 bg-white p-4">
 												<div className="flex items-center justify-between gap-3">
-													<p className="font-semibold text-stone-900">{addon.name || "Untitled add-on"}</p>
-													<button type="button" onClick={() => removeAddon(addon.id)} className="text-sm font-semibold text-stone-500">
+													<p className="font-semibold text-slate-900">{addon.name || "Untitled add-on"}</p>
+													<button type="button" onClick={() => removeAddon(addon.id)} className="text-sm font-semibold text-slate-500">
 														Remove
 													</button>
 												</div>
 												<div className="mt-3 grid gap-3 md:grid-cols-2">
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Name</span>
+														<span className="font-medium text-slate-700">Name</span>
 														<input value={addon.name} onChange={(e) => updateAddon(addon.id, "name", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={FIELD_LABEL}>
-														<span className="font-medium text-stone-700">Price</span>
+														<span className="font-medium text-slate-700">Price</span>
 														<input type="number" value={addon.price} onChange={(e) => updateAddon(addon.id, "price", Number(e.target.value))} className={SUBFIELD_INPUT} />
 													</label>
 													<label className={`md:col-span-2 ${FIELD_LABEL}`}>
-														<span className="font-medium text-stone-700">Description</span>
+														<span className="font-medium text-slate-700">Description</span>
 														<textarea value={addon.description} onChange={(e) => updateAddon(addon.id, "description", e.target.value)} rows={2} className={SUBFIELD_INPUT} />
 													</label>
 												</div>
@@ -637,7 +623,7 @@ export default function AdminProductsPage() {
 								</div>
 
 								<div className="flex justify-end">
-									<Button onClick={saveProduct} disabled={isLoadingCatalog || isSaving || isUploadingImages}>
+									<Button variant="primary" onClick={saveProduct} disabled={isLoadingCatalog || isSaving || isUploadingImages}>
 										{isSaving ? "Saving..." : "Save product"}
 									</Button>
 								</div>
@@ -645,8 +631,6 @@ export default function AdminProductsPage() {
 						)}
 					</div>
 				</div>
-			</main>
-			<SiteFooter />
-		</div>
+			</div>
 	);
 }

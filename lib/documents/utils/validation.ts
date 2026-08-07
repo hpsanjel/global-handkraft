@@ -34,7 +34,6 @@ const businessSchema = z.object({
 			bic: z.string().optional(),
 		})
 		.optional(),
-	returnAddress: businessAddressSchema,
 	defaultCountryOfOrigin: z.string().length(2),
 	defaultCurrency: z.object({
 		code: currencyCodeSchema,
@@ -146,15 +145,13 @@ const shipmentSchema = z.object({
 
 const shippingInformationSchema = z.object({
 	method: z.string().nullable(),
+	isPickup: z.boolean(),
 	estimatedDelivery: z.string().nullable(),
 	address: addressSchema,
 	shipment: shipmentSchema.nullable(),
 });
 
 const returnInformationSchema = z.object({
-	returnAddress: businessAddressSchema,
-	returnWindowDays: z.number().int().positive(),
-	instructions: z.array(z.string()),
 	policySummary: z.string().min(1),
 	supportEmail: z.string().min(1),
 	supportPhone: z.string().min(1),

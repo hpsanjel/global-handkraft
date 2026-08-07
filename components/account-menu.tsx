@@ -136,7 +136,7 @@ export function AccountMenu() {
 						) : null}
 						<Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
 							<UserIcon className="h-4 w-4" />
-							My Profile
+							My Account
 						</Link>
 						<Link href="/account/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
 							<Package className="h-4 w-4" />

@@ -2,7 +2,7 @@ import { Document, Text, View } from "@react-pdf/renderer";
 import type { OrderDocumentData } from "../../types";
 import { sharedStyles } from "../../styles/stylesheet";
 import { spacing } from "../../styles/theme";
-import { DocumentPage, CompanyHeader, CompanyFooter, OrderMetaBlock, ItemsTable, NotesSection, SignatureBlock, PageNumber } from "../components";
+import { DocumentPage, CompanyHeader, CompanyFooter, OrderMetaBlock, ItemsTable, NotesSection, SignatureBlock } from "../components";
 
 interface PackingListTemplateProps {
 	data: OrderDocumentData;
@@ -14,7 +14,7 @@ export function PackingListTemplate({ data }: PackingListTemplateProps) {
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Packing List`} author={business.seller.legalName}>
-			<DocumentPage footer={<><CompanyFooter seller={business.seller} /><PageNumber /></>}>
+			<DocumentPage footer={<CompanyFooter seller={business.seller} />}>
 				<CompanyHeader seller={business.seller} documentTitle="Packing List" documentNumber={data.metadata.documentNumber} issuedAt={data.metadata.issuedAt} />
 
 				<OrderMetaBlock
@@ -53,7 +53,7 @@ export function PackingListTemplate({ data }: PackingListTemplateProps) {
 					<ItemsTable items={order.items} currency={order.currency} columns={["sku", "description", "quantity", "weight"]} />
 				</View>
 
-				<NotesSection title="Handling notes" notes={["Handle with care — contains handcrafted wooden items.", "Keep upright and dry during transit."]} />
+				<NotesSection title="Handling notes" notes={["Handle with care — package may contain handcrafted items and/or traditional clothing.", "Keep upright and dry during transit."]} />
 				<NotesSection title="Inspection notes" notes={["Inspected and packed by warehouse staff prior to dispatch."]} />
 
 				<SignatureBlock label="Packed by / warehouse signature" />

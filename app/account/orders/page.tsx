@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "@/components/order-status-badge";
+import { AccountPageHeader } from "@/components/account/account-page-header";
 import { ORDER_STATUS_META, isOrderStatus } from "@/lib/order-status";
 
 type AccountOrderItem = {
@@ -40,7 +42,9 @@ function formatCurrency(amount: number, currency: string) {
 	}).format(amount);
 }
 
-export default function AccountOrdersPage() {
+function AccountOrdersPageContent() {
+	const searchParams = useSearchParams();
+	const highlightedOrder = searchParams.get("order");
 	const [orders, setOrders] = useState<AccountOrder[] | null>(null);
 	const [error, setError] = useState("");
 
@@ -75,21 +79,24 @@ export default function AccountOrdersPage() {
 		};
 	}, []);
 
+	// Jump straight to the order a receipt/document QR code linked to.
+	useEffect(() => {
+		if (!highlightedOrder || !orders) return;
+		document.getElementById(`order-${highlightedOrder}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+	}, [highlightedOrder, orders]);
+
 	return (
 		<div className="space-y-6">
-			<div>
-				<h2 className="text-xl font-semibold text-stone-900">My Orders</h2>
-				<p className="mt-1 text-sm text-stone-500">Track your order history in chronological order.</p>
-			</div>
+			<AccountPageHeader title="My Orders" description="Track your order history in chronological order." />
 
 			{error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
-			{!orders && !error ? <p className="text-sm text-stone-500">Loading your orders...</p> : null}
+			{!orders && !error ? <p className="text-sm text-slate-500">Loading your orders...</p> : null}
 
 			{orders && orders.length === 0 ? (
-				<div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-10 text-center">
-					<p className="text-sm text-stone-600">You haven&apos;t placed any orders yet.</p>
-					<Button asChild>
+				<div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+					<p className="text-sm text-slate-600">You haven&apos;t placed any orders yet.</p>
+					<Button asChild variant="primary">
 						<Link href="/shop">Shop Now</Link>
 					</Button>
 				</div>
@@ -98,11 +105,15 @@ export default function AccountOrdersPage() {
 			{orders && orders.length > 0 ? (
 				<div className="space-y-4">
 					{orders.map((order) => (
-						<div key={order.id} className="rounded-2xl border border-stone-200 bg-stone-50 p-5">
+						<div
+							key={order.id}
+							id={`order-${order.orderNumber}`}
+							className={`rounded-2xl border p-5 transition ${order.orderNumber === highlightedOrder ? "border-[#1B365D] bg-white ring-2 ring-[#1B365D]/30" : "border-slate-200 bg-slate-50"}`}
+						>
 							<div className="flex flex-wrap items-start justify-between gap-3">
 								<div>
-									<p className="font-semibold text-stone-900">{order.orderNumber}</p>
-									<p className="mt-1 text-xs uppercase tracking-[0.2em] text-stone-400">
+									<p className="font-semibold text-slate-900">{order.orderNumber}</p>
+									<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
 										{new Date(order.createdAt).toLocaleDateString("en-GB", {
 											day: "numeric",
 											month: "short",
@@ -111,13 +122,13 @@ export default function AccountOrdersPage() {
 									</p>
 								</div>
 								<div className="text-right">
-									<p className="font-semibold text-stone-900">{formatCurrency(order.total, order.currency)}</p>
+									<p className="font-semibold text-slate-900">{formatCurrency(order.total, order.currency)}</p>
 									<div className="mt-1">
 										<OrderStatusBadge status={order.status} />
 									</div>
 								</div>
 							</div>
-							<div className="mt-4 flex flex-wrap gap-2 border-t border-stone-200 pt-4">
+							<div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
 								{([
 									["RECEIPT", "Receipt"],
 									["COMMERCIAL_INVOICE", "Invoice"],
@@ -128,36 +139,36 @@ export default function AccountOrdersPage() {
 										href={`/api/account/orders/${order.id}/documents/${type}`}
 										target="_blank"
 										rel="noreferrer"
-										className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 transition hover:bg-stone-100"
+										className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
 									>
 										{label}
 									</a>
 								))}
 							</div>
-							<div className="mt-4 space-y-3 border-t border-stone-200 pt-4">
+							<div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
 								{order.items.map((item) => (
-									<div key={item.id} className="text-sm text-stone-700">
+									<div key={item.id} className="text-sm text-slate-700">
 										<div className="flex items-center justify-between gap-3">
 											<span>
 												{item.product?.name ?? "Product"} · {item.variant?.name ?? "Variant"} × {item.quantity}
 											</span>
 											<span>{formatCurrency(item.unitPrice * item.quantity, order.currency)}</span>
 										</div>
-										{item.addonNames.length > 0 ? <p className="mt-0.5 pl-0 text-xs text-stone-500">Add-ons: {item.addonNames.join(", ")}</p> : null}
+										{item.addonNames.length > 0 ? <p className="mt-0.5 pl-0 text-xs text-slate-500">Add-ons: {item.addonNames.join(", ")}</p> : null}
 									</div>
 								))}
 							</div>
 							{order.statusEvents.length > 0 ? (
-								<div className="mt-4 border-t border-stone-200 pt-4">
-									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">Order timeline</p>
+								<div className="mt-4 border-t border-slate-200 pt-4">
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Order timeline</p>
 									<ol className="mt-3 space-y-3">
 										{order.statusEvents.map((event, index) => (
 											<li key={event.id} className="relative pl-5">
 												<span
-													className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${index === order.statusEvents.length - 1 ? "bg-[#1B365D]" : "bg-stone-300"}`}
+													className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${index === order.statusEvents.length - 1 ? "bg-[#1B365D]" : "bg-slate-300"}`}
 												/>
-												<p className="text-sm font-medium text-stone-800">{isOrderStatus(event.status) ? ORDER_STATUS_META[event.status].label : event.status}</p>
-												<p className="text-xs text-stone-500">
+												<p className="text-sm font-medium text-slate-700">{isOrderStatus(event.status) ? ORDER_STATUS_META[event.status].label : event.status}</p>
+												<p className="text-xs text-slate-500">
 													{new Date(event.createdAt).toLocaleString("en-GB", {
 														day: "numeric",
 														month: "short",
@@ -175,5 +186,13 @@ export default function AccountOrdersPage() {
 				</div>
 			) : null}
 		</div>
+	);
+}
+
+export default function AccountOrdersPage() {
+	return (
+		<Suspense fallback={null}>
+			<AccountOrdersPageContent />
+		</Suspense>
 	);
 }

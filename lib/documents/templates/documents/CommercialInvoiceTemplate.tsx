@@ -2,7 +2,7 @@ import { Document, View } from "@react-pdf/renderer";
 import type { OrderDocumentData } from "../../types";
 import { sharedStyles } from "../../styles/stylesheet";
 import { spacing } from "../../styles/theme";
-import { DocumentPage, CompanyHeader, CompanyFooter, CustomerBlock, OrderMetaBlock, ItemsTable, TaxSummary, PriceSummary, TermsAndConditions, PageNumber } from "../components";
+import { DocumentPage, CompanyHeader, CompanyFooter, CustomerBlock, OrderMetaBlock, ItemsTable, TaxSummary, PriceSummary, TermsAndConditions } from "../components";
 
 const DECLARATION = "We declare that the information contained in this invoice is true and correct to the best of our knowledge. All goods described herein are of the stated country of origin and are declared for commercial/customs purposes.";
 
@@ -15,7 +15,7 @@ export function CommercialInvoiceTemplate({ data }: CommercialInvoiceTemplatePro
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Commercial Invoice`} author={business.seller.legalName}>
-			<DocumentPage footer={<><CompanyFooter seller={business.seller} /><PageNumber /></>}>
+			<DocumentPage footer={<CompanyFooter seller={business.seller} />}>
 				<CompanyHeader seller={business.seller} documentTitle="Commercial Invoice" documentNumber={data.metadata.documentNumber} issuedAt={data.metadata.issuedAt} />
 
 				<OrderMetaBlock
@@ -23,7 +23,6 @@ export function CommercialInvoiceTemplate({ data }: CommercialInvoiceTemplatePro
 					extraFields={[
 						{ label: "Country of origin", value: business.defaultCountryOfOrigin },
 						...(business.defaultIncoterm ? [{ label: "Incoterm", value: business.defaultIncoterm }] : []),
-						{ label: "Payment status", value: data.payment.status },
 					]}
 				/>
 

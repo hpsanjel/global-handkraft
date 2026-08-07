@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { hasAdminRole } from "@/lib/admin-auth";
 import { createClient } from "@/lib/supabase/server";
+import { AdminShell } from "@/components/admin/admin-shell";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
 	const supabase = await createClient();
@@ -16,5 +17,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 		redirect("/account");
 	}
 
-	return <>{children}</>;
+	return <AdminShell userEmail={user.email ?? "Admin"}>{children}</AdminShell>;
 }

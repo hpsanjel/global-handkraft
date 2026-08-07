@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
-import { generateDocument, isDocumentType, OrderNotFoundError } from "@/lib/documents";
+import { generateDocument, isDocumentType, OrderNotFoundError, DocumentNotApplicableError } from "@/lib/documents";
 
 export const runtime = "nodejs";
 
@@ -44,6 +44,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 	} catch (error) {
 		if (error instanceof OrderNotFoundError) {
 			return NextResponse.json({ error: "Order not found." }, { status: 404 });
+		}
+		if (error instanceof DocumentNotApplicableError) {
+			return NextResponse.json({ error: error.message }, { status: 400 });
 		}
 		const message = error instanceof Error ? error.message : "Unable to generate document.";
 		return NextResponse.json({ error: message }, { status: 500 });

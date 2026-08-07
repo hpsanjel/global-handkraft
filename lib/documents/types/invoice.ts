@@ -1,4 +1,3 @@
-import type { BusinessAddress } from "./business";
 import type { DocumentType } from "./document";
 
 export interface DocumentMetadata {
@@ -7,11 +6,8 @@ export interface DocumentMetadata {
 	issuedAt: Date;
 }
 
+/** We run a no-returns policy — this is a notice, not a return-instructions sheet. */
 export interface ReturnInformation {
-	/** The seller's own address, not the customer's — a BusinessAddress, not an Address. */
-	returnAddress: BusinessAddress;
-	returnWindowDays: number;
-	instructions: string[];
 	policySummary: string;
 	supportEmail: string;
 	supportPhone: string;

@@ -22,8 +22,8 @@ const COLUMN_DEFS: Record<ItemsTableColumn, ColumnDef> = {
 	quantity: { header: "Qty", width: 0.7, align: "center", render: (item) => String(item.quantity) },
 	unitPrice: { header: "Unit price", width: 1.2, align: "right", render: (item, currency) => formatMoney(item.unitPrice, currency) },
 	lineTotal: { header: "Total", width: 1.2, align: "right", render: (item, currency) => formatMoney(item.lineTotal, currency) },
-	hsCode: { header: "HS code", width: 1, render: (item) => item.hsCode ?? "—" },
-	countryOfOrigin: { header: "Origin", width: 0.8, render: (item) => item.countryOfOrigin ?? "—" },
+	hsCode: { header: "HS code", width: 1, align: "center", render: (item) => item.hsCode ?? "—" },
+	countryOfOrigin: { header: "Origin", width: 0.8, align: "center", render: (item) => item.countryOfOrigin ?? "—" },
 	weight: { header: "Weight", width: 1, align: "right", render: (item) => (item.weightInGrams ? `${(item.weightInGrams / 1000).toFixed(2)} kg` : "—") },
 };
 

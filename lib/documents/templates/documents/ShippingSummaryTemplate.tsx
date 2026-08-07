@@ -2,7 +2,7 @@ import { Document, Text, View } from "@react-pdf/renderer";
 import type { OrderDocumentData } from "../../types";
 import { sharedStyles } from "../../styles/stylesheet";
 import { spacing } from "../../styles/theme";
-import { DocumentPage, CompanyHeader, CompanyFooter, AddressBlock, OrderMetaBlock, BarcodeBlock, PageNumber } from "../components";
+import { DocumentPage, CompanyHeader, CompanyFooter, AddressBlock, OrderMetaBlock, BarcodeBlock } from "../components";
 
 interface ShippingSummaryTemplateProps {
 	data: OrderDocumentData;
@@ -14,7 +14,7 @@ export function ShippingSummaryTemplate({ data }: ShippingSummaryTemplateProps) 
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Shipping Summary`} author={business.seller.legalName}>
-			<DocumentPage footer={<><CompanyFooter seller={business.seller} /><PageNumber /></>}>
+			<DocumentPage footer={<CompanyFooter seller={business.seller} />}>
 				<CompanyHeader seller={business.seller} documentTitle="Shipping Summary" documentNumber={data.metadata.documentNumber} issuedAt={data.metadata.issuedAt} />
 
 				<OrderMetaBlock

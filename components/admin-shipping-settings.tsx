@@ -144,31 +144,32 @@ export function AdminShippingSettings() {
 	};
 
 	return (
-		<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-			<h2 className="text-xl font-semibold text-stone-900">Shipping zones</h2>
-			<p className="mt-1 text-sm text-stone-500">Set a shipping rate per country. Orders from countries without a specific rate use the default rate.</p>
+		<div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+			<h2 className="text-xl font-semibold text-slate-900">Shipping zones</h2>
+			<p className="mt-1 text-sm text-slate-500">Set a shipping rate per country. Orders from countries without a specific rate use the default rate.</p>
 
 			{feedback ? <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{feedback.message}</div> : null}
 
 			{isLoading ? (
-				<p className="mt-4 text-sm text-stone-500">Loading shipping zones...</p>
+				<p className="mt-4 text-sm text-slate-500">Loading shipping zones...</p>
 			) : (
 				<div className="mt-4 space-y-3">
 					{zones.map((zone) => (
-						<div key={zone.id} className="rounded-2xl border border-stone-200 p-4">
+						<div key={zone.id} className="rounded-2xl border border-slate-200 p-4">
 							<div className="flex items-center justify-between gap-3">
-								<p className="font-semibold text-stone-900">{countryLabel(zone.country)}</p>
+								<p className="font-semibold text-slate-900">{countryLabel(zone.country)}</p>
 								<button type="button" onClick={() => deleteZone(zone.country)} disabled={isSaving} className="text-xs font-medium text-red-600 transition hover:text-red-700 disabled:opacity-50">
 									Remove
 								</button>
 							</div>
 							<div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-								<label className="space-y-1 text-xs text-stone-500">
+								<label className="space-y-1 text-xs text-slate-500">
 									<span>Shipping cost (NOK)</span>
 									<Input
 										type="number"
 										min="0"
 										step="0.01"
+										className="rounded-lg border-slate-200 py-2.5 focus:ring-stone-100"
 										value={editingValues[zone.id]?.shippingCost ?? ""}
 										onChange={(event) =>
 											setEditingValues((current) => ({
@@ -178,12 +179,13 @@ export function AdminShippingSettings() {
 										}
 									/>
 								</label>
-								<label className="space-y-1 text-xs text-stone-500">
+								<label className="space-y-1 text-xs text-slate-500">
 									<span>Free shipping from (NOK, 0 to disable)</span>
 									<Input
 										type="number"
 										min="0"
 										step="0.01"
+										className="rounded-lg border-slate-200 py-2.5 focus:ring-stone-100"
 										value={editingValues[zone.id]?.freeShippingFrom ?? ""}
 										onChange={(event) =>
 											setEditingValues((current) => ({
@@ -194,7 +196,7 @@ export function AdminShippingSettings() {
 									/>
 								</label>
 								<div className="flex items-end">
-									<Button type="button" disabled={isSaving} onClick={() => saveZone(zone.country, editingValues[zone.id]?.shippingCost ?? String(zone.shippingCost), editingValues[zone.id]?.freeShippingFrom ?? String(zone.freeShippingFrom))} className="w-full sm:w-auto">
+									<Button type="button" variant="secondary" disabled={isSaving} onClick={() => saveZone(zone.country, editingValues[zone.id]?.shippingCost ?? String(zone.shippingCost), editingValues[zone.id]?.freeShippingFrom ?? String(zone.freeShippingFrom))} className="w-full sm:w-auto">
 										Save
 									</Button>
 								</div>
@@ -202,12 +204,12 @@ export function AdminShippingSettings() {
 						</div>
 					))}
 
-					<div className="rounded-2xl border border-dashed border-stone-300 p-4">
-						<p className="text-sm font-semibold text-stone-900">Add a rate</p>
+					<div className="rounded-2xl border border-dashed border-slate-300 p-4">
+						<p className="text-sm font-semibold text-slate-900">Add a rate</p>
 						<div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
-							<label className="space-y-1 text-xs text-stone-500">
+							<label className="space-y-1 text-xs text-slate-500">
 								<span>Country</span>
-								<select value={newCountry} onChange={(event) => setNewCountry(event.target.value)} className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-200">
+								<select value={newCountry} onChange={(event) => setNewCountry(event.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100">
 									<option value="">Select a country</option>
 									{!hasDefaultZone ? <option value={DEFAULT_SHIPPING_ZONE_CODE}>Default (all other countries)</option> : null}
 									{availableCountryOptions.map((country) => (
@@ -217,16 +219,16 @@ export function AdminShippingSettings() {
 									))}
 								</select>
 							</label>
-							<label className="space-y-1 text-xs text-stone-500">
+							<label className="space-y-1 text-xs text-slate-500">
 								<span>Shipping cost (NOK)</span>
-								<Input type="number" min="0" step="0.01" value={newCost} onChange={(event) => setNewCost(event.target.value)} />
+								<Input type="number" min="0" step="0.01" className="rounded-lg border-slate-200 py-2.5 focus:ring-stone-100" value={newCost} onChange={(event) => setNewCost(event.target.value)} />
 							</label>
-							<label className="space-y-1 text-xs text-stone-500">
+							<label className="space-y-1 text-xs text-slate-500">
 								<span>Free shipping from (NOK)</span>
-								<Input type="number" min="0" step="0.01" value={newFreeFrom} onChange={(event) => setNewFreeFrom(event.target.value)} />
+								<Input type="number" min="0" step="0.01" className="rounded-lg border-slate-200 py-2.5 focus:ring-stone-100" value={newFreeFrom} onChange={(event) => setNewFreeFrom(event.target.value)} />
 							</label>
 							<div className="flex items-end">
-								<Button type="button" disabled={isSaving || !newCountry} onClick={() => saveZone(newCountry, newCost, newFreeFrom)} className="w-full sm:w-auto">
+								<Button type="button" variant="primary" disabled={isSaving || !newCountry} onClick={() => saveZone(newCountry, newCost, newFreeFrom)} className="w-full sm:w-auto">
 									Add
 								</Button>
 							</div>

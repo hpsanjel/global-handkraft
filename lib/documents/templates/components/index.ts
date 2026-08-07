@@ -13,4 +13,3 @@ export * from "./BarcodeBlock";
 export * from "./SignatureBlock";
 export * from "./NotesSection";
 export * from "./TermsAndConditions";
-export * from "./PageNumber";

@@ -1,9 +1,17 @@
 import { getDocumentGenerator } from "../registry/document-registry";
 import { assertValidOrderDocumentData } from "../utils/validation";
+import { isShippingOnlyDocumentType } from "../types";
 import type { DocumentOutput, DocumentType, OrderDocumentData, OutputFormat } from "../types";
 import { loadOrderDocumentData } from "./order-document-data.service";
 import { resolveDocumentNumber } from "./document-number.service";
 import { renderDocument } from "./document-renderer.service";
+
+export class DocumentNotApplicableError extends Error {
+	constructor(type: DocumentType) {
+		super(`${type} is not applicable to this order — it requires a shipped delivery, and this order is in-store pickup.`);
+		this.name = "DocumentNotApplicableError";
+	}
+}
 
 /**
  * Assembles the full, validated OrderDocumentData for a given order and
@@ -14,6 +22,11 @@ import { renderDocument } from "./document-renderer.service";
  */
 export async function assembleOrderDocumentData(orderId: string, type: DocumentType): Promise<OrderDocumentData> {
 	const data = await loadOrderDocumentData(orderId);
+
+	if (isShippingOnlyDocumentType(type) && data.shipping.isPickup) {
+		throw new DocumentNotApplicableError(type);
+	}
+
 	const documentNumber = await resolveDocumentNumber(type, { id: orderId, orderNumber: data.order.orderNumber });
 
 	const full: OrderDocumentData = {

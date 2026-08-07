@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { STORE_PICKUP_ID } from "@/lib/shipping-client";
 
 export interface AdminMandapInquiry {
 	id: string;
@@ -47,6 +48,7 @@ export interface AdminOrder {
 	amount: number;
 	currency: string;
 	shippingMethod: string;
+	isPickup: boolean;
 	date: string;
 }
 
@@ -85,6 +87,7 @@ export async function getRecentOrders(limit = 10): Promise<AdminOrder[]> {
 			amount: order.total,
 			currency: order.currency || "NOK",
 			shippingMethod: order.shippingMethod || "Not recorded",
+			isPickup: order.shippingProductId === STORE_PICKUP_ID,
 			date: order.createdAt.toLocaleString("en-GB", {
 				day: "numeric",
 				month: "short",

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { CartDrawerProvider } from "@/components/cart-drawer-provider";
-import { CouponPopup } from "@/components/coupon-popup";
+import { CookieNotice } from "@/components/cookie-notice";
 
 export const metadata: Metadata = {
 	title: "Global Handcrafts AS",
@@ -29,7 +29,7 @@ export default function RootLayout({
 			<body className="min-h-full flex flex-col">
 				{children}
 				<CartDrawerProvider />
-				<CouponPopup />
+				<CookieNotice />
 			</body>
 		</html>
 	);

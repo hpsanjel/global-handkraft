@@ -3,9 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { AdminPageHeader } from "@/components/admin/page-header";
 import { refreshCategoriesCatalog } from "@/lib/categories-catalog";
 import type { CategorySummary } from "@/lib/category-utils";
 
@@ -229,119 +228,109 @@ export default function AdminCategoriesPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-stone-50 text-stone-800">
-			<SiteHeader />
-			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-				<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-					<div>
-						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Admin</p>
-						<h1 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Manage categories</h1>
-						<p className="mt-2 max-w-2xl text-sm text-stone-600">Create categories first. Products can only be assigned to categories that already exist.</p>
-					</div>
-					<div className="flex flex-wrap gap-3">
-						<Button asChild variant="outline">
-							<Link href="/admin">Back to dashboard</Link>
+		<div className="space-y-6">
+			<AdminPageHeader
+				title="Categories"
+				description="Create categories first. Products can only be assigned to categories that already exist."
+				actions={
+					<Button asChild variant="primary">
+						<Link href="/admin/products">Manage products</Link>
+					</Button>
+				}
+			/>
+
+			<div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+				<div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+					<h2 className="text-base font-semibold text-slate-900">Create category</h2>
+					<p className="mt-1 text-sm text-slate-500">
+						Categories: {categories.length} · Products assigned: {totalProducts}
+					</p>
+					<div className="mt-5 space-y-3">
+						<label className="space-y-2 text-sm text-slate-600">
+							<span className="font-medium text-slate-700">Category name</span>
+							<input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} placeholder="e.g. Handcrafted Wooden Temples" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+						</label>
+						<label className="space-y-2 text-sm text-slate-600">
+							<span className="font-medium text-slate-700">Category image (optional)</span>
+							<input key={newImageInputKey} type="file" accept="image/*" onChange={(event) => setNewCategoryImage(event.target.files?.[0] ?? null)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700" />
+						</label>
+						<Button variant="primary" onClick={createCategory} disabled={isSaving} className="mt-2">
+							{isSaving ? "Saving..." : "Add category"}
 						</Button>
-						<Button asChild>
-							<Link href="/admin/products">Manage products</Link>
-						</Button>
 					</div>
+					{feedback ? <div className={`mt-4 rounded-xl border px-4 py-3 text-sm ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{feedback.message}</div> : null}
 				</div>
 
-				<div className="mt-8 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<h2 className="text-xl font-semibold text-stone-900">Create category</h2>
-						<p className="mt-1 text-sm text-stone-500">
-							Categories: {categories.length} · Products assigned: {totalProducts}
-						</p>
-						<div className="mt-5 space-y-3">
-							<label className="space-y-2 text-sm text-stone-600">
-								<span className="font-medium text-stone-700">Category name</span>
-								<input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} placeholder="e.g. Handcrafted Wooden Temples" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-0" />
-							</label>
-							<label className="space-y-2 text-sm text-stone-600">
-								<span className="font-medium text-stone-700">Category image (optional)</span>
-								<input key={newImageInputKey} type="file" accept="image/*" onChange={(event) => setNewCategoryImage(event.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700" />
-							</label>
-							<Button onClick={createCategory} disabled={isSaving} className="mt-2">
-								{isSaving ? "Saving..." : "Add category"}
-							</Button>
-						</div>
-						{feedback ? <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{feedback.message}</div> : null}
-					</div>
-
-					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<h2 className="text-xl font-semibold text-stone-900">Existing categories</h2>
-						<p className="mt-1 text-sm text-stone-500">Drag to reorder. Rename categories or delete unused ones.</p>
-						<div className="mt-5 space-y-3">
-							{isLoading ? <p className="text-sm text-stone-500">Loading categories...</p> : null}
-							{!isLoading && categories.length === 0 ? <p className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-4 text-sm text-stone-500">No categories yet. Add your first category.</p> : null}
-							{categories.map((category) => (
-								<div
-									key={category.id}
-									className={`rounded-2xl border bg-stone-50 p-4 ${draggingCategoryId === category.id ? "border-stone-400" : "border-stone-200"}`}
-									draggable={!isSaving && categories.length > 1}
-									onDragStart={() => setDraggingCategoryId(category.id)}
-									onDragEnd={() => setDraggingCategoryId(null)}
-									onDragOver={(event) => {
-										event.preventDefault();
-									}}
-									onDrop={(event) => {
-										event.preventDefault();
-										if (draggingCategoryId && !isSaving) {
-											moveCategory(draggingCategoryId, category.id);
+				<div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+					<h2 className="text-base font-semibold text-slate-900">Existing categories</h2>
+					<p className="mt-1 text-sm text-slate-500">Drag to reorder. Rename categories or delete unused ones.</p>
+					<div className="mt-5 space-y-3">
+						{isLoading ? <p className="text-sm text-slate-500">Loading categories...</p> : null}
+						{!isLoading && categories.length === 0 ? <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No categories yet. Add your first category.</p> : null}
+						{categories.map((category) => (
+							<div
+								key={category.id}
+								className={`rounded-xl border bg-slate-50 p-4 ${draggingCategoryId === category.id ? "border-stone-400" : "border-slate-200"}`}
+								draggable={!isSaving && categories.length > 1}
+								onDragStart={() => setDraggingCategoryId(category.id)}
+								onDragEnd={() => setDraggingCategoryId(null)}
+								onDragOver={(event) => {
+									event.preventDefault();
+								}}
+								onDrop={(event) => {
+									event.preventDefault();
+									if (draggingCategoryId && !isSaving) {
+										moveCategory(draggingCategoryId, category.id);
+									}
+									setDraggingCategoryId(null);
+								}}
+							>
+								<div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Drag to reorder</div>
+								{category.imageUrl ? (
+									<div className="mb-3">
+										<Image src={category.imageUrl} alt={`${category.name} preview`} width={80} height={80} className="h-20 w-20 rounded-xl border border-slate-200 object-cover" unoptimized />
+									</div>
+								) : null}
+								<div className="flex flex-col gap-3 md:flex-row md:items-center">
+									<input
+										value={editingNames[category.id] ?? category.name}
+										onChange={(event) =>
+											setEditingNames((current) => ({
+												...current,
+												[category.id]: event.target.value,
+											}))
 										}
-										setDraggingCategoryId(null);
-									}}
-								>
-									<div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Drag to reorder</div>
-									{category.imageUrl ? (
-										<div className="mb-3">
-											<Image src={category.imageUrl} alt={`${category.name} preview`} width={80} height={80} className="h-20 w-20 rounded-xl border border-stone-200 object-cover" unoptimized />
-										</div>
-									) : null}
-									<div className="flex flex-col gap-3 md:flex-row md:items-center">
-										<input
-											value={editingNames[category.id] ?? category.name}
-											onChange={(event) =>
-												setEditingNames((current) => ({
-													...current,
-													[category.id]: event.target.value,
-												}))
-											}
-											className="w-full rounded-2xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none ring-0"
-										/>
-										<div className="text-xs font-medium text-stone-500">{category.productCount} products</div>
-									</div>
-									<label className="mt-3 block space-y-2 text-sm text-stone-600">
-										<span className="font-medium text-stone-700">Replace image (optional)</span>
-										<input
-											type="file"
-											accept="image/*"
-											onChange={(event) =>
-												setEditingImages((current) => ({
-													...current,
-													[category.id]: event.target.files?.[0] ?? null,
-												}))
-											}
-											className="w-full rounded-2xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700"
-										/>
-									</label>
-									<div className="mt-3 flex flex-wrap gap-2">
-										<Button type="button" variant="outline" onClick={() => updateCategory(category.id)} disabled={isSaving}>
-											Save
-										</Button>
-										<Button type="button" variant="destructive" onClick={() => deleteCategory(category)} disabled={isSaving || category.productCount > 0}>
-											Delete
-										</Button>
-									</div>
+										className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+									/>
+									<div className="text-xs font-medium text-slate-500">{category.productCount} products</div>
 								</div>
-							))}
-						</div>
+								<label className="mt-3 block space-y-2 text-sm text-slate-600">
+									<span className="font-medium text-slate-700">Replace image (optional)</span>
+									<input
+										type="file"
+										accept="image/*"
+										onChange={(event) =>
+											setEditingImages((current) => ({
+												...current,
+												[category.id]: event.target.files?.[0] ?? null,
+											}))
+										}
+										className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+									/>
+								</label>
+								<div className="mt-3 flex flex-wrap gap-2">
+									<Button type="button" variant="secondary" onClick={() => updateCategory(category.id)} disabled={isSaving}>
+										Save
+									</Button>
+									<Button type="button" variant="destructive" onClick={() => deleteCategory(category)} disabled={isSaving || category.productCount > 0}>
+										Delete
+									</Button>
+								</div>
+							</div>
+						))}
 					</div>
 				</div>
-			</main>
-			<SiteFooter />
+			</div>
 		</div>
 	);
 }

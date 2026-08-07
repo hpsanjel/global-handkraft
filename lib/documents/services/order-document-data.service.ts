@@ -60,10 +60,8 @@ function mapPaymentStatus(orderStatus: string): PaymentStatus {
 	return "PAID";
 }
 
-const RETURN_INFORMATION: Omit<ReturnInformation, "returnAddress"> = {
-	returnWindowDays: 7,
-	instructions: ["Contact our support team with your order number, a description of the issue, and photos of the product if applicable.", "Items must be unused, in original condition, and include all original packaging.", "Customers are responsible for return shipping costs unless the item received is damaged, defective, or incorrect."],
-	policySummary: "Returns accepted within 7 days of delivery for damaged, defective, or incorrect items. Custom-made or personalized products are non-returnable.",
+const RETURN_INFORMATION: ReturnInformation = {
+	policySummary: "All sales are final. We do not accept returns or exchanges for change of mind. If your order arrives damaged, defective, or incorrect, contact our support team with your order number and photos of the issue and we'll make it right.",
 	supportEmail: BUSINESS.seller.supportEmail,
 	supportPhone: BUSINESS.seller.supportPhone,
 	website: BUSINESS.seller.website,
@@ -112,7 +110,14 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 			unitPrice: item.unitPrice,
 			lineTotal: item.unitPrice * item.quantity,
 			addonNames: item.addonNames,
-			weightInGrams: weightKg !== null ? weightKg * 1000 : undefined,
+			// No per-product hsCode column exists in the schema yet, so it's left
+			// undefined (renders as "—") rather than guessed — a wrong customs code
+			// is worse than a missing one. countryOfOrigin falls back to the
+			// business default since it isn't tracked per product either.
+			countryOfOrigin: BUSINESS.defaultCountryOfOrigin,
+			// Mirrors the same weight floor buildPackagesFromLines uses below, so the
+			// item table and the package/shipment weights never disagree.
+			weightInGrams: Math.max(weightKg !== null ? weightKg * 1000 : 500, 200),
 			dimensions: { width: item.variant.width, height: item.variant.height, depth: item.variant.depth },
 		};
 	});
@@ -156,18 +161,27 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 	const discounts: Discount[] = discountTotal > 0 ? [{ description: "Discount applied at checkout", type: "FIXED", amount: discountTotal }] : [];
 
 	const isPickup = order.shippingProductId === STORE_PICKUP_ID;
-	const packageInputs = buildPackagesFromLines(order.items.map((item) => ({ weight: item.variant.weight, width: item.variant.width, height: item.variant.height, depth: item.variant.depth, quantity: item.quantity })));
+
+	// Built in the same order (order.items, then one entry per unit of quantity)
+	// as buildPackagesFromLines below, so packageContents[i] describes packages[i].
+	const packageContents = order.items.flatMap((item) => {
+		const label = [item.product.name, item.variant.name].filter(Boolean).join(" — ");
+		return Array<string>(Math.max(1, Math.round(item.quantity))).fill(label);
+	});
+	const packageInputs = isPickup ? [] : buildPackagesFromLines(order.items.map((item) => ({ weight: item.variant.weight, width: item.variant.width, height: item.variant.height, depth: item.variant.depth, quantity: item.quantity })));
 	const packages = packageInputs.map((pkg, index) => ({
 		packageNumber: index + 1,
 		weightInGrams: pkg.weightInGrams,
 		lengthCm: pkg.length,
 		widthCm: pkg.width,
 		heightCm: pkg.height,
+		contentsSummary: packageContents[index],
 	}));
 	const totalWeightInGrams = packages.reduce((sum, pkg) => sum + pkg.weightInGrams, 0);
 
 	const shipping: ShippingInformation = {
 		method: order.shippingMethod,
+		isPickup,
 		estimatedDelivery: isPickup ? "Ready for pickup" : "3-10 business days",
 		address,
 		shipment:
@@ -194,6 +208,6 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 		taxes,
 		discounts,
 		shipping,
-		returnInformation: { ...RETURN_INFORMATION, returnAddress: BUSINESS.returnAddress },
+		returnInformation: RETURN_INFORMATION,
 	};
 }

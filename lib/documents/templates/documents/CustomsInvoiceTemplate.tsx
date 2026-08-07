@@ -2,7 +2,7 @@ import { Document, View } from "@react-pdf/renderer";
 import type { OrderDocumentData } from "../../types";
 import { sharedStyles } from "../../styles/stylesheet";
 import { spacing } from "../../styles/theme";
-import { DocumentPage, CompanyHeader, CompanyFooter, CustomerBlock, OrderMetaBlock, ItemsTable, PriceSummary, NotesSection, TermsAndConditions, PageNumber } from "../components";
+import { DocumentPage, CompanyHeader, CompanyFooter, CustomerBlock, OrderMetaBlock, ItemsTable, PriceSummary, NotesSection, TermsAndConditions } from "../components";
 
 const CUSTOMS_DECLARATION = "This is a customs declaration for the goods described below. No commercial samples. Declared value reflects the actual transaction value paid by the buyer. Goods are not for resale.";
 
@@ -16,7 +16,7 @@ export function CustomsInvoiceTemplate({ data }: CustomsInvoiceTemplateProps) {
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Customs Invoice`} author={business.seller.legalName}>
-			<DocumentPage footer={<><CompanyFooter seller={business.seller} /><PageNumber /></>}>
+			<DocumentPage footer={<CompanyFooter seller={business.seller} />}>
 				<CompanyHeader seller={business.seller} documentTitle="Customs Invoice" documentNumber={data.metadata.documentNumber} issuedAt={data.metadata.issuedAt} />
 
 				<OrderMetaBlock
@@ -38,7 +38,7 @@ export function CustomsInvoiceTemplate({ data }: CustomsInvoiceTemplateProps) {
 
 				<PriceSummary currency={order.currency} subtotal={order.subtotal} shippingCost={order.shippingCost} discountTotal={order.discountTotal} vatTotal={order.vatTotal} grandTotal={order.grandTotal} />
 
-				<NotesSection title="Customs notes" notes={["Goods are handcrafted items imported for retail sale.", "No batteries, liquids, or restricted materials included."]} />
+				<NotesSection title="Customs notes" notes={["Goods are handcrafted items and/or traditional clothing imported for retail sale.", "No batteries, liquids, or restricted materials included."]} />
 
 				<TermsAndConditions text={CUSTOMS_DECLARATION} />
 			</DocumentPage>

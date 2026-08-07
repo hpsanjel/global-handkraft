@@ -234,3 +234,49 @@ export async function sendCustomInquiryAdminNotification(params: CustomInquiryNo
 		html,
 	});
 }
+
+type AccountDeletionRequestParams = {
+	userId: string;
+	email: string;
+	fullName?: string | null;
+};
+
+/**
+ * Notifies admins when a buyer requests deletion of their account, so the request can be
+ * manually processed within the GDPR 30-day window (order/invoice records must be retained
+ * per Norwegian bookkeeping law, so this can't be a fully automated hard-delete).
+ * Failures are the caller's responsibility to catch.
+ */
+export async function sendAccountDeletionRequestEmail(params: AccountDeletionRequestParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping account deletion request email.");
+		return;
+	}
+
+	const adminEmails = getAdminEmails();
+	if (adminEmails.length === 0) {
+		console.warn("ADMIN_EMAILS not configured; skipping account deletion request email.");
+		return;
+	}
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:#1B365D; margin-bottom:4px;">Account deletion request</h2>
+			<p>A buyer has requested deletion of their account.</p>
+			<table style="width:100%; margin-top:16px; border-collapse:collapse;">
+				<tr><td style="padding:4px 0; color:#57534e;">Name</td><td style="padding:4px 0; text-align:right;">${params.fullName || "Not provided"}</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">Email</td><td style="padding:4px 0; text-align:right;">${params.email}</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">User ID</td><td style="padding:4px 0; text-align:right;">${params.userId}</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">Requested at</td><td style="padding:4px 0; text-align:right;">${new Date().toISOString()}</td></tr>
+			</table>
+			<p style="margin-top:16px;">Please delete their login and profile data, then anonymize (not delete) any linked order/invoice records to preserve accounting history, within 30 days.</p>
+		</div>
+	`;
+
+	await resend.emails.send({
+		from: SENDER,
+		to: adminEmails,
+		subject: `Account deletion request — ${params.email}`,
+		html,
+	});
+}

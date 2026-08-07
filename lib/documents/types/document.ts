@@ -15,6 +15,13 @@ export function isDocumentType(value: string): value is DocumentType {
 	return (DOCUMENT_TYPES as string[]).includes(value);
 }
 
+/** Document types that only make sense for an order that's actually being shipped — meaningless for in-store pickup. */
+export const SHIPPING_ONLY_DOCUMENT_TYPES: readonly DocumentType[] = ["PACKING_LIST", "CUSTOMS_INVOICE", "SHIPPING_SUMMARY"];
+
+export function isShippingOnlyDocumentType(type: DocumentType): boolean {
+	return (SHIPPING_ONLY_DOCUMENT_TYPES as DocumentType[]).includes(type);
+}
+
 /**
  * PDF-only. All three are produced from the same react-pdf <Document> element
  * by DocumentRendererService; the caller picks the container that fits its use

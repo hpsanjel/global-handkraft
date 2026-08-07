@@ -2,7 +2,7 @@ import { Document, Text, View } from "@react-pdf/renderer";
 import type { OrderDocumentData } from "../../types";
 import { sharedStyles } from "../../styles/stylesheet";
 import { colors, spacing } from "../../styles/theme";
-import { DocumentPage, CompanyHeader, CompanyFooter, OrderMetaBlock, ItemsTable, PriceSummary, PaymentInfo, QRCodeBlock, PageNumber } from "../components";
+import { DocumentPage, CompanyHeader, CompanyFooter, OrderMetaBlock, ItemsTable, PriceSummary, PaymentInfo, QRCodeBlock } from "../components";
 
 interface ReceiptTemplateProps {
 	data: OrderDocumentData;
@@ -13,7 +13,7 @@ export function ReceiptTemplate({ data }: ReceiptTemplateProps) {
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Receipt`} author={business.seller.legalName}>
-			<DocumentPage footer={<><CompanyFooter seller={business.seller} /><PageNumber /></>}>
+			<DocumentPage footer={<CompanyFooter seller={business.seller} />}>
 				<CompanyHeader seller={business.seller} documentTitle="Receipt" documentNumber={data.metadata.documentNumber} issuedAt={data.metadata.issuedAt} />
 
 				<View style={[sharedStyles.sectionSpacing, { padding: spacing.sm, backgroundColor: colors.neutral[50] }]}>
@@ -36,7 +36,7 @@ export function ReceiptTemplate({ data }: ReceiptTemplateProps) {
 						<Text style={[sharedStyles.muted, { marginTop: spacing.xs }]}>{business.seller.supportEmail}</Text>
 						<Text style={sharedStyles.muted}>{business.seller.supportPhone}</Text>
 					</View>
-					<QRCodeBlock value={`https://${business.seller.website}/account/orders`} caption="View order online" />
+					<QRCodeBlock value={`https://${business.seller.website}/account/orders?order=${encodeURIComponent(order.orderNumber)}`} caption="View this order online" />
 				</View>
 			</DocumentPage>
 		</Document>
