@@ -235,6 +235,88 @@ export async function sendCustomInquiryAdminNotification(params: CustomInquiryNo
 	});
 }
 
+type MandapInquiryReplyParams = {
+	to: string;
+	category: string;
+	productName: string;
+	message: string;
+};
+
+/**
+ * Notifies the customer by email when admin replies to their custom Mandap/Temple order request.
+ * Failures are the caller's responsibility to catch — a failed email should
+ * never fail the reply submission itself.
+ */
+export async function sendMandapInquiryReplyEmail(params: MandapInquiryReplyParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping mandap inquiry reply email.");
+		return;
+	}
+
+	if (!params.to) {
+		console.warn("No recipient email for mandap inquiry reply; skipping email.");
+		return;
+	}
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:#1B365D; margin-bottom:4px;">New reply on your custom ${params.category.toLowerCase()} request</h2>
+			<p>Hi there,</p>
+			<p>We've replied to your custom order request for <strong>${params.productName}</strong>:</p>
+			<p style="color:#57534e; font-style:italic;">"${params.message}"</p>
+			<p style="margin-top:28px;">You can reply from your <a href="https://handcraftsglobal.com/account/custom-requests" style="color:#1B365D;">account dashboard</a>.</p>
+			<p>Warm regards,<br/>Global Handcrafts Team</p>
+		</div>
+	`;
+
+	await resend.emails.send({
+		from: SENDER,
+		to: params.to,
+		subject: `New reply on your custom ${params.category.toLowerCase()} request`,
+		html,
+	});
+}
+
+type MandapInquiryCustomerMessageParams = {
+	category: string;
+	productName: string;
+	message: string;
+	customerEmail: string | null;
+};
+
+/**
+ * Notifies admins by email when a customer sends a follow-up message on their custom
+ * Mandap/Temple order request. Failures are the caller's responsibility to catch.
+ */
+export async function sendMandapInquiryCustomerMessageEmail(params: MandapInquiryCustomerMessageParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping mandap inquiry customer message email.");
+		return;
+	}
+
+	const adminEmails = getAdminEmails();
+	if (adminEmails.length === 0) {
+		console.warn("ADMIN_EMAILS not configured; skipping mandap inquiry customer message email.");
+		return;
+	}
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:#1B365D; margin-bottom:4px;">New customer reply — ${params.category} request</h2>
+			<p>${params.customerEmail || "A customer"} replied on the custom <strong>${params.category}</strong> request for <strong>${params.productName}</strong>:</p>
+			<p style="color:#57534e; font-style:italic;">"${params.message}"</p>
+			<p style="margin-top:28px;">View and reply in the <a href="https://handcraftsglobal.com/admin/orders" style="color:#1B365D;">admin dashboard</a>.</p>
+		</div>
+	`;
+
+	await resend.emails.send({
+		from: SENDER,
+		to: adminEmails,
+		subject: `New customer reply — ${params.category} request for ${params.productName}`,
+		html,
+	});
+}
+
 type AccountDeletionRequestParams = {
 	userId: string;
 	email: string;

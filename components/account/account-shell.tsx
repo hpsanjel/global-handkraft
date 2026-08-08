@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { LayoutDashboard, Package, MapPin, User as UserIcon, Menu, X, LogOut, Store, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Package, MapPin, User as UserIcon, Menu, X, LogOut, Store, ChevronDown, MessageSquare } from "lucide-react";
 import { CartBadge } from "@/components/cart-badge";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
 	{ href: "/account", label: "Overview", icon: LayoutDashboard, exact: true },
 	{ href: "/account/orders", label: "My Orders", icon: Package },
+	{ href: "/account/custom-requests", label: "Custom Requests", icon: MessageSquare },
 	{ href: "/account/addresses", label: "Addresses", icon: MapPin },
 	{ href: "/account/profile", label: "Profile & Security", icon: UserIcon },
 ] as const;

@@ -338,22 +338,21 @@ export function ShopClient() {
 							</button>
 						</div>
 					) : (
-						<div className={viewMode === "grid" ? "grid grid-cols-2 gap-4 md:gap-6 md:grid-cols-3" : "space-y-4"}>
+						<div className={viewMode === "grid" ? "grid grid-cols-2 gap-3 md:gap-6 md:grid-cols-3" : "space-y-2"}>
 							{visibleProducts.map((product) => (
 								<Link key={product.id} href={`/product/${product.slug}`} className={`relative rounded-[1.75rem] bg-white  md:transition md:hover:-translate-y-1 ${viewMode === "list" ? "flex gap-5" : ""}`}>
-									<div className={`${viewMode === "list" ? "h-28 w-28 shrink-0" : "mx-auto aspect-4/5"} rounded-t-[1.25rem] bg-cover bg-center`} style={{ backgroundImage: `url('${product.image}')` }} />
-									<div className="min-w-0 flex-1 p-4 sm:px-6 sm:py-4">
-										<h2 className="text-lg font-semibold text-stone-900 line-clamp-1" title={product.name}>
+									<div className={`${viewMode === "list" ? "h-28 w-28 shrink-0" : "mx-auto aspect-4/5"} bg-cover bg-center`} style={{ backgroundImage: `url('${product.image}')` }} />
+									<div className={`${viewMode === "list" ? "mt-8" : "min-w-0 flex-1 p-2 sm:px-6 sm:py-4"}`}>
+										<h2 className="text-xs sm:text-sm md:text-md font-semibold text-stone-900 line-clamp-1" title={product.name}>
 											{product.name}
 										</h2>
-										<div className="mt-3 flex items-center justify-between gap-3">
-											<p className="text-sm font-semibold text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
+										<div className={`mt-1 md:mt-3 flex gap-2 md:gap-3 ${viewMode === "list" ? "flex-col items-start" : "items-center justify-between"}`}>
+											<p className="text-xs md:text-sm font-medium text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
+
 											<span className={`${loading ? "opacity-50 cursor-not-allowed" : ""} inline-flex items-center rounded-full bg-[#F7931E] px-3 py-1 text-xs font-semibold text-white`}>Buy</span>
 										</div>
 
-										<div className="mt-3 flex flex-wrap gap-2 text-xs text-stone-600">
-											<span className="absolute top-4 right-6 rounded-full border border-stone-200 bg-stone-50 px-2 py-1">{product.category}</span>
-										</div>
+										{viewMode === "grid" ? <span className="absolute top-2 right-2 md:top-4 md:right-6 text-xs rounded-full border border-stone-200 bg-stone-50 px-2 py-1">{product.category}</span> : null}
 									</div>
 								</Link>
 							))}

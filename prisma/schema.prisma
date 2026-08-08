@@ -242,4 +242,16 @@ model MandapInquiry {
   sampleImages      String[]
   status            String   @default("NEW")
   createdAt         DateTime @default(now())
+  messages          MandapInquiryMessage[]
+}
+
+model MandapInquiryMessage {
+  id        String        @id @default(cuid())
+  inquiryId String
+  inquiry   MandapInquiry @relation(fields: [inquiryId], references: [id])
+  sender    String
+  message   String
+  createdAt DateTime      @default(now())
+
+  @@index([inquiryId])
 }

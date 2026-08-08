@@ -1,5 +1,6 @@
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { getRecentOrders, getMandapInquiries } from "@/lib/admin";
+import { MandapInquiryThread } from "@/components/mandap-inquiry-thread";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { OrderDocumentsMenu } from "./OrderDocumentsMenu";
 
@@ -111,6 +112,8 @@ export default async function AdminOrdersPage() {
 										))}
 									</div>
 								) : null}
+
+								<MandapInquiryThread messages={inquiry.messages} postUrl={`/api/admin/mandap-inquiries/${inquiry.id}/messages`} viewerRole="ADMIN" />
 							</div>
 						))
 					) : (

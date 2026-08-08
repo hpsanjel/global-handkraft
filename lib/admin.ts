@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { STORE_PICKUP_ID } from "@/lib/shipping-client";
 
+export interface AdminMandapInquiryMessage {
+	id: string;
+	sender: string;
+	message: string;
+	createdAt: string;
+}
+
 export interface AdminMandapInquiry {
 	id: string;
 	productId: string;
@@ -18,6 +25,7 @@ export interface AdminMandapInquiry {
 	sampleImages: string[];
 	status: string;
 	createdAt: string;
+	messages: AdminMandapInquiryMessage[];
 }
 
 export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry[]> {
@@ -26,6 +34,9 @@ export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry
 	}
 
 	const inquiries = await prisma.mandapInquiry.findMany({
+		include: {
+			messages: { orderBy: { createdAt: "asc" } },
+		},
 		orderBy: { createdAt: "desc" },
 		take: limit,
 	});
@@ -33,6 +44,10 @@ export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry
 	return inquiries.map((inquiry) => ({
 		...inquiry,
 		createdAt: inquiry.createdAt.toISOString(),
+		messages: inquiry.messages.map((message) => ({
+			...message,
+			createdAt: message.createdAt.toISOString(),
+		})),
 	}));
 }
 
