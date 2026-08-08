@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
 	return {
-		name: "Global Handcrafts AS",
+		name: "Global Handcrafts AS - Buy premium handcrafted products",
 		short_name: "Global Handcrafts",
 		description: "Authentic handcrafted temples, pooja items, and traditional products delivered across Europe.",
 		start_url: "/",
