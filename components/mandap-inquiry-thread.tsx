@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import { useRef, useState } from "react";
 
 export type MandapInquiryThreadMessage = {
 	id: string;
 	sender: string;
 	message: string;
+	attachments?: string[];
 	createdAt: string;
 };
 
@@ -14,6 +16,8 @@ type Props = {
 	postUrl: string;
 	viewerRole: "ADMIN" | "CUSTOMER";
 };
+
+const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
 
 function formatTimestamp(value: string) {
 	return new Date(value).toLocaleString("en-GB", {
@@ -27,8 +31,44 @@ function formatTimestamp(value: string) {
 export function MandapInquiryThread({ messages: initialMessages, postUrl, viewerRole }: Props) {
 	const [messages, setMessages] = useState(initialMessages);
 	const [draft, setDraft] = useState("");
+	const [attachment, setAttachment] = useState<File | null>(null);
+	const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
 	const [isSending, setIsSending] = useState(false);
 	const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0] ?? null;
+		if (!file) {
+			setAttachment(null);
+			setAttachmentPreview(null);
+			return;
+		}
+
+		if (!file.type.startsWith("image/")) {
+			setFeedback({ type: "error", message: "Only image files can be attached." });
+			event.target.value = "";
+			return;
+		}
+
+		if (file.size > MAX_ATTACHMENT_BYTES) {
+			setFeedback({ type: "error", message: "Attached image must be 3MB or smaller." });
+			event.target.value = "";
+			return;
+		}
+
+		setFeedback(null);
+		setAttachment(file);
+		setAttachmentPreview(URL.createObjectURL(file));
+	};
+
+	const clearAttachment = () => {
+		setAttachment(null);
+		setAttachmentPreview(null);
+		if (fileInputRef.current) {
+			fileInputRef.current.value = "";
+		}
+	};
 
 	const handleSend = async () => {
 		const trimmed = draft.trim();
@@ -40,10 +80,15 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 		setFeedback(null);
 
 		try {
+			const formData = new FormData();
+			formData.append("message", trimmed);
+			if (attachment) {
+				formData.append("attachment", attachment);
+			}
+
 			const response = await fetch(postUrl, {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ message: trimmed }),
+				body: formData,
 			});
 			const payload = await response.json();
 
@@ -53,6 +98,7 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 
 			setMessages((current) => [...current, payload as MandapInquiryThreadMessage]);
 			setDraft("");
+			clearAttachment();
 		} catch (error) {
 			setFeedback({ type: "error", message: error instanceof Error ? error.message : "Unable to send message." });
 		} finally {
@@ -74,6 +120,15 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 								<span className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${msg.sender === "ADMIN" ? "bg-[#1B365D]" : "bg-[#4CAF50]"}`} />
 								<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
 								<p className="mt-0.5 text-sm text-slate-700">{msg.message}</p>
+								{msg.attachments && msg.attachments.length > 0 ? (
+									<div className="mt-2 flex flex-wrap gap-2">
+										{msg.attachments.map((url) => (
+											<a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-lg border border-slate-200">
+												<Image src={url} alt="Message attachment" width={80} height={80} className="h-full w-full object-cover" unoptimized />
+											</a>
+										))}
+									</div>
+								) : null}
 								<p className="mt-0.5 text-xs text-slate-400">{formatTimestamp(msg.createdAt)}</p>
 							</li>
 						);
@@ -92,6 +147,18 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 					rows={2}
 					className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100 disabled:opacity-60"
 				/>
+
+				{attachmentPreview ? (
+					<div className="flex items-center gap-2">
+						<div className="h-16 w-16 overflow-hidden rounded-lg border border-slate-200">
+							<Image src={attachmentPreview} alt="Attachment preview" width={64} height={64} className="h-full w-full object-cover" unoptimized />
+						</div>
+						<button type="button" onClick={clearAttachment} disabled={isSending} className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50">
+							Remove
+						</button>
+					</div>
+				) : null}
+
 				<div className="flex items-center gap-3">
 					<button
 						type="button"
@@ -101,6 +168,10 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 					>
 						{isSending ? "Sending..." : "Send"}
 					</button>
+					<label className="cursor-pointer text-xs font-medium text-slate-500 hover:text-slate-700">
+						{attachment ? "Change image" : "Attach image (max 3MB)"}
+						<input ref={fileInputRef} type="file" accept="image/*" onChange={handleAttachmentChange} disabled={isSending} className="hidden" />
+					</label>
 					{feedback ? <p className={`text-xs ${feedback.type === "error" ? "text-red-600" : "text-green-600"}`}>{feedback.message}</p> : null}
 				</div>
 			</div>

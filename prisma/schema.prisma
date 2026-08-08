@@ -254,12 +254,13 @@ model MandapInquiry {
 }
 
 model MandapInquiryMessage {
-  id        String        @id @default(cuid())
-  inquiryId String
-  inquiry   MandapInquiry @relation(fields: [inquiryId], references: [id])
-  sender    String
-  message   String
-  createdAt DateTime      @default(now())
+  id          String        @id @default(cuid())
+  inquiryId   String
+  inquiry     MandapInquiry @relation(fields: [inquiryId], references: [id])
+  sender      String
+  message     String
+  attachments String[]      @default([])
+  createdAt   DateTime      @default(now())
 
   @@index([inquiryId])
 }

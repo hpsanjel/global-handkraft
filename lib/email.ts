@@ -240,6 +240,7 @@ type MandapInquiryReplyParams = {
 	category: string;
 	productName: string;
 	message: string;
+	attachments?: string[];
 };
 
 /**
@@ -258,12 +259,15 @@ export async function sendMandapInquiryReplyEmail(params: MandapInquiryReplyPara
 		return;
 	}
 
+	const attachmentsHtml = params.attachments?.length ? `<p style="margin-top:12px;"><strong>Attachment:</strong><br/>${params.attachments.map((url) => `<a href="${url}" style="color:#1B365D;">${url}</a>`).join("<br/>")}</p>` : "";
+
 	const html = `
 		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
 			<h2 style="color:#1B365D; margin-bottom:4px;">New reply on your custom ${params.category.toLowerCase()} request</h2>
 			<p>Hi there,</p>
 			<p>We've replied to your custom order request for <strong>${params.productName}</strong>:</p>
 			<p style="color:#57534e; font-style:italic;">"${params.message}"</p>
+			${attachmentsHtml}
 			<p style="margin-top:28px;">You can reply from your <a href="https://handcraftsglobal.com/account/custom-requests" style="color:#1B365D;">account dashboard</a>.</p>
 			<p>Warm regards,<br/>Global Handcrafts Team</p>
 		</div>
@@ -282,6 +286,7 @@ type MandapInquiryCustomerMessageParams = {
 	productName: string;
 	message: string;
 	customerEmail: string | null;
+	attachments?: string[];
 };
 
 /**
@@ -300,11 +305,14 @@ export async function sendMandapInquiryCustomerMessageEmail(params: MandapInquir
 		return;
 	}
 
+	const attachmentsHtml = params.attachments?.length ? `<p style="margin-top:12px;"><strong>Attachment:</strong><br/>${params.attachments.map((url) => `<a href="${url}" style="color:#1B365D;">${url}</a>`).join("<br/>")}</p>` : "";
+
 	const html = `
 		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
 			<h2 style="color:#1B365D; margin-bottom:4px;">New customer reply — ${params.category} request</h2>
 			<p>${params.customerEmail || "A customer"} replied on the custom <strong>${params.category}</strong> request for <strong>${params.productName}</strong>:</p>
 			<p style="color:#57534e; font-style:italic;">"${params.message}"</p>
+			${attachmentsHtml}
 			<p style="margin-top:28px;">View and reply in the <a href="https://handcraftsglobal.com/admin/orders" style="color:#1B365D;">admin dashboard</a>.</p>
 		</div>
 	`;

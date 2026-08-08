@@ -3,6 +3,7 @@ import { hasAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { sendMandapInquiryReplyEmail } from "@/lib/email";
+import { uploadMandapMessageAttachment } from "@/lib/mandap-inquiry-message-attachment";
 
 async function requireAdmin() {
 	const supabase = await createClient();
@@ -33,8 +34,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 		}
 
 		const { id } = await params;
-		const body = (await request.json()) as { message?: string };
-		const message = body.message?.trim();
+		const formData = await request.formData();
+		const message = String(formData.get("message") ?? "").trim();
+		const attachmentFile = formData.get("attachment");
 
 		if (!message) {
 			return NextResponse.json({ error: "Message cannot be empty." }, { status: 400 });
@@ -45,8 +47,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 			return NextResponse.json({ error: "Request not found." }, { status: 404 });
 		}
 
+		const attachments: string[] = [];
+		if (attachmentFile instanceof File && attachmentFile.size > 0) {
+			attachments.push(await uploadMandapMessageAttachment(attachmentFile, id));
+		}
+
 		const created = await prisma.mandapInquiryMessage.create({
-			data: { inquiryId: id, sender: "ADMIN", message },
+			data: { inquiryId: id, sender: "ADMIN", message, attachments },
 		});
 
 		if (inquiry.email) {
@@ -55,6 +62,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 				category: inquiry.category,
 				productName: inquiry.productName,
 				message,
+				attachments,
 			}).catch((error) => {
 				console.error("Unable to send mandap inquiry reply email:", error);
 			});

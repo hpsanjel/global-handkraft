@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { sendMandapInquiryCustomerMessageEmail } from "@/lib/email";
+import { uploadMandapMessageAttachment } from "@/lib/mandap-inquiry-message-attachment";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
 	try {
@@ -19,8 +20,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 		}
 
 		const { id } = await params;
-		const body = (await request.json()) as { message?: string };
-		const message = body.message?.trim();
+		const formData = await request.formData();
+		const message = String(formData.get("message") ?? "").trim();
+		const attachmentFile = formData.get("attachment");
 
 		if (!message) {
 			return NextResponse.json({ error: "Message cannot be empty." }, { status: 400 });
@@ -31,8 +33,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 			return NextResponse.json({ error: "Request not found." }, { status: 404 });
 		}
 
+		const attachments: string[] = [];
+		if (attachmentFile instanceof File && attachmentFile.size > 0) {
+			attachments.push(await uploadMandapMessageAttachment(attachmentFile, id));
+		}
+
 		const created = await prisma.mandapInquiryMessage.create({
-			data: { inquiryId: id, sender: "CUSTOMER", message },
+			data: { inquiryId: id, sender: "CUSTOMER", message, attachments },
 		});
 
 		sendMandapInquiryCustomerMessageEmail({
@@ -40,6 +47,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 			productName: inquiry.productName,
 			message,
 			customerEmail: inquiry.email,
+			attachments,
 		}).catch((error) => {
 			console.error("Unable to send mandap inquiry customer message email:", error);
 		});
