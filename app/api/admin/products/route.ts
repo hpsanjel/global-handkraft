@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@/app/generated/prisma/index";
 import { prisma } from "@/lib/prisma";
 import { toStoreProduct } from "@/lib/product-transform";
 import { hasAdminRole } from "@/lib/admin-auth";
@@ -21,6 +22,7 @@ type ProductRequestPayload = {
 	dimensions?: string;
 	weight?: string;
 	variants: Array<{
+		id?: string;
 		name: string;
 		price: number;
 		width: string;
@@ -35,6 +37,36 @@ type ProductRequestPayload = {
 		description: string;
 	}>;
 };
+
+class VariantInUseError extends Error {
+	constructor(public readonly variantNames: string[]) {
+		super(`Cannot remove variant(s) with existing order history: ${variantNames.join(", ")}. Keep them or contact support to archive past orders first.`);
+		this.name = "VariantInUseError";
+	}
+}
+
+function describePrismaError(error: unknown, fallback: string): { message: string; status: number } {
+	if (error instanceof VariantInUseError) {
+		return { message: error.message, status: 409 };
+	}
+
+	if (error instanceof Prisma.PrismaClientKnownRequestError) {
+		switch (error.code) {
+			case "P2002": {
+				const target = Array.isArray(error.meta?.target) ? error.meta.target.join(", ") : String(error.meta?.target ?? "field");
+				return { message: `A record with the same ${target} already exists.`, status: 409 };
+			}
+			case "P2003":
+				return { message: "This change is blocked by related records (e.g. existing orders). Remove or update those references first.", status: 409 };
+			case "P2025":
+				return { message: "The record you tried to update no longer exists.", status: 404 };
+			default:
+				return { message: fallback, status: 500 };
+		}
+	}
+
+	return { message: error instanceof Error ? error.message : fallback, status: 500 };
+}
 
 async function requireAdmin() {
 	const supabase = await createClient();
@@ -64,6 +96,49 @@ function generateVariantSku(productSlug: string, variantName: string, index: num
 		.replace(/[^a-z0-9]+/g, "-")
 		.replace(/(^-|-$)/g, "");
 	return `${productSlug}-${variantSlug || "variant"}-${index + 1}`.toUpperCase();
+}
+
+async function syncVariants(tx: Prisma.TransactionClient, productId: string, productSlug: string, incomingVariants: ProductRequestPayload["variants"]) {
+	const existingVariants = await tx.variant.findMany({ where: { productId } });
+	const existingIds = new Set(existingVariants.map((variant) => variant.id));
+
+	const keptIds = new Set(incomingVariants.filter((variant) => variant.id && existingIds.has(variant.id)).map((variant) => variant.id as string));
+	const idsToRemove = existingVariants.filter((variant) => !keptIds.has(variant.id)).map((variant) => variant.id);
+
+	if (idsToRemove.length > 0) {
+		const blockedVariants = await tx.variant.findMany({
+			where: { id: { in: idsToRemove }, orderItems: { some: {} } },
+			select: { name: true },
+		});
+		if (blockedVariants.length > 0) {
+			throw new VariantInUseError(blockedVariants.map((variant) => variant.name));
+		}
+		await tx.variant.deleteMany({ where: { id: { in: idsToRemove } } });
+	}
+
+	for (const [index, variant] of incomingVariants.entries()) {
+		const data = {
+			name: variant.name.trim(),
+			price: Number(variant.price ?? 0),
+			width: variant.width ?? "",
+			height: variant.height ?? "",
+			depth: variant.depth ?? "",
+			weight: variant.weight ?? "",
+			stock: Number(variant.stock ?? 0),
+		};
+
+		if (variant.id && keptIds.has(variant.id)) {
+			await tx.variant.update({ where: { id: variant.id }, data });
+		} else {
+			await tx.variant.create({
+				data: {
+					...data,
+					productId,
+					sku: generateVariantSku(productSlug, variant.name, index),
+				},
+			});
+		}
+	}
 }
 
 async function getCategoryByName(categoryName: string) {
@@ -192,8 +267,8 @@ export async function POST(request: Request) {
 
 		return NextResponse.json(await listProducts());
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unable to create product.";
-		return NextResponse.json({ error: message }, { status: 500 });
+		const { message, status } = describePrismaError(error, "Unable to create product.");
+		return NextResponse.json({ error: message }, { status });
 	}
 }
 
@@ -223,53 +298,46 @@ export async function PUT(request: Request) {
 			return NextResponse.json({ error: "Selected category does not exist. Create the category first." }, { status: 400 });
 		}
 
-		await prisma.product.update({
-			where: { id: body.id },
-			data: {
-				name: body.name.trim(),
-				slug: body.slug.trim(),
-				shortDescription: body.shortDescription?.trim() || body.name.trim(),
-				description: body.description?.trim() || body.shortDescription?.trim() || body.name.trim(),
-				material: body.material?.trim() || "Mixed Artisan Materials",
-				categoryId: category.id,
-				image: body.image,
-				gallery: body.gallery ?? [body.image],
-				galleryColors: normalizeGalleryColors(body.gallery ?? [body.image], body.galleryColors),
-				featured: Boolean(body.featured),
-				rating: Number(body.rating ?? 0),
-				reviewCount: Number(body.reviewCount ?? 0),
-				dimensions: body.dimensions?.trim() || null,
-				weight: body.weight?.trim() || null,
-				seoTitle: body.name.trim(),
-				seoDescription: body.shortDescription?.trim() || body.name.trim(),
-				variants: {
-					deleteMany: {},
-					create: body.variants.map((variant, index) => ({
-						name: variant.name.trim(),
-						price: Number(variant.price ?? 0),
-						width: variant.width ?? "",
-						height: variant.height ?? "",
-						depth: variant.depth ?? "",
-						weight: variant.weight ?? "",
-						stock: Number(variant.stock ?? 0),
-						sku: generateVariantSku(body.slug.trim(), variant.name, index),
-					})),
+		const productSlug = body.slug.trim();
+
+		await prisma.$transaction(async (tx) => {
+			await tx.product.update({
+				where: { id: body.id },
+				data: {
+					name: body.name.trim(),
+					slug: productSlug,
+					shortDescription: body.shortDescription?.trim() || body.name.trim(),
+					description: body.description?.trim() || body.shortDescription?.trim() || body.name.trim(),
+					material: body.material?.trim() || "Mixed Artisan Materials",
+					categoryId: category.id,
+					image: body.image,
+					gallery: body.gallery ?? [body.image],
+					galleryColors: normalizeGalleryColors(body.gallery ?? [body.image], body.galleryColors),
+					featured: Boolean(body.featured),
+					rating: Number(body.rating ?? 0),
+					reviewCount: Number(body.reviewCount ?? 0),
+					dimensions: body.dimensions?.trim() || null,
+					weight: body.weight?.trim() || null,
+					seoTitle: body.name.trim(),
+					seoDescription: body.shortDescription?.trim() || body.name.trim(),
+					addons: {
+						deleteMany: {},
+						create: body.addons.map((addon) => ({
+							name: addon.name.trim(),
+							price: Number(addon.price ?? 0),
+							description: addon.description ?? "",
+						})),
+					},
 				},
-				addons: {
-					deleteMany: {},
-					create: body.addons.map((addon) => ({
-						name: addon.name.trim(),
-						price: Number(addon.price ?? 0),
-						description: addon.description ?? "",
-					})),
-				},
-			},
+			});
+
+			await syncVariants(tx, body.id!, productSlug, body.variants);
 		});
 
 		return NextResponse.json(await listProducts());
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unable to update product.";
-		return NextResponse.json({ error: message }, { status: 500 });
+		const { message, status } = describePrismaError(error, "Unable to update product.");
+		return NextResponse.json({ error: message }, { status });
 	}
 }
 
@@ -301,7 +369,7 @@ export async function DELETE(request: Request) {
 
 		return NextResponse.json(await listProducts());
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unable to delete product.";
-		return NextResponse.json({ error: message }, { status: 500 });
+		const { message, status } = describePrismaError(error, "Unable to delete product.");
+		return NextResponse.json({ error: message }, { status });
 	}
 }
