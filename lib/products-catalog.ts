@@ -30,8 +30,8 @@ export async function refreshProductsCatalog() {
 	window.dispatchEvent(new Event("products:updated"));
 }
 
-export function useProductsCatalog() {
-	const [products, setProducts] = useState<Product[]>(() => inMemoryCatalog ?? []);
+export function useProductsCatalog(initialProducts?: Product[]) {
+	const [products, setProducts] = useState<Product[]>(() => inMemoryCatalog ?? initialProducts ?? []);
 
 	useEffect(() => {
 		let isDisposed = false;
@@ -40,6 +40,12 @@ export function useProductsCatalog() {
 			try {
 				if (inMemoryCatalog) {
 					setProducts(inMemoryCatalog);
+					return;
+				}
+
+				if (initialProducts) {
+					inMemoryCatalog = initialProducts;
+					setProducts(initialProducts);
 					return;
 				}
 
@@ -67,6 +73,8 @@ export function useProductsCatalog() {
 			isDisposed = true;
 			window.removeEventListener("products:updated", handleProductsUpdated);
 		};
+		// initialProducts only seeds the first mount and shouldn't re-trigger this effect
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return products;

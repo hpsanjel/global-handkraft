@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { siteConfig } from "@/app/metadata";
 
 export default function robots(): MetadataRoute.Robots {
 	return {
@@ -6,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
 			userAgent: "*",
 			allow: "/",
 		},
-		sitemap: "https://handcraftsglobal.com/sitemap.xml",
+		sitemap: `${siteConfig.url}/sitemap.xml`,
 	};
 }

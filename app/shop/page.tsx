@@ -1,9 +1,45 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ShopClient } from "@/components/shop-client";
-import { Suspense } from "react";
+import { prisma } from "@/lib/prisma";
+import { toStoreProduct } from "@/lib/product-transform";
+import { createClient } from "@/lib/supabase/server";
 
 import { siteConfig } from "@/app/metadata";
+
+const CATEGORY_BUCKET = "categories";
+
+async function getShopData() {
+	if (!process.env.DATABASE_URL) {
+		return { products: [], categories: [] };
+	}
+
+	const [productRecords, categoryRecords] = await Promise.all([
+		prisma.product.findMany({
+			where: { active: true },
+			include: { category: true, variants: true, addons: true },
+			orderBy: { createdAt: "desc" },
+		}),
+		prisma.category.findMany({
+			orderBy: { createdAt: "asc" },
+			include: { products: { where: { active: true }, select: { id: true } } },
+		}),
+	]);
+
+	const supabase = await createClient();
+
+	return {
+		products: productRecords.map(toStoreProduct),
+		categories: categoryRecords.map((category) => ({
+			id: category.id,
+			name: category.name,
+			slug: category.slug,
+			productCount: category.products.length,
+			imagePath: category.imagePath,
+			imageUrl: category.imagePath ? supabase.storage.from(CATEGORY_BUCKET).getPublicUrl(category.imagePath).data.publicUrl : null,
+		})),
+	};
+}
 
 export const metadata = {
 	title: "Shop",
@@ -28,14 +64,14 @@ export const metadata = {
 	},
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+	const { products, categories } = await getShopData();
+
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
 			<SiteHeader />
 			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-				<Suspense fallback={<div className="rounded-2xl border border-stone-200 bg-white p-6 text-sm text-stone-600">Loading shop...</div>}>
-					<ShopClient />
-				</Suspense>
+				<ShopClient initialProducts={products} initialCategories={categories} />
 			</main>
 			<SiteFooter />
 		</div>

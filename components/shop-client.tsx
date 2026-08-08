@@ -5,12 +5,28 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useProductsCatalog } from "@/lib/products-catalog";
+import type { CategorySummary } from "@/lib/category-utils";
+import type { Product } from "@/types/store";
 
 const PAGE_SIZE = 8;
 
-export function ShopClient() {
-	const products = useProductsCatalog();
-	const categories = useCategoriesCatalog();
+function getPriceRange(products: Product[]) {
+	const prices = products.flatMap((product) => product.variants.map((variant) => variant.price));
+	if (prices.length === 0) {
+		return { min: 0, max: 0 };
+	}
+
+	return { min: Math.min(...prices), max: Math.max(...prices) };
+}
+
+type ShopClientProps = {
+	initialProducts?: Product[];
+	initialCategories?: CategorySummary[];
+};
+
+export function ShopClient({ initialProducts, initialCategories }: ShopClientProps) {
+	const products = useProductsCatalog(initialProducts);
+	const categories = useCategoriesCatalog(initialCategories);
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -24,8 +40,8 @@ export function ShopClient() {
 	const [availability, setAvailability] = useState("All");
 	const [sortBy, setSortBy] = useState("newest");
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-	const [minPrice, setMinPrice] = useState(0);
-	const [maxPrice, setMaxPrice] = useState(0);
+	const [minPrice, setMinPrice] = useState(() => getPriceRange(initialProducts ?? []).min);
+	const [maxPrice, setMaxPrice] = useState(() => getPriceRange(initialProducts ?? []).max);
 	const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -33,18 +49,7 @@ export function ShopClient() {
 	const categoryParam = searchParams.get("category");
 	const [loading, setLoading] = useState(false);
 
-	const availablePrices = useMemo(() => products.flatMap((product) => product.variants.map((variant) => variant.price)), [products]);
-
-	const availablePriceRange = useMemo(() => {
-		if (availablePrices.length === 0) {
-			return { min: 0, max: 0 };
-		}
-
-		return {
-			min: Math.min(...availablePrices),
-			max: Math.max(...availablePrices),
-		};
-	}, [availablePrices]);
+	const availablePriceRange = useMemo(() => getPriceRange(products), [products]);
 
 	const getProductPrice = useCallback((product: (typeof products)[number]) => product.variants[0]?.price ?? 0, []);
 

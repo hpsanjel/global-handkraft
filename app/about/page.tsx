@@ -7,7 +7,7 @@ import { siteConfig } from "@/app/metadata";
 
 export const metadata = {
 	title: "About Us",
-	description: "Global Handcrafts AS brings authentic handcrafted temples, pooja items, and traditional cultural products from Nepal and South Asia to homes across Norway and Europe.",
+	description: "Global Handcrafts AS brings authentic handcrafted temples, pooja items, and traditional products from Nepal and South Asia to homes across Norway and Europe.",
 	openGraph: {
 		title: `About Us | ${siteConfig.name}`,
 		description: "Authentic handcrafted temples, pooja items, and traditional cultural products from Nepal and South Asia, delivered across Norway and Europe.",

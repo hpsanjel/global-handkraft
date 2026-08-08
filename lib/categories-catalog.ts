@@ -30,8 +30,8 @@ export async function refreshCategoriesCatalog() {
 	window.dispatchEvent(new Event("categories:updated"));
 }
 
-export function useCategoriesCatalog() {
-	const [categories, setCategories] = useState<CategorySummary[]>(() => inMemoryCategories ?? []);
+export function useCategoriesCatalog(initialCategories?: CategorySummary[]) {
+	const [categories, setCategories] = useState<CategorySummary[]>(() => inMemoryCategories ?? initialCategories ?? []);
 
 	useEffect(() => {
 		let isDisposed = false;
@@ -40,6 +40,12 @@ export function useCategoriesCatalog() {
 			try {
 				if (inMemoryCategories) {
 					setCategories(inMemoryCategories);
+					return;
+				}
+
+				if (initialCategories) {
+					inMemoryCategories = initialCategories;
+					setCategories(initialCategories);
 					return;
 				}
 
@@ -67,6 +73,8 @@ export function useCategoriesCatalog() {
 			isDisposed = true;
 			window.removeEventListener("categories:updated", handleCategoriesUpdated);
 		};
+		// initialCategories only seeds the first mount and shouldn't re-trigger this effect
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return categories;
