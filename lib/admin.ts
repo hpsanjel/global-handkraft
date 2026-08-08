@@ -24,7 +24,14 @@ export interface AdminMandapInquiry {
 	email: string | null;
 	sampleImages: string[];
 	status: string;
+	paymentStatus: string;
+	adminNote: string | null;
+	quotedPrice: number | null;
+	stripePaymentLink: string | null;
 	createdAt: string;
+	updatedAt: string;
+	paymentAcceptedAt: string | null;
+	paymentDeclinedAt: string | null;
 	messages: AdminMandapInquiryMessage[];
 }
 
@@ -44,6 +51,9 @@ export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry
 	return inquiries.map((inquiry) => ({
 		...inquiry,
 		createdAt: inquiry.createdAt.toISOString(),
+		updatedAt: inquiry.updatedAt.toISOString(),
+		paymentAcceptedAt: inquiry.paymentAcceptedAt?.toISOString() ?? null,
+		paymentDeclinedAt: inquiry.paymentDeclinedAt?.toISOString() ?? null,
 		messages: inquiry.messages.map((message) => ({
 			...message,
 			createdAt: message.createdAt.toISOString(),

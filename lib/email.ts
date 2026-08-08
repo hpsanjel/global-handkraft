@@ -317,6 +317,57 @@ export async function sendMandapInquiryCustomerMessageEmail(params: MandapInquir
 	});
 }
 
+type MandapInquiryStatusUpdateParams = {
+	to: string;
+	category: string;
+	productName: string;
+	paymentStatus: string;
+	adminNote?: string;
+	quotedPrice?: number;
+	stripePaymentLink?: string;
+};
+
+/**
+ * Notifies the customer by email when admin updates the payment status of a custom Mandap/Temple order request.
+ * Failures are the caller's responsibility to catch — a failed email should never fail the status update itself.
+ */
+export async function sendMandapInquiryStatusUpdateEmail(params: MandapInquiryStatusUpdateParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping mandap inquiry status update email.");
+		return;
+	}
+
+	if (!params.to) {
+		console.warn("No recipient email for mandap inquiry status update; skipping email.");
+		return;
+	}
+
+	const statusLabel = params.paymentStatus === "ACCEPTED" ? "Accepted" : params.paymentStatus === "DECLINED" ? "Declined" : "Updated";
+	const statusColor = params.paymentStatus === "ACCEPTED" ? "#16a34a" : params.paymentStatus === "DECLINED" ? "#dc2626" : "#1B365D";
+	const paymentLinkHtml = params.stripePaymentLink ? `<p style="margin-top:16px;"><a href="${params.stripePaymentLink}" style="background:#1B365D; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">Pay Now</a></p>` : "";
+	const priceHtml = params.quotedPrice ? `<p style="margin-top:12px;"><strong>Quoted price:</strong> NOK ${params.quotedPrice.toFixed(2)}</p>` : "";
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:${statusColor}; margin-bottom:4px;">Custom ${params.category.toLowerCase()} request ${statusLabel}</h2>
+			<p>Hi there,</p>
+			<p>Your custom order request for <strong>${params.productName}</strong> has been <strong>${statusLabel.toLowerCase()}</strong>.</p>
+			${priceHtml}
+			${params.adminNote ? `<p style="margin-top:12px; color:#57534e; font-style:italic;">"${params.adminNote}"</p>` : ""}
+			${paymentLinkHtml}
+			<p style="margin-top:28px;">You can view and reply to this request from your <a href="https://handcraftsglobal.com/account/custom-requests" style="color:#1B365D;">account dashboard</a>.</p>
+			<p>Warm regards,<br/>Global Handcrafts Team</p>
+		</div>
+	`;
+
+	await resend.emails.send({
+		from: SENDER,
+		to: params.to,
+		subject: `Custom ${params.category.toLowerCase()} request ${statusLabel} — ${params.productName}`,
+		html,
+	});
+}
+
 type AccountDeletionRequestParams = {
 	userId: string;
 	email: string;

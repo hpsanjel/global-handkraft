@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { LayoutDashboard, LogOut, MapPin, Package, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, MapPin, Package, User as UserIcon, MessageSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +14,12 @@ function parseAdminEmails(): Set<string> {
 	return new Set(
 		raw
 			.split(/[\n,;\s]+/)
-			.map((value) => value.trim().toLowerCase())
+			.map((value) =>
+				value
+					.trim()
+					.toLowerCase()
+					.replace(/^["']|["']$/g, ""),
+			)
 			.filter(Boolean),
 	);
 }
@@ -52,6 +57,7 @@ export function AccountMenu() {
 	const [user, setUser] = useState<User | null>(null);
 	const [isReady, setIsReady] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [unreadCount, setUnreadCount] = useState(0);
 	const menuRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -77,6 +83,30 @@ export function AccountMenu() {
 			subscription.unsubscribe();
 		};
 	}, [supabase]);
+
+	useEffect(() => {
+		let active = true;
+
+		const fetchUnreadCount = async () => {
+			try {
+				const response = await fetch("/api/account/mandap-inquiries/unread-count");
+				const data = (await response.json()) as { count: number };
+				if (active && response.ok) {
+					setUnreadCount(data.count);
+				}
+			} catch {
+				// Silently fail - unread count is optional
+			}
+		};
+
+		if (user?.email) {
+			fetchUnreadCount();
+		}
+
+		return () => {
+			active = false;
+		};
+	}, [user?.email]);
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -146,6 +176,15 @@ export function AccountMenu() {
 							<MapPin className="h-4 w-4" />
 							My Shipping Address
 						</Link>
+						<div className="relative">
+							<Link href="/account/custom-requests" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
+								<div className="relative">
+									<MessageSquare className="h-4 w-4" />
+									{unreadCount > 0 ? <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
+								</div>
+								Custom Requests
+							</Link>
+						</div>
 					</nav>
 					<button type="button" onClick={handleSignOut} className="flex w-full items-center gap-3 border-t border-stone-100 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50">
 						<LogOut className="h-4 w-4" />

@@ -17,6 +17,10 @@ type AccountMandapInquiry = {
 	expectedCostRange: string;
 	description: string;
 	status: string;
+	paymentStatus: string;
+	adminNote: string | null;
+	quotedPrice: number | null;
+	stripePaymentLink: string | null;
 	createdAt: string;
 	messages: MandapInquiryThreadMessage[];
 };
@@ -56,6 +60,58 @@ export default function AccountCustomRequestsPage() {
 		};
 	}, []);
 
+	const getPaymentStatusBadge = (paymentStatus: string) => {
+		switch (paymentStatus) {
+			case "PENDING":
+				return <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-yellow-700">Pending Response</span>;
+			case "ACCEPTED":
+				return <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-green-700">Payment Accepted</span>;
+			case "DECLINED":
+				return <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-red-700">Payment Declined</span>;
+			case "PAID":
+				return <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-blue-700">Paid</span>;
+			default:
+				return null;
+		}
+	};
+
+	const handleAcceptPayment = async (inquiryId: string) => {
+		try {
+			const response = await fetch(`/api/account/mandap-inquiries/${inquiryId}/payment-response`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ paymentStatus: "ACCEPTED" }),
+			});
+			const payload = await response.json();
+			if (!response.ok) {
+				throw new Error(payload.error ?? "Unable to accept payment.");
+			}
+			// Reload inquiries
+			window.location.reload();
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Unable to accept payment.");
+		}
+	};
+
+	const handleDeclinePayment = async (inquiryId: string) => {
+		const note = prompt("Please provide a reason for declining (optional):");
+		try {
+			const response = await fetch(`/api/account/mandap-inquiries/${inquiryId}/payment-response`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ paymentStatus: "DECLINED", customerResponseNote: note || "" }),
+			});
+			const payload = await response.json();
+			if (!response.ok) {
+				throw new Error(payload.error ?? "Unable to decline payment.");
+			}
+			// Reload inquiries
+			window.location.reload();
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Unable to decline payment.");
+		}
+	};
+
 	return (
 		<div className="space-y-6">
 			<AccountPageHeader title="Custom Requests" description="Track and reply to your custom Mandap & Temple order requests." />
@@ -66,7 +122,7 @@ export default function AccountCustomRequestsPage() {
 
 			{inquiries && inquiries.length === 0 ? (
 				<div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-					<p className="text-sm text-slate-600">You haven&apos;t submitted any custom Mandap or Temple requests yet.</p>
+					<p className="text-sm text-slate-600">You haven't submitted any custom Mandap or Temple requests yet.</p>
 					<Button asChild variant="primary">
 						<Link href="/shop">Shop Now</Link>
 					</Button>
@@ -88,16 +144,45 @@ export default function AccountCustomRequestsPage() {
 									</p>
 									<p className="text-sm text-slate-500">Budget: {inquiry.expectedCostRange}</p>
 								</div>
-								<p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-									{new Date(inquiry.createdAt).toLocaleDateString("en-GB", {
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									})}
-								</p>
+								<div className="text-right">
+									{getPaymentStatusBadge(inquiry.paymentStatus)}
+									<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
+										{new Date(inquiry.createdAt).toLocaleDateString("en-GB", {
+											day: "numeric",
+											month: "short",
+											year: "numeric",
+										})}
+									</p>
+								</div>
 							</div>
 
 							<p className="mt-3 text-sm leading-6 text-slate-600">{inquiry.description}</p>
+
+							{inquiry.quotedPrice && <p className="mt-2 text-sm font-medium text-slate-700">Quoted Price: NOK {inquiry.quotedPrice.toFixed(2)}</p>}
+
+							{inquiry.adminNote && (
+								<div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+									<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Admin Note</p>
+									<p className="mt-1 text-sm text-slate-700">{inquiry.adminNote}</p>
+								</div>
+							)}
+
+							{inquiry.paymentStatus === "ACCEPTED" && inquiry.stripePaymentLink && (
+								<div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
+									<p className="text-sm font-medium text-green-800">Your custom design request has been accepted!</p>
+									<p className="mt-1 text-sm text-green-700">Please complete the payment to confirm your order.</p>
+									<a href={inquiry.stripePaymentLink} target="_blank" rel="noreferrer" className="mt-3 inline-block rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white hover:bg-green-700">
+										Pay Now
+									</a>
+								</div>
+							)}
+
+							{inquiry.paymentStatus === "DECLINED" && (
+								<div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+									<p className="text-sm font-medium text-red-800">This request has been declined.</p>
+									{inquiry.adminNote && <p className="mt-1 text-sm text-red-700">{inquiry.adminNote}</p>}
+								</div>
+							)}
 
 							<MandapInquiryThread messages={inquiry.messages} postUrl={`/api/account/mandap-inquiries/${inquiry.id}/messages`} viewerRole="CUSTOMER" />
 						</div>

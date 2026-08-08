@@ -29,6 +29,42 @@ export async function POST(request: Request) {
 
 		if (event.type === "checkout.session.completed") {
 			const session = event.data.object;
+			const sessionWithShipping = await stripe.checkout.sessions.retrieve(session.id, {
+				expand: ["shipping_cost.shipping_rate"],
+			});
+			const shippingRate = sessionWithShipping.shipping_cost?.shipping_rate;
+			const shippingMethod = typeof shippingRate === "object" && shippingRate ? shippingRate.display_name : null;
+			const shippingProductId = typeof shippingRate === "object" && shippingRate ? (shippingRate.metadata?.bring_product_id ?? null) : null;
+
+			// Handle custom mandap/temple inquiry payment
+			if (session.metadata?.inquiryId) {
+				const inquiryId = session.metadata.inquiryId;
+				const inquiry = await prisma.mandapInquiry.findUnique({ where: { id: inquiryId } });
+				if (inquiry) {
+					await prisma.mandapInquiry.update({
+						where: { id: inquiryId },
+						data: { paymentStatus: "PAID", status: "PAID" },
+					});
+
+					// Send confirmation email to customer
+					try {
+						const { sendMandapInquiryStatusUpdateEmail } = await import("@/lib/email");
+						await sendMandapInquiryStatusUpdateEmail({
+							to: inquiry.email || session.customer_email || "",
+							category: inquiry.category,
+							productName: inquiry.productName,
+							paymentStatus: "PAID",
+							adminNote: "Payment received. Our team will start working on your custom order.",
+						});
+					} catch (emailError) {
+						console.error("Failed to send mandap payment confirmation email:", emailError);
+					}
+
+					return NextResponse.json({ received: true, inquiryId });
+				}
+			}
+
+			// Handle regular order payment
 			const orderNumber = `ORD-${session.id.slice(-8).toUpperCase()}`;
 			const existingOrder = await prisma.order.findUnique({
 				where: { orderNumber },
@@ -38,13 +74,6 @@ export async function POST(request: Request) {
 			if (existingOrder) {
 				return NextResponse.json({ received: true, orderId: existingOrder.id });
 			}
-
-			const sessionWithShipping = await stripe.checkout.sessions.retrieve(session.id, {
-				expand: ["shipping_cost.shipping_rate"],
-			});
-			const shippingRate = sessionWithShipping.shipping_cost?.shipping_rate;
-			const shippingMethod = typeof shippingRate === "object" && shippingRate ? shippingRate.display_name : null;
-			const shippingProductId = typeof shippingRate === "object" && shippingRate ? (shippingRate.metadata?.bring_product_id ?? null) : null;
 
 			const itemsMetadata = session.metadata?.items || "";
 			const parsedItems = itemsMetadata

@@ -3,6 +3,7 @@ import { getRecentOrders, getMandapInquiries } from "@/lib/admin";
 import { MandapInquiryThread } from "@/components/mandap-inquiry-thread";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { OrderDocumentsMenu } from "./OrderDocumentsMenu";
+import { MandapInquiryPaymentControl } from "@/components/admin/MandapInquiryPaymentControl";
 
 function formatCurrency(amount: number, currency: string) {
 	return new Intl.NumberFormat("en-GB", {
@@ -112,6 +113,17 @@ export default async function AdminOrdersPage() {
 										))}
 									</div>
 								) : null}
+
+								<MandapInquiryPaymentControl
+									inquiry={{
+										id: inquiry.id,
+										productName: inquiry.productName,
+										paymentStatus: inquiry.paymentStatus,
+										adminNote: inquiry.adminNote,
+										quotedPrice: inquiry.quotedPrice,
+										stripePaymentLink: inquiry.stripePaymentLink,
+									}}
+								/>
 
 								<MandapInquiryThread messages={inquiry.messages} postUrl={`/api/admin/mandap-inquiries/${inquiry.id}/messages`} viewerRole="ADMIN" />
 							</div>

@@ -226,23 +226,31 @@ model DocumentCounter {
 }
 
 model MandapInquiry {
-  id                String   @id @default(cuid())
-  productId         String
-  productName       String
-  productSlug       String
-  category          String   @default("Mandap")
-  length            String
-  width             String
-  height            String
-  material          String
-  expectedCostRange String
-  description       String
-  whatsapp          String?
-  email             String?
-  sampleImages      String[]
-  status            String   @default("NEW")
-  createdAt         DateTime @default(now())
-  messages          MandapInquiryMessage[]
+  id                    String   @id @default(cuid())
+  productId             String
+  productName           String
+  productSlug           String
+  category              String   @default("Mandap")
+  length                String
+  width                 String
+  height                String
+  material              String
+  expectedCostRange     String
+  description           String
+  whatsapp              String?
+  email                 String?
+  sampleImages          String[]
+  status                String   @default("NEW")
+  paymentStatus         String   @default("PENDING")
+  adminNote             String?
+  quotedPrice           Float?
+  stripePaymentLink     String?
+  paymentAcceptedAt     DateTime?
+  paymentDeclinedAt     DateTime?
+  customerResponseNote  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  messages              MandapInquiryMessage[]
 }
 
 model MandapInquiryMessage {

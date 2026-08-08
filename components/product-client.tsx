@@ -197,7 +197,7 @@ export function ProductClient({ product }: { product: Product }) {
 				return;
 			}
 
-			setMandapFormSuccess("Request submitted. Our team will contact you soon.");
+			setMandapFormSuccess("Your request for custom design has been received. You will get response within 24 hours.");
 			setMandapLength("");
 			setMandapWidth("");
 			setMandapHeight("");
