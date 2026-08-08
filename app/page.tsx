@@ -281,9 +281,9 @@ export default function HomePage() {
 				</section>
 
 				<section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 md:py-16 lg:px-8">
-					<div className="grid items-stretch gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+					<div className="grid min-w-0 items-stretch gap-6 lg:grid-cols-[0.9fr_1.1fr]">
 						{/* Left: intro card */}
-						<div className="flex h-full flex-col rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
+						<div className="flex h-full min-w-0 flex-col rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
 							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Customer Voice</p>
 							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Proof that your order is in safe hands</h2>
 
@@ -307,7 +307,7 @@ export default function HomePage() {
 							{/* pushes CTAs to the bottom so the card's own content fills its height */}
 							<div className="mt-6 flex flex-1 flex-wrap items-end gap-3">
 								<Button asChild className="bg-[#1B365D] text-white hover:bg-[#152d4c]">
-									<Link href="/shop">Browse Best Sellers</Link>
+									<Link href="/shop">Shop Now</Link>
 								</Button>
 								<Button asChild variant="outline" className="border-stone-300 text-stone-800 hover:bg-stone-100">
 									<Link href="/contact">Ask Before You Buy</Link>
@@ -316,7 +316,7 @@ export default function HomePage() {
 						</div>
 
 						{/* Right: testimonials, vertically centered to fill the same height */}
-						<div className="flex h-full flex-col justify-center">
+						<div className="flex h-full min-w-0 flex-col justify-center">
 							{showSlider && (
 								<div className="mb-4 hidden items-center justify-end gap-2 md:flex">
 									<button onClick={goPrev} disabled={page === 0} aria-label="Previous testimonials" className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40">
