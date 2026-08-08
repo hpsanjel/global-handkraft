@@ -18,6 +18,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 				expiresAt: true,
 				maxUses: true,
 				maxUsesPerCustomer: true,
+				minPurchaseAmount: true,
 				currentUses: true,
 				createdAt: true,
 				updatedAt: true,
@@ -40,7 +41,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 	try {
 		const { id } = await params;
 		const body = await request.json();
-		const { code, discountPct, freeShipping, active, expiresAt, maxUses, maxUsesPerCustomer } = body;
+		const { code, discountPct, freeShipping, active, expiresAt, maxUses, maxUsesPerCustomer, minPurchaseAmount } = body;
 
 		// Check if coupon exists
 		const existing = await prisma.coupon.findUnique({
@@ -71,6 +72,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 		if (expiresAt !== undefined) updateData.expiresAt = expiresAt ? new Date(expiresAt) : null;
 		if (maxUses !== undefined) updateData.maxUses = maxUses ? Number(maxUses) : null;
 		if (maxUsesPerCustomer !== undefined) updateData.maxUsesPerCustomer = maxUsesPerCustomer ? Number(maxUsesPerCustomer) : null;
+		if (minPurchaseAmount !== undefined) updateData.minPurchaseAmount = minPurchaseAmount !== null && minPurchaseAmount !== "" ? Number(minPurchaseAmount) : null;
 
 		const coupon = await prisma.coupon.update({
 			where: { id },
@@ -84,6 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 				expiresAt: true,
 				maxUses: true,
 				maxUsesPerCustomer: true,
+				minPurchaseAmount: true,
 				currentUses: true,
 				createdAt: true,
 				updatedAt: true,

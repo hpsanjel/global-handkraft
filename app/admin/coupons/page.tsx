@@ -14,6 +14,7 @@ type Coupon = {
 	expiresAt: string | null;
 	maxUses: number | null;
 	maxUsesPerCustomer: number | null;
+	minPurchaseAmount: number | null;
 	currentUses: number;
 	createdAt: string;
 	updatedAt: string;
@@ -27,6 +28,7 @@ type CouponFormData = {
 	expiresAt: string;
 	maxUses: string;
 	maxUsesPerCustomer: string;
+	minPurchaseAmount: string;
 };
 
 const emptyForm: CouponFormData = {
@@ -37,6 +39,7 @@ const emptyForm: CouponFormData = {
 	expiresAt: "",
 	maxUses: "",
 	maxUsesPerCustomer: "",
+	minPurchaseAmount: "1500",
 };
 
 export default function AdminCouponsPage() {
@@ -79,6 +82,7 @@ export default function AdminCouponsPage() {
 				expiresAt: formData.expiresAt || null,
 				maxUses: formData.maxUses ? Number(formData.maxUses) : null,
 				maxUsesPerCustomer: formData.maxUsesPerCustomer ? Number(formData.maxUsesPerCustomer) : null,
+				minPurchaseAmount: formData.minPurchaseAmount ? Number(formData.minPurchaseAmount) : null,
 			};
 
 			const url = editingCoupon ? `/api/admin/coupons/${editingCoupon.id}` : "/api/admin/coupons";
@@ -133,6 +137,7 @@ export default function AdminCouponsPage() {
 			expiresAt: coupon.expiresAt ? coupon.expiresAt.split("T")[0] : "",
 			maxUses: coupon.maxUses?.toString() || "",
 			maxUsesPerCustomer: coupon.maxUsesPerCustomer?.toString() || "",
+			minPurchaseAmount: coupon.minPurchaseAmount?.toString() || "",
 		});
 		setShowModal(true);
 		setError("");
@@ -183,7 +188,7 @@ export default function AdminCouponsPage() {
 											<span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${coupon.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{coupon.active ? "Active" : "Inactive"}</span>
 											{coupon.expiresAt && new Date(coupon.expiresAt) < new Date() && <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">Expired</span>}
 										</div>
-										<div className="mt-2 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+										<div className="mt-2 grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
 											<div>
 												<p className="text-slate-500">Discount</p>
 												<p className="font-medium text-slate-900">{coupon.discountPct}%</p>
@@ -191,6 +196,10 @@ export default function AdminCouponsPage() {
 											<div>
 												<p className="text-slate-500">Free Shipping</p>
 												<p className="font-medium text-slate-900">{coupon.freeShipping ? "Yes" : "No"}</p>
+											</div>
+											<div>
+												<p className="text-slate-500">Min. Purchase</p>
+												<p className="font-medium text-slate-900">{coupon.minPurchaseAmount ? `NOK ${coupon.minPurchaseAmount}` : "None"}</p>
 											</div>
 											<div>
 												<p className="text-slate-500">Usage</p>
@@ -246,6 +255,23 @@ export default function AdminCouponsPage() {
 									Discount Percentage
 								</label>
 								<input type="number" id="discountPct" required min="0" max="100" value={formData.discountPct} onChange={(e) => setFormData({ ...formData, discountPct: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+							</div>
+
+							<div>
+								<label htmlFor="minPurchaseAmount" className="block text-sm font-medium text-slate-700">
+									Minimum Purchase (NOK, optional)
+								</label>
+								<input
+									type="number"
+									id="minPurchaseAmount"
+									min="0"
+									step="1"
+									value={formData.minPurchaseAmount}
+									onChange={(e) => setFormData({ ...formData, minPurchaseAmount: e.target.value })}
+									className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+									placeholder="e.g. 1500"
+								/>
+								<p className="mt-1 text-xs text-slate-500">Cart subtotal must be at least this amount for the coupon to be redeemable. Leave empty for no minimum.</p>
 							</div>
 
 							<div className="flex items-center gap-2">

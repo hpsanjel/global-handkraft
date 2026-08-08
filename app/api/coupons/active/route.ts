@@ -21,12 +21,13 @@ export async function GET() {
 				expiresAt: true,
 				maxUses: true,
 				currentUses: true,
+				minPurchaseAmount: true,
 			},
 		});
 
 		const redeemable = coupons
 			.filter((coupon) => coupon.maxUses === null || coupon.currentUses < coupon.maxUses)
-			.map(({ code, discountPct, freeShipping, expiresAt }) => ({ code, discountPct, freeShipping, expiresAt }))
+			.map(({ code, discountPct, freeShipping, expiresAt, minPurchaseAmount }) => ({ code, discountPct, freeShipping, expiresAt, minPurchaseAmount }))
 			.slice(0, 5);
 
 		return NextResponse.json({ coupons: redeemable });

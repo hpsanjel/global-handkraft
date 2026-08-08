@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, ShoppingCart, Tags, Ticket, Star, Settings, ArrowRight, ChevronRight } from "lucide-react";
+import { Package, ShoppingCart, Tags, Ticket, Star, Quote, Settings, ArrowRight, ChevronRight } from "lucide-react";
 import { AdminLiveStats } from "@/components/admin-live-stats";
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const QUICK_ACTIONS = [
 	{ href: "/admin/orders", label: "Review orders", description: "Track payments and fulfilment", icon: ShoppingCart },
 	{ href: "/admin/coupons", label: "Coupon codes", description: "Create and manage discounts", icon: Ticket },
 	{ href: "/admin/reviews", label: "Moderate reviews", description: "Approve or reject customer reviews", icon: Star },
+	{ href: "/admin/testimonials", label: "Testimonials", description: "Manage homepage customer testimonials", icon: Quote },
 	{ href: "/admin/settings", label: "Shipping & VAT", description: "Configure delivery zones", icon: Settings },
 ];
 

@@ -53,6 +53,10 @@ This section reflects what is actually built in the codebase today, as opposed t
 - Admin moderation queue (`/admin/reviews`) with pending/approved/all filters, approve/unapprove, and delete
 - Approved reviews display on the product page with an aggregate star rating and count, kept in sync automatically (`Product.rating`/`reviewCount` recompute from approved reviews on every moderation action), plus Schema.org `AggregateRating` structured data
 
+**Testimonials**
+- Admin-managed homepage testimonials (`/admin/testimonials`): create/edit/delete, star rating, drag-to-reorder, show/hide toggle, and customer photo upload to Supabase Storage
+- Replaces the previously hardcoded testimonial array; the homepage now fetches active testimonials live
+
 ### Not yet implemented
 
 - Wishlist, product comparison, recently viewed, quick view, voice/advanced search, 360° image view

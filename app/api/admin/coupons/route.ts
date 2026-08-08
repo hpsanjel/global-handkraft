@@ -25,6 +25,7 @@ export async function GET(request: Request) {
 				expiresAt: true,
 				maxUses: true,
 				maxUsesPerCustomer: true,
+				minPurchaseAmount: true,
 				currentUses: true,
 				createdAt: true,
 				updatedAt: true,
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
 	try {
 		const body = await request.json();
-		const { code, discountPct, freeShipping, active, expiresAt, maxUses, maxUsesPerCustomer } = body;
+		const { code, discountPct, freeShipping, active, expiresAt, maxUses, maxUsesPerCustomer, minPurchaseAmount } = body;
 
 		if (!code || typeof code !== "string") {
 			return NextResponse.json({ error: "Coupon code is required." }, { status: 400 });
@@ -50,6 +51,10 @@ export async function POST(request: Request) {
 
 		if (typeof discountPct !== "number" || discountPct < 0 || discountPct > 100) {
 			return NextResponse.json({ error: "Discount percentage must be between 0 and 100." }, { status: 400 });
+		}
+
+		if (minPurchaseAmount !== undefined && minPurchaseAmount !== null && (typeof minPurchaseAmount !== "number" || minPurchaseAmount < 0)) {
+			return NextResponse.json({ error: "Minimum purchase amount must be a positive number." }, { status: 400 });
 		}
 
 		const normalizedCode = code.trim().toUpperCase();
@@ -72,6 +77,7 @@ export async function POST(request: Request) {
 				expiresAt: expiresAt ? new Date(expiresAt) : null,
 				maxUses: maxUses ? Number(maxUses) : null,
 				maxUsesPerCustomer: maxUsesPerCustomer ? Number(maxUsesPerCustomer) : null,
+				minPurchaseAmount: minPurchaseAmount !== undefined && minPurchaseAmount !== null ? Number(minPurchaseAmount) : null,
 			},
 		});
 

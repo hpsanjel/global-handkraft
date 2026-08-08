@@ -348,10 +348,16 @@ export async function POST(request: Request) {
 				const normalizedCode = body.couponCode.trim().toUpperCase();
 				const coupon = await prisma.coupon.findUnique({
 					where: { code: normalizedCode },
-					select: { id: true, code: true, discountPct: true, freeShipping: true, active: true, expiresAt: true, maxUses: true, currentUses: true },
+					select: { id: true, code: true, discountPct: true, freeShipping: true, active: true, expiresAt: true, maxUses: true, currentUses: true, minPurchaseAmount: true },
 				});
 
-				if (coupon && coupon.active && (!coupon.expiresAt || coupon.expiresAt >= new Date()) && (!coupon.maxUses || coupon.currentUses < coupon.maxUses)) {
+				if (
+					coupon &&
+					coupon.active &&
+					(!coupon.expiresAt || coupon.expiresAt >= new Date()) &&
+					(!coupon.maxUses || coupon.currentUses < coupon.maxUses) &&
+					(!coupon.minPurchaseAmount || subtotal >= coupon.minPurchaseAmount)
+				) {
 					hasFreeShippingCoupon = coupon.freeShipping;
 
 					// Only create a Stripe coupon if there's an actual percentage discount

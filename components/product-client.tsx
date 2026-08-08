@@ -234,15 +234,15 @@ export function ProductClient({ product }: { product: Product }) {
 					<div className="grid gap-4 sm:grid-cols-3">
 						<label className="space-y-2 text-sm text-stone-600">
 							<span className="font-medium text-stone-700">Length *</span>
-							<input value={mandapLength} onChange={(event) => setMandapLength(event.target.value)} placeholder="e.g. 10 ft" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input value={mandapLength} onChange={(event) => setMandapLength(event.target.value)} placeholder="e.g. 40 cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 						<label className="space-y-2 text-sm text-stone-600">
 							<span className="font-medium text-stone-700">Width *</span>
-							<input value={mandapWidth} onChange={(event) => setMandapWidth(event.target.value)} placeholder="e.g. 8 ft" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input value={mandapWidth} onChange={(event) => setMandapWidth(event.target.value)} placeholder="e.g. 20cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 						<label className="space-y-2 text-sm text-stone-600">
 							<span className="font-medium text-stone-700">Height *</span>
-							<input value={mandapHeight} onChange={(event) => setMandapHeight(event.target.value)} placeholder="e.g. 9 ft" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input value={mandapHeight} onChange={(event) => setMandapHeight(event.target.value)} placeholder="e.g. 60 cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 					</div>
 

@@ -9,6 +9,7 @@ type ActiveCoupon = {
 	discountPct: number;
 	freeShipping: boolean;
 	expiresAt: string | null;
+	minPurchaseAmount: number | null;
 };
 
 function formatExpiry(expiresAt: string | null) {
@@ -147,6 +148,7 @@ export function CouponPopup() {
 										)}
 									</button>
 								</div>
+								{coupon.minPurchaseAmount ? <p className="mt-2 text-[11px] font-medium text-stone-600">Min. purchase NOK {coupon.minPurchaseAmount}</p> : null}
 								<p className="mt-2 text-right text-[11px] text-stone-700">Use this Coupon Code</p>
 							</div>
 						);

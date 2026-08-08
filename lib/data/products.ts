@@ -384,16 +384,3 @@ export const products: Product[] = baseProducts.map((product) => {
 		reviews: product.reviews ?? [defaultReview],
 	};
 });
-
-export const testimonials = [
-	{
-		name: "Saroj Thapa, Oslo",
-		quote: "The temple quality exceeded expectations. Packaging, delivery updates, and finish quality all felt premium and trustworthy.",
-		image: "/images/testimonial-1.avif",
-	},
-	{
-		name: "Jaya Devi Bista, Stockholm",
-		quote: "Our mandap and pooja set were beautifully crafted and arrived on schedule. The team understood our cultural requirements perfectly.",
-		image: "/images/testimonial-2.avif",
-	},
-];

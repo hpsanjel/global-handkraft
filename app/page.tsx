@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { testimonials } from "@/lib/data/products";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { useProductsCatalog } from "@/lib/products-catalog";
@@ -10,24 +9,19 @@ import Image from "next/image";
 import { HomeCategoryProductsSection } from "@/components/home-category-products-section";
 import { CouponPopup } from "@/components/coupon-popup";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
+import { useTestimonialsCatalog, type PublicTestimonial } from "@/lib/testimonials-catalog";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 
-type Testimonial = {
-	name: string;
-	quote: string;
-	image: string;
-};
-
-function TestimonialCard({ item, index }: { item: Testimonial; index: number }) {
+function TestimonialCard({ item }: { item: PublicTestimonial }) {
 	return (
 		<div className="group flex h-full flex-col rounded-[1.5rem] border border-stone-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md sm:p-6">
 			<div className="flex items-center justify-between gap-3">
 				<div className="flex items-center gap-0.5">
 					{Array.from({ length: 5 }).map((_, i) => (
-						<Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+						<Star key={i} className={`h-4 w-4 ${i < item.rating ? "fill-yellow-400 text-yellow-400" : "fill-transparent text-stone-300"}`} />
 					))}
-					<span className="ml-1.5 text-xs font-medium text-stone-600">5.0</span>
+					<span className="ml-1.5 text-xs font-medium text-stone-600">{item.rating.toFixed(1)}</span>
 				</div>
 				<span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 flex items-center gap-1">
 					<svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
@@ -38,7 +32,11 @@ function TestimonialCard({ item, index }: { item: Testimonial; index: number }) 
 			</div>
 			<p className="mt-4 flex-1 text-sm leading-7 text-stone-700">“{item.quote}”</p>
 			<div className="mt-5 flex items-center gap-3 border-t border-stone-200 pt-4">
-				<img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" />
+				{item.image ? (
+					<img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" />
+				) : (
+					<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-500 ring-2 ring-stone-100">{item.name.charAt(0).toUpperCase()}</div>
+				)}
 				<div className="flex-1 min-w-0">
 					<p className="font-semibold text-stone-900 text-sm">{item.name}</p>
 					<p className="text-xs text-stone-500 flex items-center gap-1">
@@ -57,6 +55,7 @@ function TestimonialCard({ item, index }: { item: Testimonial; index: number }) 
 export default function HomePage() {
 	const products = useProductsCatalog();
 	const categories = useCategoriesCatalog();
+	const testimonials = useTestimonialsCatalog();
 	const categoriesWithProducts = categories.filter((category) => category.productCount > 0);
 	const featuredProducts = (products.filter((product) => product.featured).length > 0 ? products.filter((product) => product.featured) : products).slice(0, 4);
 	const highlightedCategories = categoriesWithProducts;
@@ -264,7 +263,7 @@ export default function HomePage() {
 						<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
 							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Shop by Intent</p>
 							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Find the right collection faster</h2>
-							<div className="mt-5 space-y-3">
+							<div className="mt-5 space-y-3 grid grid-cols-1 md:grid-cols-2 gap-3">
 								{categoryHighlights.map((item) => (
 									<Link key={item.slug} href={`/shop?category=${encodeURIComponent(item.slug)}`} className="group flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-3 transition hover:border-stone-300 hover:bg-white">
 										<div className="h-14 w-14 shrink-0 rounded-xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${item.previewImage}')` }} />
@@ -272,7 +271,6 @@ export default function HomePage() {
 											<p className="text-sm font-semibold text-stone-900 group-hover:text-[#1B365D]">{item.label}</p>
 											<p className="mt-1 text-xs text-stone-600">{item.count > 0 ? `${item.count} products available` : "No products yet"}</p>
 										</div>
-										<span className="ml-auto text-xs font-semibold text-[#1B365D]">Open</span>
 									</Link>
 								))}
 							</div>
@@ -333,8 +331,8 @@ export default function HomePage() {
 								<div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${page * 100}%)` }}>
 									{Array.from({ length: pageCount }).map((_, p) => (
 										<div key={p} className="grid w-full flex-shrink-0 auto-rows-fr grid-cols-2 gap-4">
-											{testimonials.slice(p * perPage, p * perPage + perPage).map((item, i) => (
-												<TestimonialCard key={item.name} item={item} index={p * perPage + i} />
+											{testimonials.slice(p * perPage, p * perPage + perPage).map((item) => (
+												<TestimonialCard key={item.id} item={item} />
 											))}
 										</div>
 									))}
@@ -351,9 +349,9 @@ export default function HomePage() {
 
 							{/* Mobile: native swipe, one card at a time */}
 							<div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-								{testimonials.map((item, i) => (
-									<div key={item.name} className="w-[85%] flex-shrink-0 snap-center">
-										<TestimonialCard item={item} index={i} />
+								{testimonials.map((item) => (
+									<div key={item.id} className="w-[85%] flex-shrink-0 snap-center">
+										<TestimonialCard item={item} />
 									</div>
 								))}
 							</div>

@@ -54,6 +54,9 @@ The complete project scope, brand guidelines, product universe, and implementati
 - Admin moderation queue to approve, unapprove, or delete reviews
 - Product page displays the approved review list plus an aggregate rating that recomputes automatically from approved reviews
 
+**Testimonials**
+- Admin CRUD for homepage testimonials (name, quote, star rating, photo, drag-to-reorder, show/hide) backed by the database and Supabase Storage, replacing the previous hardcoded array
+
 ## Current Stack
 
 - Next.js (App Router) + TypeScript

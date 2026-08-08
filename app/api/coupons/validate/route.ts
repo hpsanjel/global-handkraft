@@ -43,6 +43,7 @@ export async function POST(request: Request) {
 				expiresAt: true,
 				maxUses: true,
 				maxUsesPerCustomer: true,
+				minPurchaseAmount: true,
 				currentUses: true,
 			},
 		});
@@ -67,6 +68,12 @@ export async function POST(request: Request) {
 		// Check total uses limit
 		if (coupon.maxUses && coupon.currentUses >= coupon.maxUses) {
 			const response: CouponValidationResponse = { valid: false, error: "This coupon has reached its maximum number of uses." };
+			return NextResponse.json(response);
+		}
+
+		// Check minimum purchase amount
+		if (coupon.minPurchaseAmount && (typeof subtotal !== "number" || subtotal < coupon.minPurchaseAmount)) {
+			const response: CouponValidationResponse = { valid: false, error: `This coupon requires a minimum purchase of NOK ${coupon.minPurchaseAmount}.` };
 			return NextResponse.json(response);
 		}
 
