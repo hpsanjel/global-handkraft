@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductClient } from "@/components/product-client";
+import { ProductReviews } from "@/components/product-reviews";
 import { prisma } from "@/lib/prisma";
 import { toStoreProduct } from "@/lib/product-transform";
 import { siteConfig } from "@/app/metadata";
@@ -72,6 +73,16 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 	};
 }
 
+async function getApprovedReviews(productId: string) {
+	const reviews = await prisma.review.findMany({
+		where: { productId, approved: true },
+		orderBy: { createdAt: "desc" },
+		select: { id: true, name: true, rating: true, title: true, comment: true, createdAt: true },
+	});
+
+	return reviews.map((review) => ({ ...review, createdAt: review.createdAt.toISOString() }));
+}
+
 export default async function ProductPage({ params }: ProductPageProps) {
 	const { slug } = await params;
 	const product = await getProductBySlug(slug);
@@ -79,6 +90,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 	if (!product) {
 		notFound();
 	}
+
+	const reviews = await getApprovedReviews(product.id);
 
 	const productSchema = {
 		"@context": "https://schema.org",
@@ -98,6 +111,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
 			name: siteConfig.name,
 		},
 		category: product.category,
+		...(product.reviewCount > 0
+			? {
+					aggregateRating: {
+						"@type": "AggregateRating",
+						ratingValue: product.rating,
+						reviewCount: product.reviewCount,
+					},
+				}
+			: {}),
 	};
 
 	return (
@@ -107,6 +129,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
 			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
 				<ProductClient product={product} />
+				<ProductReviews productSlug={product.slug} initialRating={product.rating} initialReviewCount={product.reviewCount} initialReviews={reviews} />
 			</main>
 			<SiteFooter />
 		</div>

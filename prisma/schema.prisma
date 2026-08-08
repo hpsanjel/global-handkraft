@@ -53,6 +53,7 @@ model Product {
   variants         Variant[]
   addons           Addon[]
   orderItems       OrderItem[]
+  reviews          Review[]
   createdAt        DateTime    @default(now())
 }
 
@@ -142,11 +143,18 @@ model OrderItem {
 
 model Review {
   id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
   name      String
+  email     String?
   rating    Int
+  title     String?
   comment   String
   approved  Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([approved])
 }
 
 model Coupon {

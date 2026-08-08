@@ -1,5 +1,67 @@
 # Global Handcrafts AS: Project Scope and Product Vision
 
+Live at [handcraftsglobal.com](https://www.handcraftsglobal.com).
+
+## 0. Implementation Status
+
+This section reflects what is actually built in the codebase today, as opposed to the vision/roadmap content in the rest of this document. Sections below are otherwise written as target scope; where an item is already live, it's noted inline as **(Implemented)**.
+
+### Live today
+
+**Storefront**
+- Home, Shop with category/filter browsing, Product Detail, Cart, Checkout, Account, Contact, Privacy, Terms, Shipping, Returns pages
+- Product variants (price/size/stock per variant) and paid add-ons
+- Slide-in cart drawer, coupon code entry at checkout, site-wide active-coupon promo popup
+- Newsletter signup, cookie/GDPR notice, WhatsApp contact button
+- Dynamic Open Graph image generation, `sitemap.xml`, `robots.txt`
+
+**Checkout & payments**
+- Stripe Checkout with webhook-driven order creation
+- Live shipping rate quotes via Bring (Posten Norge) and PostNord, admin-configurable shipping zones and free-shipping thresholds
+- Per-country VAT rates
+- Coupon engine: percentage discount, free shipping, expiry, global and per-customer usage caps
+
+**Orders & documents**
+- Full order status lifecycle (Pending, Paid, Processing, Shipped, Delivered, Cancelled, Refunded) with a status-history timeline and a customer email sent on every transition
+- PDF generation (`@react-pdf/renderer`) for invoices, receipts, packing lists, customs invoices, gift receipts, return cards, shipping summaries, and order summaries, with barcodes (`bwip-js`), QR codes, and sequential document numbering
+- Customer-facing order history with document downloads
+
+**Custom orders (Mandap/Temple builds)**
+- Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
+- Threaded messaging between customer and admin with unread indicators
+- Admin quoting workflow with Stripe payment links and accept/decline responses
+
+**Accounts**
+- Supabase email/password authentication; admin role via email allow-list (`ADMIN_EMAILS`) or user metadata
+- Customer account area: order history, addresses, custom-request threads, profile
+- GDPR self-service data export and account-deletion request flow (with admin notification and a 30-day manual-processing note for bookkeeping retention)
+
+**Admin dashboard**
+- Live overview stats
+- Products CRUD with variant/add-on management and image upload to Supabase Storage
+- Categories CRUD
+- Orders management, status control, and document generation
+- Coupons CRUD
+- Custom/mandap inquiry management with messaging and payment status control
+- Shipping zone and rate configuration
+
+**Transactional email (Resend)**
+- Order confirmation (with optional PDF receipt attached), order status updates, custom-inquiry admin notifications and customer replies, payment-status updates, account-deletion admin alerts
+
+**Reviews & ratings**
+- Public review submission per product (name, optional email, 1-5 star rating, title, comment), held as pending until an admin approves it
+- Admin moderation queue (`/admin/reviews`) with pending/approved/all filters, approve/unapprove, and delete
+- Approved reviews display on the product page with an aggregate star rating and count, kept in sync automatically (`Product.rating`/`reviewCount` recompute from approved reviews on every moderation action), plus Schema.org `AggregateRating` structured data
+
+### Not yet implemented
+
+- Wishlist, product comparison, recently viewed, quick view, voice/advanced search, 360° image view
+- Additional payment methods: Vipps, Klarna, PayPal, Apple Pay, Google Pay
+- Blog, FAQ knowledge base, CMS-managed homepage/content blocks (the `SiteSettings` model exists but is not yet wired into any admin UI or page)
+- Multilingual (EN/NO/NE/HI) and multi-currency (NOK/EUR/USD) support
+- Loyalty/rewards, referrals, gift cards, subscription kits, multi-vendor marketplace, 3D custom temple builder, AI recommendations
+- shadcn/ui, Framer Motion, Zustand, TanStack Query, and React Hook Form + Zod are installed as dependencies but not yet integrated into the UI
+
 ## 1. Brand and Business Context
 
 Global Handcrafts AS is a Norway-based brand importing and selling authentic handcrafted products from Nepal and South Asia for customers across Norway and Europe.
@@ -266,11 +328,12 @@ Checkout capabilities:
 - Order summary
 - Confirmation and tracking details
 
-Payment methods roadmap:
+Payment methods:
 
-- Stripe
-- Visa
-- Mastercard
+- Stripe (Implemented — cards, Visa/Mastercard via Stripe Checkout)
+
+Roadmap:
+
 - Apple Pay
 - Google Pay
 - PayPal
@@ -358,23 +421,24 @@ Admin modules:
 
 ## 14. Technical Architecture Plan
 
-Current stack in repository:
+Current stack in repository (Implemented):
 
-- Next.js 15 + TypeScript
-- Tailwind CSS
-- Prisma + PostgreSQL
+- Next.js + TypeScript, Tailwind CSS
+- Prisma ORM + PostgreSQL (Supabase-hosted)
+- Supabase Authentication for account flows and admin role gating
+- Supabase Storage for product image delivery
+- Stripe for checkout and webhook lifecycle
+- Resend for transactional email (order confirmations, status updates, custom-inquiry and payment notifications)
+- Bring (Posten Norge) and PostNord for live shipping rates
+- `@react-pdf/renderer`, `bwip-js`, and `qrcode` for the order document system (invoices, receipts, packing lists, etc.)
 
-Target architecture additions:
+Target architecture additions (installed but not yet integrated, or not yet started):
 
 - shadcn/ui for composable UI primitives
 - Framer Motion for interactions and transitions
 - Zustand for local state (cart, UI state)
 - TanStack Query for async caching
-- React Hook Form + Zod for robust form validation
-- Supabase Authentication for account flows
-- Cloudinary for image delivery and optimization
-- Stripe for checkout and webhook lifecycle
-- Resend for transactional email (order updates)
+- React Hook Form + Zod for robust form validation (Zod is currently used only for document-data validation, not forms)
 - Vercel deployment pipeline
 
 Data and extensibility principles:
