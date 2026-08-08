@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { generateDocument } from "@/lib/documents";
+import { BUSINESS } from "@/lib/documents/business-config";
 
 export const runtime = "nodejs";
 
@@ -143,6 +144,8 @@ export async function POST(request: Request) {
 				console.error("Failed to generate receipt PDF for order confirmation email:", receiptError);
 			}
 
+			const isPickupOrder = typeof shippingMethod === "string" && /pickup|pick-up|store|collection/i.test(shippingMethod);
+
 			try {
 				await sendOrderConfirmationEmail({
 					to: session.customer_details?.email || session.customer_email || "",
@@ -160,6 +163,15 @@ export async function POST(request: Request) {
 						postalCode: session.customer_details?.address?.postal_code || "",
 						country: session.customer_details?.address?.country || "",
 					},
+					isPickupOrder,
+					pickupAddress: isPickupOrder
+						? {
+								address: `${BUSINESS.seller.address.line1}, ${BUSINESS.seller.address.city}`,
+								city: BUSINESS.seller.address.city,
+								postalCode: BUSINESS.seller.address.postalCode,
+								country: BUSINESS.seller.address.country,
+							}
+						: undefined,
 					attachment: receiptAttachment,
 				});
 			} catch (emailError) {

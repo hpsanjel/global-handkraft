@@ -44,6 +44,8 @@ type OrderConfirmationParams = {
 	total: number;
 	currency: string;
 	address: OrderConfirmationAddress;
+	isPickupOrder?: boolean;
+	pickupAddress?: OrderConfirmationAddress;
 	/** Optional receipt PDF (from the document generation module) attached to the confirmation email. */
 	attachment?: OrderConfirmationAttachment;
 };
@@ -105,12 +107,10 @@ export async function sendOrderConfirmationEmail(params: OrderConfirmationParams
 			<tr style="font-weight:bold; border-top:1px solid #e7e5e4;"><td style="padding-top:8px;">Total</td><td style="text-align:right; padding-top:8px;">${formatMoney(params.total, params.currency)}</td></tr>
 		</table>
 
-			<h3 style="margin-top:28px; margin-bottom:6px; color:#1B365D;">Delivery details</h3>
+			<h3 style="margin-top:28px; margin-bottom:6px; color:#1B365D;">${params.isPickupOrder ? "Pickup details" : "Delivery details"}</h3>
 			<p style="color:#44403c; margin-top:0;">
-				${params.shippingMethod || "Standard shipping"}<br/>
-				${params.address.address}<br/>
-				${params.address.postalCode} ${params.address.city}<br/>
-				${params.address.country}
+				${params.isPickupOrder ? "In-store pickup" : params.shippingMethod || "Standard shipping"}<br/>
+				${params.isPickupOrder && params.pickupAddress ? `${params.pickupAddress.address}<br/>${params.pickupAddress.postalCode} ${params.pickupAddress.city}<br/>${params.pickupAddress.country}` : `${params.address.address}<br/>${params.address.postalCode} ${params.address.city}<br/>${params.address.country}`}
 			</p>
 
 			<p style="margin-top:28px;">We'll email you again once your order ships. Thank you for supporting authentic handcrafted treasures!</p>

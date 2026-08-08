@@ -36,7 +36,7 @@ export function SiteFooter() {
 						<ul className="mt-3 space-y-2 text-sm text-stone-600">
 							<li>contact@handcraftsglobal.com</li>
 							<li>+47 91267612</li>
-							<li>Oslo, Norway</li>
+							<li>Belsetveien 80, Rykkinn</li>
 						</ul>
 					</div>
 				</div>

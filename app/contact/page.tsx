@@ -22,7 +22,7 @@ export default function ContactPage() {
 						<ul className="mt-4 space-y-3 text-sm text-stone-600">
 							<li>Email: contact@handcraftsglobal.com</li>
 							<li>WhatsApp: +47 91267612</li>
-							<li>Address: Oslo, Norway</li>
+							<li>Address: Belsetveien 80, Rykkinn</li>
 						</ul>
 					</div>
 				</div>
@@ -38,6 +38,9 @@ export default function ContactPage() {
 					</form>
 				</div>
 			</main>
+			<div className="w-full">
+				<iframe title="Business Location" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1837.8487983146663!2d10.485134876947551!3d59.928055374909796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x464113addc8dfba9%3A0x191c9e26cee6da4b!2sBelsetveien%2080%2C%201348%20Rykkinn!5e1!3m2!1sen!2sno!4v1786168456215!5m2!1sen!2sno" width="100%" height="450" style={{ border: 0 }} allowFullScreen={false} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="block" />
+			</div>
 			<SiteFooter />
 		</div>
 	);

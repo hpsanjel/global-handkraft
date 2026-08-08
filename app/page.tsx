@@ -23,17 +23,32 @@ function TestimonialCard({ item, index }: { item: Testimonial; index: number }) 
 	return (
 		<div className="group flex h-full flex-col rounded-[1.5rem] border border-stone-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md sm:p-6">
 			<div className="flex items-center justify-between gap-3">
-				<p className="flex items-center gap-0.5">
+				<div className="flex items-center gap-0.5">
 					{Array.from({ length: 5 }).map((_, i) => (
 						<Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
 					))}
-				</p>
-				<span className="rounded-full bg-[#1B365D]/10 px-2.5 py-1 text-[11px] font-semibold text-[#1B365D]">Review {index + 1}</span>
+					<span className="ml-1.5 text-xs font-medium text-stone-600">5.0</span>
+				</div>
+				<span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 flex items-center gap-1">
+					<svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+						<path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+					</svg>
+					Verified Purchase
+				</span>
 			</div>
 			<p className="mt-4 flex-1 text-sm leading-7 text-stone-700">“{item.quote}”</p>
-			<div className="mt-5 flex items-center gap-2 border-t border-stone-200 pt-4">
-				<img src={item.image} alt={item.name} width={40} height={40} className="h-10 w-10 rounded-full object-cover" />
-				<p className="font-semibold text-stone-900">{item.name}</p>
+			<div className="mt-5 flex items-center gap-3 border-t border-stone-200 pt-4">
+				<img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" />
+				<div className="flex-1 min-w-0">
+					<p className="font-semibold text-stone-900 text-sm">{item.name}</p>
+					<p className="text-xs text-stone-500 flex items-center gap-1">
+						<svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+						</svg>
+						Verified Customer
+					</p>
+				</div>
 			</div>
 		</div>
 	);
@@ -110,7 +125,7 @@ export default function HomePage() {
 			<CouponPopup />
 			<SiteHeader />
 			<main className="flex-1">
-				<section className="hidden sm:relative overflow-hidden">
+				<section className="hidden sm:block sm:relative overflow-hidden">
 					<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#4CAF5020_0%,transparent_42%),radial-gradient(circle_at_top_right,#F7931E2E_0%,transparent_44%),linear-gradient(180deg,#fff8eb_0%,transparent_100%)]" />
 					<div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
 						<div className="max-w-2xl">
@@ -165,26 +180,49 @@ export default function HomePage() {
 							Shop all
 						</Link>
 					</div>
-					<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-						{featuredProducts.map((product) => (
-							<div key={product.id} className="flex h-full w-[72vw] max-w-70 shrink-0 snap-start flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:w-70 md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
-								<Link href={`/product/${product.slug}`} className="block">
-									<div className="w-full aspect-5/6 bg-stone-100 bg-cover" style={{ backgroundImage: `url('${product.image}')` }} />
-									<div className="px-3 pt-3 sm:px-5 sm:pt-4">
-										<p className="text-sm font-semibold text-stone-900 sm:text-base line-clamp-1" title={product.name}>
-											{product.name}
-										</p>
-										{/* <p className="mt-2 overflow-hidden text-xs text-stone-600 sm:text-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">{product.shortDescription}</p> */}
+					<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+						{featuredProducts.map((product) => {
+							const displayPrice = product.variants[0]?.price ?? 0;
+							const originalPrice = displayPrice * 1.2;
+							const discount = Math.round(((originalPrice - displayPrice) / originalPrice) * 100);
+							return (
+								<div key={product.id} className="flex h-full w-[72vw] max-w-70 shrink-0 snap-start flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:w-70 md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
+									<div className="group relative block">
+										<Link href={`/product/${product.slug}`} className="block">
+											<div className="relative w-full aspect-5/6 bg-stone-100 bg-cover" style={{ backgroundImage: `url('${product.image}')` }}>
+												{product.featured && <span className="absolute left-3 top-3 rounded-full bg-[#F7931E] px-3 py-1 text-[11px] font-bold text-white shadow-sm">⭐ Best Seller</span>}
+												{discount > 0 && <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-[11px] font-bold text-white shadow-sm">-{discount}%</span>}
+												<div className="absolute inset-x-0 bottom-0 hidden items-center justify-center bg-gradient-to-t from-black/50 to-transparent p-4 group-hover:flex">
+													<span className="text-xs text-white font-medium">View Details</span>
+												</div>
+											</div>
+											<div className="px-3 pt-3 sm:px-5 sm:pt-4">
+												<p className="text-sm font-semibold text-stone-900 sm:text-base line-clamp-1" title={product.name}>
+													{product.name}
+												</p>
+												<div className="mt-1.5 flex items-center gap-1">
+													<div className="flex items-center">
+														{Array.from({ length: 5 }).map((_, i) => (
+															<Star key={i} className={`h-3.5 w-3.5 ${i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "fill-stone-200 text-stone-200"}`} />
+														))}
+													</div>
+													<span className="text-xs text-stone-500">({product.reviewCount})</span>
+												</div>
+											</div>
+										</Link>
 									</div>
-								</Link>
-								<div className="mt-auto flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-5 sm:pb-5">
-									<p className="text-sm font-semibold text-[#1B365D] sm:text-base">NOK {product.variants[0].price}</p>
-									<Button asChild className={`${buying ? "opacity-50 cursor-not-allowed" : ""} rounded-full bg-[#F7931E] px-4 py-2 text-xs text-white hover:bg-[#d87810] sm:text-sm`} disabled={buying}>
-										<Link href={`/product/${product.slug}`}>Buy</Link>
-									</Button>
+									<div className="mt-auto flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-5 sm:pb-5">
+										<div className="flex flex-col">
+											<p className="text-sm font-semibold text-[#1B365D] sm:text-base">NOK {displayPrice}</p>
+											{discount > 0 && <p className="text-xs text-stone-400 line-through">NOK {originalPrice.toFixed(2)}</p>}
+										</div>
+										<Button asChild className={`${buying ? "opacity-50 cursor-not-allowed" : ""} rounded-full bg-[#F7931E] px-4 py-2 text-xs text-white hover:bg-[#d87810] sm:text-sm`} disabled={buying}>
+											<Link href={`/product/${product.slug}`}>Buy</Link>
+										</Button>
+									</div>
 								</div>
-							</div>
-						))}
+							);
+						})}
 					</div>
 				</section>
 
