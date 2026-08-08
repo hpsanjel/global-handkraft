@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/cart-badge";
 import { AccountMenu } from "@/components/account-menu";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
+import { siteConfig } from "@/app/metadata";
 
 export function SiteHeader() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -22,8 +23,35 @@ export function SiteHeader() {
 		[categories],
 	);
 
+	const organizationSchema = useMemo(
+		() => ({
+			"@context": "https://schema.org",
+			"@type": "Organization",
+			name: siteConfig.name,
+			url: siteConfig.url,
+			logo: `${siteConfig.url}/images/globalhandicraft-logo.png`,
+			contactPoint: {
+				"@type": "ContactPoint",
+				email: "contact@handcraftsglobal.com",
+				telephone: "+47-91267612",
+				contactType: "customer service",
+			},
+			address: {
+				"@type": "PostalAddress",
+				streetAddress: "Belsetveien 80",
+				addressLocality: "Rykkinn",
+				postalCode: "1348",
+				addressCountry: "NO",
+			},
+			sameAs: ["https://wa.me/4791267612"],
+		}),
+		[],
+	);
+
 	return (
 		<header className="sticky top-0 z-30 border-b border-stone-200/70 bg-white/90 backdrop-blur">
+			{/* JSON-LD structured data for the organization */}
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
 			<div className="mx-auto flex max-w-7xl items-center gap-3 px-4">
 				<div className="flex items-center gap-1">
 					<div className="flex h-16 w-16 items-center justify-center overflow-hidden sm:h-24 sm:w-24">

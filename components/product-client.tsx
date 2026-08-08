@@ -301,13 +301,13 @@ export function ProductClient({ product }: { product: Product }) {
 
 	return (
 		<div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-			<div className="hidden space-y-4 lg:block">
-				<div className="aspect-[4/5] rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${selectedGalleryImage}')` }} />
-				<div className="grid gap-4 sm:grid-cols-3">
+			<div className="hidden lg:flex lg:gap-4">
+				<div className="flex flex-col gap-4">
 					{product.gallery.map((image) => (
-						<button key={image} type="button" onClick={() => setSelectedGalleryImage(image)} className={`aspect-square rounded-[1.25rem] border bg-stone-100 bg-cover bg-center transition ${selectedGalleryImage === image ? "border-stone-900 ring-2 ring-stone-900" : "border-stone-200 hover:border-stone-400"}`} style={{ backgroundImage: `url('${image}')` }} aria-label="View image" />
+						<button key={image} type="button" onClick={() => setSelectedGalleryImage(image)} className={`aspect-square w-20 shrink-0 rounded-[1.25rem] border bg-stone-100 bg-cover bg-center transition ${selectedGalleryImage === image ? "border-stone-900 ring-2 ring-stone-900" : "border-stone-200 hover:border-stone-400"}`} style={{ backgroundImage: `url('${image}')` }} aria-label="View image" />
 					))}
 				</div>
+				<div className="aspect-[4/5] flex-1 rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${selectedGalleryImage}')` }} />
 			</div>
 			<div className="pb-24 lg:pb-0">
 				<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">{product.category}</p>

@@ -130,14 +130,10 @@ export function CouponPopup() {
 													Free shipping
 												</span>
 											) : null}
-											{expiry ? <span className="text-[11px] font-medium text-stone-500">Ends {expiry}</span> : <span className="text-[11px] font-medium text-stone-500">No expiry</span>}
+											{expiry ? <span className="text-[11px] font-medium text-stone-800">Ends {expiry}</span> : <span className="text-[11px] font-medium text-stone-500">No expiry</span>}
 										</div>
 									</div>
-									<button
-										type="button"
-										onClick={() => handleCopy(coupon.code)}
-										className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 font-mono text-sm font-semibold tracking-wide transition ${isCopied ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-stone-300 bg-white text-stone-900 hover:border-stone-900"}`}
-									>
+									<button type="button" onClick={() => handleCopy(coupon.code)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 font-mono text-sm font-semibold tracking-wide transition ${isCopied ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-stone-300 bg-white text-stone-900 hover:border-stone-900"}`}>
 										{isCopied ? (
 											<>
 												<Check className="h-3.5 w-3.5" />
@@ -151,6 +147,7 @@ export function CouponPopup() {
 										)}
 									</button>
 								</div>
+								<p className="mt-2 text-right text-[11px] text-stone-700">Use this Coupon Code</p>
 							</div>
 						);
 					})}
@@ -160,7 +157,6 @@ export function CouponPopup() {
 					<button type="button" onClick={handleClose} className="inline-flex w-full items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">
 						Continue Shopping
 					</button>
-					<p className="mt-2 text-center text-[11px] text-stone-400">Copy a code above and paste it in your cart to redeem.</p>
 				</div>
 			</div>
 		</div>

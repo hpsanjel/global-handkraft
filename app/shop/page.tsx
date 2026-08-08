@@ -3,9 +3,29 @@ import { SiteFooter } from "@/components/site-footer";
 import { ShopClient } from "@/components/shop-client";
 import { Suspense } from "react";
 
+import { siteConfig } from "@/app/metadata";
+
 export const metadata = {
-	title: "Shop | Global Handcrafts AS",
-	description: "Browse handcrafted wooden temples and ritual furniture.",
+	title: "Shop",
+	description: "Browse authentic handcrafted temples, pooja items, and cultural products. Filter by category and find the perfect piece for your home or ceremony.",
+	openGraph: {
+		title: `Shop | ${siteConfig.name}`,
+		description: "Browse authentic handcrafted temples, pooja items, and cultural products.",
+		images: [
+			{
+				url: siteConfig.ogImage,
+				width: 1200,
+				height: 630,
+				alt: "Global Handcrafts Shop",
+			},
+		],
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: `Shop | ${siteConfig.name}`,
+		description: "Browse authentic handcrafted temples, pooja items, and cultural products.",
+		images: [siteConfig.ogImage],
+	},
 };
 
 export default function ShopPage() {

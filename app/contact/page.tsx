@@ -2,10 +2,29 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/app/metadata";
 
 export const metadata = {
-	title: "Contact | Global Handcrafts AS",
-	description: "Reach out for bespoke orders, consultations, or support.",
+	title: "Contact",
+	description: "Contact Global Handcrafts AS for bespoke orders, consultations, wholesale inquiries, and support. Reach us by email, WhatsApp, or visit our location in Rykkinn.",
+	openGraph: {
+		title: `Contact | ${siteConfig.name}`,
+		description: "Contact Global Handcrafts AS for bespoke orders, consultations, wholesale inquiries, and support.",
+		images: [
+			{
+				url: siteConfig.ogImage,
+				width: 1200,
+				height: 630,
+				alt: "Contact Global Handcrafts",
+			},
+		],
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: `Contact | ${siteConfig.name}`,
+		description: "Contact Global Handcrafts AS for bespoke orders, consultations, wholesale inquiries, and support.",
+		images: [siteConfig.ogImage],
+	},
 };
 
 export default function ContactPage() {
