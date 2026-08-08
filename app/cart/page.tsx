@@ -11,7 +11,7 @@ export const metadata = {
 		description: "Review your cart, apply coupons, calculate shipping, and checkout securely with Stripe.",
 		images: [
 			{
-				url: siteConfig.ogImage,
+				url: "/api/og?title=Shopping%20Cart%20|%20Global%20Handcrafts&description=Review%20your%20cart%2C%20apply%20coupons%2C%20calculate%20shipping%2C%20and%20checkout%20securely",
 				width: 1200,
 				height: 630,
 				alt: "Shopping Cart",
@@ -22,7 +22,7 @@ export const metadata = {
 		card: "summary_large_image",
 		title: `Shopping Cart | ${siteConfig.name}`,
 		description: "Review your cart, apply coupons, calculate shipping, and checkout securely with Stripe.",
-		images: [siteConfig.ogImage],
+		images: ["/api/og?title=Shopping%20Cart%20|%20Global%20Handcrafts&description=Review%20your%20cart%2C%20apply%20coupons%2C%20calculate%20shipping%2C%20and%20checkout%20securely"],
 	},
 };
 

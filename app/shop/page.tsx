@@ -13,7 +13,7 @@ export const metadata = {
 		description: "Browse authentic handcrafted temples, pooja items, and cultural products.",
 		images: [
 			{
-				url: "/images/shop-og-image.png",
+				url: "/api/og?title=Shop%20|%20Global%20Handcrafts&description=Handcrafted%20temples%2C%20pooja%20items%2C%20and%20cultural%20products",
 				width: 1200,
 				height: 630,
 				alt: "Global Handcrafts Shop - Handcrafted Temples and Cultural Products",
@@ -24,7 +24,7 @@ export const metadata = {
 		card: "summary_large_image",
 		title: `Shop | ${siteConfig.name}`,
 		description: "Browse authentic handcrafted temples, pooja items, and cultural products.",
-		images: ["/images/shop-og-image.png"],
+		images: ["/api/og?title=Shop%20|%20Global%20Handcrafts&description=Handcrafted%20temples%2C%20pooja%20items%2C%20and%20cultural%20products"],
 	},
 };
 

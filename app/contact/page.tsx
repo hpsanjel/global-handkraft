@@ -12,7 +12,7 @@ export const metadata = {
 		description: "Contact Global Handcrafts AS for bespoke orders, consultations, wholesale inquiries, and support.",
 		images: [
 			{
-				url: siteConfig.ogImage,
+				url: "/api/og?title=Contact%20|%20Global%20Handcrafts&description=Contact%20us%20for%20bespoke%20orders%2C%20consultations%2C%20wholesale%20inquiries%2C%20and%20support",
 				width: 1200,
 				height: 630,
 				alt: "Contact Global Handcrafts",
@@ -23,7 +23,7 @@ export const metadata = {
 		card: "summary_large_image",
 		title: `Contact | ${siteConfig.name}`,
 		description: "Contact Global Handcrafts AS for bespoke orders, consultations, wholesale inquiries, and support.",
-		images: [siteConfig.ogImage],
+		images: ["/api/og?title=Contact%20|%20Global%20Handcrafts&description=Contact%20us%20for%20bespoke%20orders%2C%20consultations%2C%20wholesale%20inquiries%2C%20and%20support"],
 	},
 };
 
