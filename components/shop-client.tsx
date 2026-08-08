@@ -7,6 +7,7 @@ import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import type { CategorySummary } from "@/lib/category-utils";
 import type { Product } from "@/types/store";
+import { PriceEstimate } from "@/components/price-estimate";
 
 const PAGE_SIZE = 8;
 
@@ -352,7 +353,10 @@ export function ShopClient({ initialProducts, initialCategories }: ShopClientPro
 											{product.name}
 										</h2>
 										<div className={`mt-1 md:mt-3 flex gap-2 md:gap-3 ${viewMode === "list" ? "flex-col items-start" : "items-center justify-between"}`}>
-											<p className="text-xs md:text-sm font-medium text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
+											<div>
+												<p className="text-xs md:text-sm font-medium text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
+												{product.variants[0] ? <PriceEstimate amountNok={product.variants[0].price} className="text-xs text-stone-500" /> : null}
+											</div>
 
 											<span className={`${loading ? "opacity-50 cursor-not-allowed" : ""} inline-flex items-center rounded-full bg-[#F7931E] px-3 py-1 text-xs font-semibold text-white`}>Buy</span>
 										</div>

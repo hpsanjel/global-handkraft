@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/cart-badge";
 import { AccountMenu } from "@/components/account-menu";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { siteConfig } from "@/app/metadata";
 
@@ -52,12 +53,12 @@ export function SiteHeader() {
 		<header className="sticky top-0 z-30 border-b border-stone-200/70 bg-white/90 backdrop-blur">
 			{/* JSON-LD structured data for the organization */}
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
-			<div className="mx-auto flex max-w-7xl items-center gap-3 px-4">
+			<div className="mx-auto flex max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-4">
 				<div className="flex items-center gap-1">
-					<div className="flex h-16 w-16 items-center justify-center overflow-hidden sm:h-24 sm:w-24">
+					<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden sm:h-24 sm:w-24">
 						<img src="/images/globalhandicraft-logo.png" alt="Global Handcrafts Logo" width={100} height={100} className="h-full w-full scale-125 object-contain" />
 					</div>
-					<Link href="/" className="max-w-[52vw] text-sm font-semibold leading-4 sm:leading-5 text-stone-900 uppercase sm:max-w-none sm:text-lg">
+					<Link href="/" className="max-w-[36vw] text-xs font-semibold leading-4 text-stone-900 uppercase sm:max-w-none sm:text-lg sm:leading-5">
 						Global <br />
 						Handcrafts
 					</Link>
@@ -71,13 +72,14 @@ export function SiteHeader() {
 						))}
 					</nav>
 				</div>
-				<div className="ml-auto flex items-center gap-3">
+				<div className="ml-auto flex items-center gap-1.5 sm:gap-3">
 					<CartBadge />
 					<Button asChild className="hidden rounded-full bg-stone-900 px-4 py-2 text-sm sm:inline-flex">
 						<Link href="/shop">Shop Now</Link>
 					</Button>
+					<CurrencySwitcher />
 					<AccountMenu />
-					<button type="button" onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-700 md:hidden" aria-label="Toggle navigation menu" aria-expanded={mobileMenuOpen}>
+					<button type="button" onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-700 md:hidden" aria-label="Toggle navigation menu" aria-expanded={mobileMenuOpen}>
 						{mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
 					</button>
 				</div>

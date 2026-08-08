@@ -9,6 +9,7 @@ import { useProductsCatalog } from "@/lib/products-catalog";
 import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
 import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
 import type { CartItem } from "@/types/store";
+import { PriceEstimate } from "@/components/price-estimate";
 
 type CartDrawerProps = {
 	isOpen: boolean;
@@ -387,7 +388,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 													+
 												</button>
 											</div>
-											<p className="text-sm font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
+											<div className="text-right">
+												<p className="text-sm font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
+												<PriceEstimate amountNok={item.price * item.quantity} className="text-xs text-stone-500" />
+											</div>
 										</div>
 									</div>
 								</div>
@@ -401,13 +405,25 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 					<div className="max-h-[70vh] overflow-y-auto border-t border-stone-200 px-5 py-4">
 						<div className="flex items-center justify-between text-sm">
 							<span className="text-stone-600">Subtotal</span>
-							<span className="text-lg font-semibold text-stone-900">NOK {subtotal}</span>
+							<span className="text-right text-lg font-semibold text-stone-900">
+								NOK {subtotal}
+								<PriceEstimate amountNok={subtotal} className="block text-xs font-normal text-stone-500" />
+							</span>
 						</div>
 
 						{selectedShippingOption ? (
 							<div className="mt-1 flex items-center justify-between text-sm">
 								<span className="text-stone-600">Shipping</span>
-								<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost}`}</span>
+								<span className="text-right font-medium text-stone-900">
+									{selectedShippingCost === 0 ? (
+										"Free"
+									) : (
+										<>
+											NOK {selectedShippingCost}
+											<PriceEstimate amountNok={selectedShippingCost} className="block text-xs font-normal text-stone-500" />
+										</>
+									)}
+								</span>
 							</div>
 						) : (
 							<p className="mt-1 text-xs text-stone-500">Shipping calculated at checkout.</p>
@@ -416,7 +432,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 						{selectedShippingOption ? (
 							<div className="mt-1 flex items-center justify-between text-sm font-semibold text-stone-900">
 								<span>Estimated total</span>
-								<span>NOK {estimatedTotal}</span>
+								<span className="text-right">
+									NOK {estimatedTotal}
+									<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-500" />
+								</span>
 							</div>
 						) : null}
 
@@ -536,7 +555,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 													{option.expectedDelivery ? <p className="text-xs text-stone-500">{option.expectedDelivery}</p> : null}
 												</div>
 											</div>
-											<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
+											<div className="text-right">
+												<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
+												{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-500" />}
+											</div>
 										</div>
 										{selectedShippingId === option.productId ? (
 											<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">

@@ -127,12 +127,12 @@ export function AccountMenu() {
 	};
 
 	if (!isReady) {
-		return <div className="h-10 w-10 animate-pulse rounded-full bg-stone-100" aria-hidden="true" />;
+		return <div className="h-9 w-9 animate-pulse rounded-full bg-stone-100 sm:h-10 sm:w-10" aria-hidden="true" />;
 	}
 
 	if (!user) {
 		return (
-			<Button asChild variant="outline" className="rounded-full border-input px-2 py-2 text-xs sm:px-4">
+			<Button asChild variant="outline" className="h-9 rounded-full border-input px-2 text-xs sm:h-10 sm:px-4">
 				<Link href="/login">Sign In</Link>
 			</Button>
 		);
@@ -144,7 +144,7 @@ export function AccountMenu() {
 
 	return (
 		<div className="relative" ref={menuRef}>
-			<button type="button" onClick={() => setMenuOpen((open) => !open)} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-linear-to-br from-[#1B365D] to-[#4CAF50] text-sm font-semibold text-white transition hover:ring-2 hover:ring-stone-300 hover:ring-offset-2" aria-haspopup="true" aria-expanded={menuOpen} aria-label="Open account menu">
+			<button type="button" onClick={() => setMenuOpen((open) => !open)} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-linear-to-br from-[#1B365D] to-[#4CAF50] text-xs font-semibold text-white transition hover:ring-2 hover:ring-stone-300 hover:ring-offset-2 sm:h-10 sm:w-10 sm:text-sm" aria-haspopup="true" aria-expanded={menuOpen} aria-label="Open account menu">
 				{avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : getInitials(user)}
 			</button>
 

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
+import { PriceEstimate } from "@/components/price-estimate";
 import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -331,7 +332,10 @@ export function ProductClient({ product }: { product: Product }) {
 				<div className="mt-5 rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 					<div className="flex items-center justify-between gap-3">
 						<p className="text-sm font-medium text-stone-500">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
-						<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
+						<div className="text-right">
+							<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
+							<PriceEstimate amountNok={totalPrice} className="text-sm text-stone-500" />
+						</div>
 					</div>
 					<div className="mt-6 space-y-4">
 						<div>
@@ -447,6 +451,7 @@ export function ProductClient({ product }: { product: Product }) {
 												<div>
 													<p className="font-medium">
 														{addon.name} {isSelected ? "✓" : "+NOK " + addon.price}
+														{!isSelected ? <PriceEstimate amountNok={addon.price} className="ml-1 text-xs text-stone-400" /> : null}
 													</p>
 													<p className={`text-xs ${isSelected ? "text-stone-200" : "text-stone-500"}`}>{addon.description}</p>
 												</div>
@@ -484,6 +489,7 @@ export function ProductClient({ product }: { product: Product }) {
 					<div>
 						<p className="text-xs text-stone-500">Total</p>
 						<p className="text-lg font-semibold text-stone-900">NOK {totalPrice}</p>
+						<PriceEstimate amountNok={totalPrice} className="text-xs text-stone-500" />
 					</div>
 					<div className="flex flex-col items-end gap-2">
 						<Button className="rounded-full px-6 disabled:cursor-not-allowed disabled:opacity-50" onClick={handleAddToCart} disabled={!selectedVariant || isOutOfStock}>

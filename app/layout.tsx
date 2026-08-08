@@ -3,6 +3,7 @@ import "./globals.css";
 import { CartDrawerProvider } from "@/components/cart-drawer-provider";
 import { CookieNotice } from "@/components/cookie-notice";
 import { WhatsAppButton } from "@/components/whatsapp-button";
+import { CurrencyInit } from "@/components/currency-init";
 import { siteConfig } from "@/app/metadata";
 
 export const metadata: Metadata = {
@@ -83,6 +84,7 @@ export default function RootLayout({
 				<CartDrawerProvider />
 				<CookieNotice />
 				<WhatsAppButton />
+				<CurrencyInit />
 			</body>
 		</html>
 	);

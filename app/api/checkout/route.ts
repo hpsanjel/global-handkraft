@@ -6,21 +6,21 @@ import { getShippingRate } from "@/lib/shipping";
 import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 import { getBringOptionsForCheckout } from "@/lib/bring-shipping-integration";
 import { STORE_PICKUP_ID, STORE_PICKUP_DISPLAY_NAME } from "@/lib/shipping-client";
+import { getExchangeRates } from "@/lib/exchange-rates";
 
 export const runtime = "nodejs";
 
 const DEFAULT_CURRENCY = "nok";
-// Fixed EUR/NOK exchange rate used as a display reference on the Stripe
+
+// Live EUR/NOK exchange rate used as a display reference on the Stripe
 // checkout page. Stripe charges the exact amount in NOK; the EUR amount is
 // shown as an informational equivalent.
-const EUR_PER_NOK = 0.095;
-
-function formatEurEquivalent(nokAmount: number) {
+function formatEurEquivalent(nokAmount: number, eurPerNok: number) {
 	return new Intl.NumberFormat("en-GB", {
 		style: "currency",
 		currency: "EUR",
 		maximumFractionDigits: 2,
-	}).format(nokAmount * EUR_PER_NOK);
+	}).format(nokAmount * eurPerNok);
 }
 
 type SavedShippingAddress = {
@@ -168,7 +168,7 @@ async function findOrCreateCustomer(stripe: Stripe, email: string, shippingAddre
  * When Bring API is available, creates multiple shipping options
  * based on real Bring rates. Falls back to static rates otherwise.
  */
-async function buildShippingOptions(shippingAddress: SavedShippingAddress | undefined, pricedItems: PricedCheckoutItem[], subtotal: number, selectedShippingId?: string | null, hasFreeShippingCoupon?: boolean): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
+async function buildShippingOptions(shippingAddress: SavedShippingAddress | undefined, pricedItems: PricedCheckoutItem[], subtotal: number, eurPerNok: number, selectedShippingId?: string | null, hasFreeShippingCoupon?: boolean): Promise<Stripe.Checkout.SessionCreateParams.ShippingOption[]> {
 	// Store pickup: skip Bring entirely, single free option.
 	// However, if a free shipping coupon is applied, don't show store pickup option.
 	if (selectedShippingId === STORE_PICKUP_ID && !hasFreeShippingCoupon) {
@@ -270,7 +270,7 @@ async function buildShippingOptions(shippingAddress: SavedShippingAddress | unde
 					amount: shippingRateAmountCents,
 					currency: DEFAULT_CURRENCY,
 				},
-				display_name: shippingRateAmountCents === 0 ? "Free shipping" : `Standard shipping (${formatEurEquivalent(shippingRateAmountCents / 100)} EUR)`,
+				display_name: shippingRateAmountCents === 0 ? "Free shipping" : `Standard shipping (${formatEurEquivalent(shippingRateAmountCents / 100, eurPerNok)} EUR)`,
 				delivery_estimate: {
 					minimum: { unit: "business_day", value: 3 },
 					maximum: { unit: "business_day", value: 10 },
@@ -309,6 +309,8 @@ export async function POST(request: Request) {
 		});
 
 		const pricedItems = await priceCheckoutItems(items);
+		const { rates } = await getExchangeRates();
+		const eurPerNok = rates.EUR;
 		const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 		const line_items = pricedItems.map((item) => {
 			// Stripe Checkout only renders images from publicly reachable https
@@ -316,7 +318,7 @@ export async function POST(request: Request) {
 			const images = item.image?.startsWith("https://") ? [item.image] : undefined;
 
 			const specs = [item.weight, [item.width, item.height, item.depth].filter(Boolean).join(" x ")].filter(Boolean).join(" · ");
-			const description = [specs, `Equivalent: ${formatEurEquivalent(item.unitAmountCents / 100)} EUR`].filter(Boolean).join(" — ");
+			const description = [specs, `Equivalent: ${formatEurEquivalent(item.unitAmountCents / 100, eurPerNok)} EUR`].filter(Boolean).join(" — ");
 
 			return {
 				price_data: {
@@ -388,7 +390,7 @@ export async function POST(request: Request) {
 		}
 
 		// Build shipping options - uses Bring API if configured, falls back to static
-		const shippingOptions = await buildShippingOptions(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId, hasFreeShippingCoupon);
+		const shippingOptions = await buildShippingOptions(body.shippingAddress, pricedItems, subtotal, eurPerNok, body.selectedShippingId, hasFreeShippingCoupon);
 
 		let customer: Stripe.Customer | undefined;
 		if (body.customerEmail) {
