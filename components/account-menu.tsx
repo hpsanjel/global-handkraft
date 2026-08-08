@@ -91,7 +91,7 @@ export function AccountMenu() {
 
 	const handleSignOut = async () => {
 		setMenuOpen(false);
-		await supabase.auth.signOut();
+		await fetch("/api/auth/signout", { method: "POST" });
 		router.push("/");
 		router.refresh();
 	};

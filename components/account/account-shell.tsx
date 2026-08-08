@@ -34,12 +34,7 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
 				const active = isActive(pathname, item.href, "exact" in item ? item.exact : false);
 				const Icon = item.icon;
 				return (
-					<Link
-						key={item.href}
-						href={item.href}
-						onClick={onNavigate}
-						className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${active ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
-					>
+					<Link key={item.href} href={item.href} onClick={onNavigate} className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${active ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}>
 						<span className={`-ml-3 h-5 w-0.5 shrink-0 rounded-r-full transition ${active ? "bg-stone-500" : "bg-transparent"}`} aria-hidden="true" />
 						<Icon className={`h-4.5 w-4.5 shrink-0 ${active ? "text-stone-400" : "text-slate-400 group-hover:text-slate-200"}`} />
 						{item.label}
@@ -104,7 +99,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
 
 	const handleSignOut = async () => {
 		setUserMenuOpen(false);
-		await supabase.auth.signOut();
+		await fetch("/api/auth/signout", { method: "POST" });
 		router.push("/");
 		router.refresh();
 	};

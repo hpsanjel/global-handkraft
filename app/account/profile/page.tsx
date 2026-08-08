@@ -6,7 +6,7 @@ import { Download, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AccountPageHeader } from "@/components/account/account-page-header";
-import { createClient } from "@/lib/supabase/client";
+import { updatePassword, updateProfile } from "@/app/actions/auth";
 
 const PROVIDER_LABELS: Record<string, string> = {
 	email: "Email & password",
@@ -20,7 +20,6 @@ function connectedProviders(user: User): string[] {
 }
 
 export default function AccountProfilePage() {
-	const [supabase] = useState(() => createClient());
 	const [user, setUser] = useState<User | null>(null);
 	const [form, setForm] = useState({ fullName: "", phone: "" });
 	const [isSaving, setIsSaving] = useState(false);
@@ -36,34 +35,35 @@ export default function AccountProfilePage() {
 	const [deletionFeedback, setDeletionFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
 	useEffect(() => {
-		supabase.auth.getUser().then(({ data }) => {
-			if (!data.user) {
-				return;
-			}
-			setUser(data.user);
-			setForm({
-				fullName: (data.user.user_metadata?.full_name as string | undefined) ?? "",
-				phone: (data.user.user_metadata?.phone as string | undefined) ?? "",
-			});
-		});
-	}, [supabase]);
+		fetch("/api/account/me")
+			.then(async (response) => {
+				if (!response.ok) return;
+				const data = await response.json();
+				if (data.user) {
+					setUser(data.user);
+					setForm({
+						fullName: (data.user.user_metadata?.full_name as string | undefined) ?? "",
+						phone: (data.user.user_metadata?.phone as string | undefined) ?? "",
+					});
+				}
+			})
+			.catch(() => {});
+	}, []);
 
 	const saveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		setFeedback(null);
 		setIsSaving(true);
 
-		const { error } = await supabase.auth.updateUser({
-			data: {
-				full_name: form.fullName.trim(),
-				phone: form.phone.trim(),
-			},
+		const result = await updateProfile({
+			firstName: form.fullName.trim(),
+			phone: form.phone.trim(),
 		});
 
 		setIsSaving(false);
 
-		if (error) {
-			setFeedback({ type: "error", message: error.message });
+		if (result?.error) {
+			setFeedback({ type: "error", message: result.error });
 			return;
 		}
 
@@ -85,15 +85,14 @@ export default function AccountProfilePage() {
 		}
 
 		setIsChangingPassword(true);
-		const { error, data } = await supabase.auth.updateUser({ password: passwordForm.newPassword });
+		const result = await updatePassword("", passwordForm.newPassword);
 		setIsChangingPassword(false);
 
-		if (error) {
-			setPasswordFeedback({ type: "error", message: error.message });
+		if (result?.error) {
+			setPasswordFeedback({ type: "error", message: result.error });
 			return;
 		}
 
-		if (data.user) setUser(data.user);
 		setPasswordForm({ newPassword: "", confirmPassword: "" });
 		setPasswordFeedback({ type: "success", message: hasPassword ? "Your password has been changed." : "Password set — you can now sign in with either Google or your email and password." });
 	};
