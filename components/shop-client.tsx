@@ -346,13 +346,13 @@ export function ShopClient({ initialProducts, initialCategories }: ShopClientPro
 					) : (
 						<div className={viewMode === "grid" ? "grid grid-cols-2 gap-3 md:gap-6 md:grid-cols-3" : "space-y-2"}>
 							{visibleProducts.map((product) => (
-								<Link key={product.id} href={`/product/${product.slug}`} className={`relative rounded-[1.75rem] bg-white  md:transition md:hover:-translate-y-1 ${viewMode === "list" ? "flex gap-5" : ""}`}>
-									<div className={`${viewMode === "list" ? "h-28 w-28 shrink-0" : "mx-auto aspect-4/5"} bg-cover bg-center`} style={{ backgroundImage: `url('${product.image}')` }} />
-									<div className={`${viewMode === "list" ? "mt-8" : "min-w-0 flex-1 p-2 sm:px-6 sm:py-4"}`}>
+								<Link key={product.id} href={`/product/${product.slug}`} className={`relative rounded-[1.75rem] bg-white  md:transition md:hover:-translate-y-1 ${viewMode === "list" ? "flex gap-4" : ""}`}>
+									<div className={`${viewMode === "list" ? "h-32 w-32 shrink-0 rounded-l-[1.75rem] bg-cover bg-center" : "mx-auto aspect-4/5 bg-cover bg-center"}`} style={{ backgroundImage: `url('${product.image}')` }} />
+									<div className={`${viewMode === "list" ? "flex flex-col justify-center rounded-r-[1.75rem] px-3" : "min-w-0 flex-1 p-2 sm:px-6 sm:py-4"}`}>
 										<h2 className="text-xs sm:text-sm md:text-md font-semibold text-stone-900 line-clamp-1" title={product.name}>
 											{product.name}
 										</h2>
-										<div className={`mt-1 md:mt-3 flex gap-2 md:gap-3 ${viewMode === "list" ? "flex-col items-start" : "items-center justify-between"}`}>
+										<div className={`${viewMode === "list" ? "flex flex-col items-start gap-1 mt-1" : "mt-1 flex gap-2 md:gap-3 items-center justify-between"}`}>
 											<div>
 												<p className="text-xs md:text-sm font-medium text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
 												{product.variants[0] ? <PriceEstimate amountNok={product.variants[0].price} className="text-xs text-stone-500" /> : null}
