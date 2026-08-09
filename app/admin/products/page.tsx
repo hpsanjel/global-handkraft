@@ -152,7 +152,13 @@ export default function AdminProductsPage() {
 
 	const updateProductName = (name: string) => {
 		setSaveFeedback(null);
-		setDraftProduct((current) => (current ? { ...current, name, ...(slugEditedRef.current ? null : { slug: slugify(name) }) } : current));
+		setDraftProduct((current) => {
+			if (!current) return current;
+			// Only auto-derive the slug while creating a brand-new product — never overwrite
+			// an existing, already-published product's slug just because its name was edited.
+			const isNewProduct = current.id.startsWith("product-");
+			return { ...current, name, ...(isNewProduct && !slugEditedRef.current ? { slug: slugify(name) } : null) };
+		});
 	};
 
 	const updateProductSlug = (slug: string) => {
