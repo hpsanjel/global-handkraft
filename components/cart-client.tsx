@@ -5,8 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "@/lib/cart";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { createClient } from "@/lib/supabase/client";
-import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
+import { SHIPPING_COUNTRIES, COUNTRY_TO_ZONE } from "@/lib/shipping-countries";
 import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
+import { useDetectedCountry } from "@/hooks/use-detected-country";
+import { ZONE_MARKUPS } from "@/lib/price-zones-client";
 import { Package, MapPin, Truck, Loader2, Check } from "lucide-react";
 import type { CartItem } from "@/types/store";
 import { PriceEstimate } from "@/components/price-estimate";
@@ -32,6 +34,12 @@ export function CartClient() {
 	const [bringError, setBringError] = useState("");
 	const [savedAddressUsed, setSavedAddressUsed] = useState<{ postalCode: string; city?: string } | null>(null);
 
+	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
+	const getZoneMarkup = (countryCode: string | null | undefined) => {
+		const zone = COUNTRY_TO_ZONE[countryCode?.trim().toUpperCase() ?? ""];
+		return zone ? ZONE_MARKUPS[zone] : 0;
+	};
+
 	useEffect(() => {
 		const syncItems = () => setItems(getCartItems());
 		const initialSyncId = window.setTimeout(() => {
@@ -49,6 +57,12 @@ export function CartClient() {
 			window.removeEventListener("pageshow", syncItems);
 		};
 	}, []);
+
+	useEffect(() => {
+		if (detectedCountry && isDetectingCountry === false) {
+			setShippingCountry(detectedCountry);
+		}
+	}, [detectedCountry, isDetectingCountry]);
 
 	const fetchBringOptions = async (postalCode: string, country: string, cartItems: CartItem[]) => {
 		setIsLoadingBring(true);
@@ -114,6 +128,15 @@ export function CartClient() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	useEffect(() => {
+		if (isDetectingCountry === false && detectedCountry) {
+			const cartItems = getCartItems();
+			if (cartItems.length > 0 && bringOptions.length === 0 && !showShippingForm) {
+				void fetchBringOptions(shippingPostalCode, detectedCountry, cartItems);
+			}
+		}
+	}, [isDetectingCountry, detectedCountry, shippingPostalCode, bringOptions.length, showShippingForm]);
+
 	const useDifferentAddress = () => {
 		setSavedAddressUsed(null);
 		setBringOptions([]);
@@ -130,7 +153,29 @@ export function CartClient() {
 	}, [appliedCoupon, selectedShippingId]);
 
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
-	const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
+
+	const subtotal = useMemo(() => {
+		return items.reduce((sum, item) => {
+			const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
+			const basePrice = variant?.price ?? item.price;
+			return sum + basePrice * item.quantity;
+		}, 0);
+	}, [items, products]);
+
+	const subtotalWithMarkup = useMemo(() => {
+		return items.reduce((sum, item) => {
+			const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
+			const basePrice = variant?.price ?? item.price;
+			const addonSum = item.addonIds.reduce((addonSum, addonId) => {
+				const product = products.find((p) => p.id === item.productId);
+				const addon = product?.addons.find((a) => a.id === addonId);
+				return addonSum + (addon?.price ?? 0);
+			}, 0);
+			const itemBasePrice = basePrice + addonSum;
+			const markup = getZoneMarkup(detectedCountry);
+			return sum + (itemBasePrice + markup) * item.quantity;
+		}, 0);
+	}, [items, products, detectedCountry]);
 
 	const handleFetchBringOptions = () => {
 		if (!shippingPostalCode.trim()) {
@@ -207,7 +252,7 @@ export function CartClient() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					code: couponCode,
-					subtotal,
+					subtotal: subtotalWithMarkup,
 					email: user?.email,
 				}),
 			});
@@ -295,7 +340,7 @@ export function CartClient() {
 	};
 
 	const selectedShippingCost = getSelectedShippingCost();
-	const displaySubtotal = appliedCoupon ? appliedCoupon.finalSubtotal : subtotal;
+	const displaySubtotal = appliedCoupon ? appliedCoupon.finalSubtotal : subtotalWithMarkup;
 	const shippingCostAfterCoupon = appliedCoupon?.freeShipping ? 0 : selectedShippingCost;
 	const estimatedTotal = displaySubtotal + shippingCostAfterCoupon;
 
@@ -350,40 +395,51 @@ export function CartClient() {
 				<div className="mt-8 space-y-8">
 					<div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
 						<div className="space-y-4">
-							{items.map((item) => (
-								<div key={`${item.productId}-${item.variantId}-${item.addonIds.join("-")}`} className="flex flex-col gap-4 rounded-[1.5rem] border border-stone-200 p-4 sm:flex-row sm:items-center sm:justify-between">
-									<div className="flex items-center gap-4">
-										<div
-											className="h-16 w-16 rounded-[1rem] bg-stone-100 bg-cover bg-center sm:h-20 sm:w-20"
-											style={{
-												backgroundImage: `url('${item.image}')`,
-											}}
-										/>
-										<div>
-											<p className="font-semibold text-stone-900">{item.name}</p>
-											<p className="mt-1 text-sm text-stone-600">{item.variantName}</p>
+							{items.map((item) => {
+								const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
+								const basePrice = variant?.price ?? item.price;
+								const addonSum = item.addonIds.reduce((sum, addonId) => {
+									const product = products.find((p) => p.id === item.productId);
+									const addon = product?.addons.find((a) => a.id === addonId);
+									return sum + (addon?.price ?? 0);
+								}, 0);
+								const itemTotalBase = (basePrice + addonSum) * item.quantity;
+
+								return (
+									<div key={`${item.productId}-${item.variantId}-${item.addonIds.join("-")}`} className="flex flex-col gap-4 rounded-[1.5rem] border border-stone-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+										<div className="flex items-center gap-4">
+											<div
+												className="h-16 w-16 rounded-[1rem] bg-stone-100 bg-cover bg-center sm:h-20 sm:w-20"
+												style={{
+													backgroundImage: `url('${item.image}')`,
+												}}
+											/>
+											<div>
+												<p className="font-semibold text-stone-900">{item.name}</p>
+												<p className="mt-1 text-sm text-stone-600">{item.variantName}</p>
+											</div>
+										</div>
+										<div className="flex flex-row items-center justify-between gap-3 text-sm text-stone-600 sm:flex-col sm:items-end">
+											<div className="flex items-center rounded-full border border-stone-200 bg-white p-1">
+												<button type="button" onClick={() => handleQuantityChange(item, -1)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
+													-
+												</button>
+												<span className="min-w-8 text-center font-semibold text-stone-900">{item.quantity}</span>
+												<button type="button" onClick={() => handleQuantityChange(item, 1)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
+													+
+												</button>
+											</div>
+											<div className="text-right">
+												<p className="font-semibold text-stone-900">NOK {itemTotalBase}</p>
+												<PriceEstimate amountNok={itemTotalBase} className="text-xs text-stone-500" />
+											</div>
+											<button type="button" onClick={() => handleRemoveItem(item)} className="text-sm font-medium text-stone-500 transition hover:text-stone-900">
+												Remove
+											</button>
 										</div>
 									</div>
-									<div className="flex flex-row items-center justify-between gap-3 text-sm text-stone-600 sm:flex-col sm:items-end">
-										<div className="flex items-center rounded-full border border-stone-200 bg-white p-1">
-											<button type="button" onClick={() => handleQuantityChange(item, -1)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
-												-
-											</button>
-											<span className="min-w-8 text-center font-semibold text-stone-900">{item.quantity}</span>
-											<button type="button" onClick={() => handleQuantityChange(item, 1)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
-												+
-											</button>
-										</div>
-										<div className="text-right">
-											<p className="font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
-											<PriceEstimate amountNok={item.price * item.quantity} className="text-xs text-stone-500" />
-										</div>
-										<button type="button" onClick={() => handleRemoveItem(item)} className="text-sm font-medium text-stone-500 transition hover:text-stone-900">
-											Remove
-										</button>
-									</div>
-								</div>
-							))}
+								);
+							})}
 						</div>
 						<div className="space-y-6">
 							<div className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-6">

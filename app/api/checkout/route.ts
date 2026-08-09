@@ -8,6 +8,7 @@ import { getBringOptionsForCheckout } from "@/lib/bring-shipping-integration";
 import { STORE_PICKUP_ID, STORE_PICKUP_DISPLAY_NAME } from "@/lib/shipping-client";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { variantLabel } from "@/lib/product-transform";
+import { getDisplayPrice, getZoneMarkup } from "@/lib/price-zones";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,8 @@ export type PricedCheckoutItem = {
 	height: string;
 	/** Depth in cm as stored on the Variant (e.g. "30 cm") */
 	depth: string;
+	/** Zone markup applied per unit */
+	zoneMarkup: number;
 };
 
 function normalizeCheckoutItems(items: CheckoutItem[]) {
@@ -68,7 +71,7 @@ function normalizeCheckoutItems(items: CheckoutItem[]) {
 	}));
 }
 
-async function priceCheckoutItems(items: CheckoutItem[]): Promise<PricedCheckoutItem[]> {
+async function priceCheckoutItems(items: CheckoutItem[], countryCode?: string): Promise<PricedCheckoutItem[]> {
 	const normalizedItems = normalizeCheckoutItems(items);
 
 	if (normalizedItems.some((item) => !item.productId || !item.variantId)) {
@@ -110,7 +113,9 @@ async function priceCheckoutItems(items: CheckoutItem[]): Promise<PricedCheckout
 			}
 
 			const addonTotal = addons.reduce((sum, addon) => sum + addon.price, 0);
-			const unitAmount = variant.price + addonTotal;
+			const baseUnitAmount = variant.price + addonTotal;
+			const markup = countryCode ? await getZoneMarkup(countryCode) : 0;
+			const unitAmount = baseUnitAmount + markup;
 			const variantDisplay = variantLabel(variant.name, variant.color);
 			const name = `${variant.product.name}${variantDisplay ? ` (${variantDisplay})` : ""}`;
 
@@ -127,6 +132,7 @@ async function priceCheckoutItems(items: CheckoutItem[]): Promise<PricedCheckout
 				width: variant.width,
 				height: variant.height,
 				depth: variant.depth,
+				zoneMarkup: markup,
 			};
 		}),
 	);
@@ -310,7 +316,8 @@ export async function POST(request: Request) {
 			apiVersion: "2026-07-29.dahlia",
 		});
 
-		const pricedItems = await priceCheckoutItems(items);
+		const countryCode = body.shippingAddress?.country;
+		const pricedItems = await priceCheckoutItems(items, countryCode);
 		const { rates } = await getExchangeRates();
 		const eurPerNok = rates.EUR;
 		const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -332,6 +339,7 @@ export async function POST(request: Request) {
 						metadata: {
 							productId: item.productId,
 							image: item.image,
+							zoneMarkup: String(item.zoneMarkup),
 						},
 					},
 					unit_amount: item.unitAmountCents,
@@ -340,7 +348,7 @@ export async function POST(request: Request) {
 			};
 		});
 
-		const compactItems = pricedItems.map((item) => `${item.productId}:${item.variantId}:${item.quantity}:${item.addonIds.join("+")}`).join("|");
+		const compactItems = pricedItems.map((item) => `${item.productId}:${item.variantId}:${item.quantity}:${item.addonIds.join("+")}:${item.zoneMarkup}`).join("|");
 
 		const subtotal = pricedItems.reduce((sum, item) => sum + item.lineSubtotal, 0);
 
@@ -355,13 +363,7 @@ export async function POST(request: Request) {
 					select: { id: true, code: true, discountPct: true, freeShipping: true, active: true, expiresAt: true, maxUses: true, currentUses: true, minPurchaseAmount: true },
 				});
 
-				if (
-					coupon &&
-					coupon.active &&
-					(!coupon.expiresAt || coupon.expiresAt >= new Date()) &&
-					(!coupon.maxUses || coupon.currentUses < coupon.maxUses) &&
-					(!coupon.minPurchaseAmount || subtotal >= coupon.minPurchaseAmount)
-				) {
+				if (coupon && coupon.active && (!coupon.expiresAt || coupon.expiresAt >= new Date()) && (!coupon.maxUses || coupon.currentUses < coupon.maxUses) && (!coupon.minPurchaseAmount || subtotal >= coupon.minPurchaseAmount)) {
 					hasFreeShippingCoupon = coupon.freeShipping;
 
 					// Only create a Stripe coupon if there's an actual percentage discount

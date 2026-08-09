@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
 import { variantLabel } from "@/lib/product-transform";
 import { PriceEstimate } from "@/components/price-estimate";
 import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
+import { getZoneMarkupClient } from "@/lib/price-zones-client";
+import { useDetectedCountry } from "@/hooks/use-detected-country";
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -45,6 +47,14 @@ export function ProductClient({ product }: { product: Product }) {
 	const [isSubmittingMandap, setIsSubmittingMandap] = useState(false);
 	const [cartFeedback, setCartFeedback] = useState("");
 	const [showCustomTempleForm, setShowCustomTempleForm] = useState(false);
+
+	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
+	const [zoneMarkup, setZoneMarkup] = useState(0);
+
+	useEffect(() => {
+		if (!detectedCountry) return;
+		setZoneMarkup(getZoneMarkupClient(detectedCountry));
+	}, [detectedCountry]);
 
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
 
@@ -119,10 +129,12 @@ export function ProductClient({ product }: { product: Product }) {
 
 	const selectedAddons = useMemo(() => product.addons.filter((addon) => selectedAddonIds.includes(addon.id)), [product.addons, selectedAddonIds]);
 
-	const totalPrice = useMemo(() => {
+	const basePrice = useMemo(() => {
 		const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
 		return (selectedVariant?.price ?? 0) + addonsTotal;
 	}, [selectedAddons, selectedVariant]);
+
+	const totalPrice = useMemo(() => basePrice + zoneMarkup, [basePrice, zoneMarkup]);
 
 	const toggleAddon = (addonId: string) => {
 		setSelectedAddonIds((current) => (current.includes(addonId) ? current.filter((id) => id !== addonId) : [...current, addonId]));
@@ -388,7 +400,10 @@ export function ProductClient({ product }: { product: Product }) {
 					<div className="flex items-center justify-between gap-3">
 						<p className="text-sm font-medium text-stone-500">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
 						<div className="text-right">
-							<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
+							<p className="text-3xl font-semibold text-stone-900">
+								NOK {isDetectingCountry ? "..." : totalPrice}
+								{zoneMarkup > 0 && !isDetectingCountry ? <span className="ml-2 text-xs font-normal text-stone-500">(includes zone surcharge)</span> : null}
+							</p>
 							<PriceEstimate amountNok={totalPrice} className="text-sm text-stone-500" />
 						</div>
 					</div>
@@ -441,7 +456,7 @@ export function ProductClient({ product }: { product: Product }) {
 
 							{selectedVariant?.width || selectedVariant?.height || selectedVariant?.depth || selectedVariant?.weight ? (
 								<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-4">
-									<p className="text-xs font-semibold uppercase tracking-[0.15em] text-stone-500">Dimensions &amp; Weight</p>
+									<p className="text-xs font-semibold uppercase tracking-[0.15em] text-stone-500">Dimensions & Weight</p>
 
 									<div className="mt-3 grid gap-3 sm:grid-cols-2">
 										{(selectedVariant?.width || selectedVariant?.height || selectedVariant?.depth) && (
