@@ -102,6 +102,8 @@ export default function AdminProductsPage() {
 	const [isUploadingImages, setIsUploadingImages] = useState(false);
 	const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 	const imageInputRef = useRef<HTMLInputElement>(null);
+	// Tracks whether the admin has hand-edited the slug for the current product — once true, name edits stop overwriting it.
+	const slugEditedRef = useRef(false);
 
 	useEffect(() => {
 		const loadProducts = async () => {
@@ -138,6 +140,7 @@ export default function AdminProductsPage() {
 	const selectProduct = (productId: string) => {
 		setSelectedProductId(productId);
 		setImageUploadError(null);
+		slugEditedRef.current = false;
 		const nextProduct = productsState.find((product) => product.id === productId);
 		if (nextProduct) setDraftProduct(nextProduct);
 	};
@@ -145,6 +148,16 @@ export default function AdminProductsPage() {
 	const updateDraftField = <K extends keyof Product>(key: K, value: Product[K]) => {
 		setSaveFeedback(null);
 		setDraftProduct((current) => (current ? { ...current, [key]: value } : current));
+	};
+
+	const updateProductName = (name: string) => {
+		setSaveFeedback(null);
+		setDraftProduct((current) => (current ? { ...current, name, ...(slugEditedRef.current ? null : { slug: slugify(name) }) } : current));
+	};
+
+	const updateProductSlug = (slug: string) => {
+		slugEditedRef.current = true;
+		updateDraftField("slug", slug);
 	};
 
 	const updateProductCategory = (category: string) => {
@@ -331,6 +344,7 @@ export default function AdminProductsPage() {
 		}
 
 		const nextProduct = createEmptyProduct(defaultCategory);
+		slugEditedRef.current = false;
 		setProductsState((current) => [nextProduct, ...current]);
 		setSelectedProductId(nextProduct.id);
 		setDraftProduct(nextProduct);
@@ -433,11 +447,11 @@ export default function AdminProductsPage() {
 								<div className="grid gap-4 md:grid-cols-2">
 									<label className={FIELD_LABEL}>
 										<span className="font-medium text-slate-700">Product name</span>
-										<input value={currentProduct.name} onChange={(e) => updateDraftField("name", e.target.value)} className={FIELD_INPUT} />
+										<input value={currentProduct.name} onChange={(e) => updateProductName(e.target.value)} className={FIELD_INPUT} />
 									</label>
 									<label className={FIELD_LABEL}>
 										<span className="font-medium text-slate-700">Slug</span>
-										<input value={currentProduct.slug} onChange={(e) => updateDraftField("slug", e.target.value)} className={FIELD_INPUT} />
+										<input value={currentProduct.slug} onChange={(e) => updateProductSlug(e.target.value)} className={FIELD_INPUT} />
 									</label>
 									<label className={FIELD_LABEL}>
 										<span className="font-medium text-slate-700">Category</span>
