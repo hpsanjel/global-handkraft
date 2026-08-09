@@ -1,9 +1,31 @@
 import { NextResponse } from "next/server";
+import { hasAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { invalidatePriceZoneCache } from "@/lib/price-zones";
+import { createClient } from "@/lib/supabase/server";
+
+async function requireAdmin() {
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	if (!hasAdminRole(user)) {
+		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	}
+
+	return null;
+}
 
 export async function POST(request: Request) {
 	try {
+		const authError = await requireAdmin();
+		if (authError) return authError;
+
 		const formData = await request.formData();
 		const action = formData.get("action");
 		const name = String(formData.get("name") ?? "").trim();

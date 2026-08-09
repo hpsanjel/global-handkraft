@@ -1,18 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { resolveZone, resolveZoneMarkup, resolveDisplayPrice, type PriceZone, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 
-export type PriceZone = {
-	id: string;
-	name: string;
-	code: string;
-	markupNok: number;
-	priority: number;
-};
-
-export type PriceZoneWithCountries = PriceZone & {
-	countries: string[];
-};
-
-const FALLBACK_ZONE_CODE = "ZONE_0";
+export type { PriceZone, PriceZoneWithCountries };
 
 let cachedZones: PriceZoneWithCountries[] | null = null;
 let cacheTimestamp = 0;
@@ -52,35 +41,18 @@ export async function getPriceZones(): Promise<PriceZoneWithCountries[]> {
 }
 
 export async function getZoneForCountry(countryCode: string | null | undefined): Promise<PriceZone | null> {
-	if (!countryCode) return null;
-
-	const normalized = countryCode.trim().toUpperCase();
-	if (!normalized) return null;
-
 	const zones = await loadZones();
-
-	for (const zone of zones) {
-		if (zone.code === FALLBACK_ZONE_CODE && zone.countries.length === 0) {
-			continue;
-		}
-		if (zone.countries.includes(normalized)) {
-			return zone;
-		}
-	}
-
-	const fallback = zones.find((z) => z.code === FALLBACK_ZONE_CODE);
-	return fallback ?? null;
+	return resolveZone(zones, countryCode);
 }
 
 export async function getDisplayPrice(basePrice: number, countryCode: string | null | undefined): Promise<number> {
-	const zone = await getZoneForCountry(countryCode);
-	if (!zone) return basePrice;
-	return basePrice + zone.markupNok;
+	const zones = await loadZones();
+	return resolveDisplayPrice(zones, basePrice, countryCode);
 }
 
 export async function getZoneMarkup(countryCode: string | null | undefined): Promise<number> {
-	const zone = await getZoneForCountry(countryCode);
-	return zone?.markupNok ?? 0;
+	const zones = await loadZones();
+	return resolveZoneMarkup(zones, countryCode);
 }
 
 export function invalidatePriceZoneCache(): void {

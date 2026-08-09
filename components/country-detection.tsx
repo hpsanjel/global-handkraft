@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { COUNTRY_TO_ZONE } from "@/lib/shipping-countries";
+import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 
 const DETECTED_COUNTRY_COOKIE = "detected_country";
 const DETECTED_COUNTRY_COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
@@ -19,7 +19,7 @@ export function CountryDetection() {
 		if (existing) return;
 
 		const localCountry = localStorage.getItem("detected_country");
-		if (localCountry && COUNTRY_TO_ZONE[localCountry]) {
+		if (localCountry && SHIPPING_COUNTRY_CODES.includes(localCountry)) {
 			setCookie(DETECTED_COUNTRY_COOKIE, localCountry, DETECTED_COUNTRY_COOKIE_MAX_AGE);
 			return;
 		}
@@ -32,7 +32,7 @@ export function CountryDetection() {
 				if (!response.ok) throw new Error("Geo API failed");
 				const data = (await response.json()) as { country_code?: string };
 				const country = data.country_code?.toUpperCase();
-				if (country && COUNTRY_TO_ZONE[country]) {
+				if (country && SHIPPING_COUNTRY_CODES.includes(country)) {
 					localStorage.setItem("detected_country", country);
 					setCookie(DETECTED_COUNTRY_COOKIE, country, DETECTED_COUNTRY_COOKIE_MAX_AGE);
 					window.dispatchEvent(new CustomEvent("country:detected", { detail: { country } }));

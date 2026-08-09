@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { COUNTRY_TO_ZONE } from "@/lib/shipping-countries";
+import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 
 const DETECTED_COUNTRY_COOKIE = "detected_country";
 
@@ -17,7 +17,7 @@ export function useDetectedCountry() {
 
 	useEffect(() => {
 		const detectedCountry = getCookieValue(DETECTED_COUNTRY_COOKIE) || localStorage.getItem("detected_country");
-		if (detectedCountry && COUNTRY_TO_ZONE[detectedCountry]) {
+		if (detectedCountry && SHIPPING_COUNTRY_CODES.includes(detectedCountry)) {
 			setCountry(detectedCountry);
 			setIsDetecting(false);
 			return;
@@ -26,7 +26,7 @@ export function useDetectedCountry() {
 		const handleDetected = (event: Event) => {
 			const custom = event as CustomEvent<{ country: string }>;
 			const detected = custom.detail?.country;
-			if (detected && COUNTRY_TO_ZONE[detected]) {
+			if (detected && SHIPPING_COUNTRY_CODES.includes(detected)) {
 				setCountry(detected);
 				setIsDetecting(false);
 			}

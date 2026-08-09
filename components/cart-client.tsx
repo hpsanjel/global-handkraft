@@ -5,15 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "@/lib/cart";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { createClient } from "@/lib/supabase/client";
-import { SHIPPING_COUNTRIES, COUNTRY_TO_ZONE } from "@/lib/shipping-countries";
+import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
 import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
 import { useDetectedCountry } from "@/hooks/use-detected-country";
-import { ZONE_MARKUPS } from "@/lib/price-zones-client";
+import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { Package, MapPin, Truck, Loader2, Check } from "lucide-react";
 import type { CartItem } from "@/types/store";
 import { PriceEstimate } from "@/components/price-estimate";
 
-export function CartClient() {
+export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[] }) {
 	const products = useProductsCatalog();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isMounted, setIsMounted] = useState(false);
@@ -35,10 +35,6 @@ export function CartClient() {
 	const [savedAddressUsed, setSavedAddressUsed] = useState<{ postalCode: string; city?: string } | null>(null);
 
 	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
-	const getZoneMarkup = (countryCode: string | null | undefined) => {
-		const zone = COUNTRY_TO_ZONE[countryCode?.trim().toUpperCase() ?? ""];
-		return zone ? ZONE_MARKUPS[zone] : 0;
-	};
 
 	useEffect(() => {
 		const syncItems = () => setItems(getCartItems());
@@ -172,10 +168,10 @@ export function CartClient() {
 				return addonSum + (addon?.price ?? 0);
 			}, 0);
 			const itemBasePrice = basePrice + addonSum;
-			const markup = getZoneMarkup(detectedCountry);
+			const markup = resolveZoneMarkup(priceZones, detectedCountry);
 			return sum + (itemBasePrice + markup) * item.quantity;
 		}, 0);
-	}, [items, products, detectedCountry]);
+	}, [items, products, detectedCountry, priceZones]);
 
 	const handleFetchBringOptions = () => {
 		if (!shippingPostalCode.trim()) {

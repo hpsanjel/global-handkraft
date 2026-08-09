@@ -8,7 +8,7 @@ import { saveCartItems, getCartItems } from "@/lib/cart";
 import { variantLabel } from "@/lib/product-transform";
 import { PriceEstimate } from "@/components/price-estimate";
 import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
-import { getZoneMarkupClient } from "@/lib/price-zones-client";
+import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { useDetectedCountry } from "@/hooks/use-detected-country";
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -26,7 +26,7 @@ function fileToDataUrl(file: File): Promise<string> {
 	});
 }
 
-export function ProductClient({ product }: { product: Product }) {
+export function ProductClient({ product, priceZones }: { product: Product; priceZones: PriceZoneWithCountries[] }) {
 	const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id ?? "");
 	const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
 	const [isMobileImageViewerOpen, setIsMobileImageViewerOpen] = useState(false);
@@ -53,8 +53,8 @@ export function ProductClient({ product }: { product: Product }) {
 
 	useEffect(() => {
 		if (!detectedCountry) return;
-		setZoneMarkup(getZoneMarkupClient(detectedCountry));
-	}, [detectedCountry]);
+		setZoneMarkup(resolveZoneMarkup(priceZones, detectedCountry));
+	}, [detectedCountry, priceZones]);
 
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
 

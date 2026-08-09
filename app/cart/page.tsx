@@ -1,7 +1,12 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CartClient } from "@/components/cart-client";
+import { getPriceZones } from "@/lib/price-zones";
 import { siteConfig } from "@/app/metadata";
+
+// Cart contents and zone pricing are per-visitor and change between admin edits;
+// without this the page would statically freeze priceZones at build time.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
 	title: "Shopping Cart",
@@ -26,12 +31,14 @@ export const metadata = {
 	},
 };
 
-export default function CartPage() {
+export default async function CartPage() {
+	const priceZones = await getPriceZones();
+
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
 			<SiteHeader />
 			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-				<CartClient />
+				<CartClient priceZones={priceZones} />
 			</main>
 			<SiteFooter />
 		</div>

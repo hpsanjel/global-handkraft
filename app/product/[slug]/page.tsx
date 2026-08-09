@@ -6,6 +6,7 @@ import { ProductClient } from "@/components/product-client";
 import { ProductReviews } from "@/components/product-reviews";
 import { prisma } from "@/lib/prisma";
 import { toStoreProduct } from "@/lib/product-transform";
+import { getPriceZones } from "@/lib/price-zones";
 import { siteConfig } from "@/app/metadata";
 
 type ProductPageProps = {
@@ -92,6 +93,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 	}
 
 	const reviews = await getApprovedReviews(product.id);
+	const priceZones = await getPriceZones();
 
 	const productSchema = {
 		"@context": "https://schema.org",
@@ -128,7 +130,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 			{/* JSON-LD structured data for the product */}
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
 			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-				<ProductClient product={product} />
+				<ProductClient product={product} priceZones={priceZones} />
 				<ProductReviews productSlug={product.slug} initialRating={product.rating} initialReviewCount={product.reviewCount} initialReviews={reviews} />
 			</main>
 			<SiteFooter />

@@ -2,8 +2,6 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { prisma } from "@/lib/prisma";
-import { invalidatePriceZoneCache } from "@/lib/price-zones";
-import { COUNTRY_TO_ZONE } from "@/lib/shipping-countries";
 import { createClient } from "@/lib/supabase/server";
 
 async function getZones() {
