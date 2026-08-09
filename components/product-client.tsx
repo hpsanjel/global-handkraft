@@ -402,7 +402,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 						<div className="text-right">
 							<p className="text-3xl font-semibold text-stone-900">
 								NOK {totalPrice}
-								{zoneMarkup > 0 && !isDetectingCountry ? <span className="ml-2 text-xs font-normal text-stone-500">(includes zone surcharge)</span> : null}
+								{zoneMarkup > 0 && !isDetectingCountry ? <span className="ml-2 text-xs font-normal text-stone-500"></span> : null}
 							</p>
 							<PriceEstimate amountNok={totalPrice} className="text-sm text-stone-500" />
 						</div>
