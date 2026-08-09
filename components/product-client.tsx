@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
+import { variantLabel } from "@/lib/product-transform";
 import { PriceEstimate } from "@/components/price-estimate";
 import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
 
@@ -62,6 +63,60 @@ export function ProductClient({ product }: { product: Product }) {
 
 	const selectedColor = useMemo(() => availableColors.find((entry) => entry.image === selectedGalleryImage)?.color ?? "", [availableColors, selectedGalleryImage]);
 
+	const hasVariantColors = useMemo(() => product.variants.some((variant) => (variant.color ?? "").trim() !== ""), [product.variants]);
+
+	const sizeOptions = useMemo(() => {
+		const seen = new Set<string>();
+		const sizes: string[] = [];
+		product.variants.forEach((variant) => {
+			if (!seen.has(variant.name)) {
+				seen.add(variant.name);
+				sizes.push(variant.name);
+			}
+		});
+		return sizes;
+	}, [product.variants]);
+
+	const colorOptionsForSelectedSize = useMemo(() => {
+		const seen = new Set<string>();
+		const colors: string[] = [];
+		product.variants
+			.filter((variant) => variant.name === selectedVariant?.name)
+			.forEach((variant) => {
+				const color = (variant.color ?? "").trim();
+				if (color && !seen.has(color)) {
+					seen.add(color);
+					colors.push(color);
+				}
+			});
+		return colors;
+	}, [product.variants, selectedVariant]);
+
+	const syncGalleryToColor = (color?: string) => {
+		const trimmed = color?.trim();
+		if (!trimmed) return;
+		const match = availableColors.find((entry) => entry.color.trim().toLowerCase() === trimmed.toLowerCase());
+		if (match) {
+			setSelectedGalleryImage(match.image);
+			setActivePreviewImage(match.image);
+		}
+	};
+
+	const selectSize = (name: string) => {
+		const candidates = product.variants.filter((variant) => variant.name === name);
+		const target = candidates.find((variant) => variant.color === selectedVariant?.color) ?? candidates[0];
+		if (!target) return;
+		setSelectedVariantId(target.id);
+		syncGalleryToColor(target.color);
+	};
+
+	const selectColor = (color: string) => {
+		const target = product.variants.find((variant) => variant.name === selectedVariant?.name && variant.color === color);
+		if (!target) return;
+		setSelectedVariantId(target.id);
+		syncGalleryToColor(color);
+	};
+
 	const selectedAddons = useMemo(() => product.addons.filter((addon) => selectedAddonIds.includes(addon.id)), [product.addons, selectedAddonIds]);
 
 	const totalPrice = useMemo(() => {
@@ -90,7 +145,7 @@ export function ProductClient({ product }: { product: Product }) {
 		}
 
 		const existingItems = getCartItems();
-		const selectedVariantName = selectedVariant?.name ?? "Default option";
+		const selectedVariantName = variantLabel(selectedVariant?.name, selectedVariant?.color) || "Default option";
 		const itemName = hasMultipleVariants ? `${product.name} (${selectedVariantName})` : product.name;
 		const matchingItemIndex = existingItems.findIndex((item) => item.productId === product.id && item.variantId === (selectedVariant?.id ?? "") && JSON.stringify(item.addonIds) === JSON.stringify(selectedAddonIds));
 		const nextItems = [...existingItems];
@@ -347,7 +402,22 @@ export function ProductClient({ product }: { product: Product }) {
 									</button>
 								) : null}
 							</div>
-							{hasMultipleVariants ? (
+							{hasVariantColors ? (
+								sizeOptions.length > 1 ? (
+									<div className="mt-3 flex flex-wrap gap-3">
+										{sizeOptions.map((name) => {
+											const isSelected = selectedVariant?.name === name;
+											return (
+												<button type="button" key={name} className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`} onClick={() => selectSize(name)}>
+													{name}
+												</button>
+											);
+										})}
+									</div>
+								) : (
+									<p className="mt-3 text-sm font-medium text-stone-900">{selectedVariant?.name ?? "Standard"}</p>
+								)
+							) : hasMultipleVariants ? (
 								<div className="mt-3 flex flex-wrap gap-3">
 									{product.variants.map((variant) => {
 										const isSelected = selectedVariant?.id === variant.id;
@@ -417,7 +487,23 @@ export function ProductClient({ product }: { product: Product }) {
 								</div>
 							) : null}
 						</div>
-						{availableColors.length > 0 ? (
+						{hasVariantColors ? (
+							colorOptionsForSelectedSize.length > 0 ? (
+								<div>
+									<p className="text-sm font-semibold text-stone-900">Colour</p>
+									<div className="mt-3 flex flex-wrap gap-3">
+										{colorOptionsForSelectedSize.map((color) => {
+											const isSelected = selectedVariant?.color === color;
+											return (
+												<button type="button" key={color} onClick={() => selectColor(color)} className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}>
+													{color}
+												</button>
+											);
+										})}
+									</div>
+								</div>
+							) : null
+						) : availableColors.length > 0 ? (
 							<div>
 								<p className="text-sm font-semibold text-stone-900">Colour</p>
 								<div className="mt-3 flex flex-wrap gap-3">

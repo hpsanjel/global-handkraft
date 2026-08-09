@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { STORE_PICKUP_ID } from "@/lib/shipping-client";
+import { variantLabel } from "@/lib/product-transform";
 
 export interface AdminMandapInquiryMessage {
 	id: string;
@@ -107,7 +108,7 @@ export async function getRecentOrders(limit = 10): Promise<AdminOrder[]> {
 			email: order.address.email || "No email provided",
 			address: address || "Address not provided",
 			item: firstItem?.product.name || "Handcrafted product",
-			variant: firstItem?.variant.name || "Selected option",
+			variant: variantLabel(firstItem?.variant.name, firstItem?.variant.color) || "Selected option",
 			status: order.status,
 			amount: order.total,
 			currency: order.currency || "NOK",

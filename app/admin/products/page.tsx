@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { type CategorySummary } from "@/lib/category-utils";
 import { refreshProductsCatalog } from "@/lib/products-catalog";
-import { DEFAULT_SHIPPING_INFO, DEFAULT_RETURN_POLICY } from "@/lib/product-transform";
+import { DEFAULT_SHIPPING_INFO, DEFAULT_RETURN_POLICY, variantLabel } from "@/lib/product-transform";
 import type { Product, ProductAddon, ProductVariant } from "@/types/store";
 
 // Shared Tailwind fragments — avoids repeating the same class string across the form.
@@ -84,7 +84,7 @@ function createEmptyProduct(category: string): Product {
 }
 
 function createEmptyVariant(): ProductVariant {
-	return { id: generateId("variant"), name: "New size", price: 0, width: "", height: "", depth: "", weight: "", stock: 0 };
+	return { id: generateId("variant"), name: "New size", color: "", price: 0, width: "", height: "", depth: "", weight: "", stock: 0 };
 }
 
 function createEmptyAddon(): ProductAddon {
@@ -543,11 +543,19 @@ export default function AdminProductsPage() {
 											Add size
 										</Button>
 									</div>
+									{isClothCategory && <p className="mt-2 text-xs text-slate-500">For clothing, add one row per size + colour combination (e.g. &quot;Small&quot; / &quot;Red&quot;, &quot;Small&quot; / &quot;Blue&quot;) so each combination tracks its own stock.</p>}
+									{isClothCategory && (
+										<datalist id="variant-color-options">
+											{Array.from(new Set((currentProduct.galleryColors ?? []).map((color) => color.trim()).filter(Boolean))).map((color) => (
+												<option key={color} value={color} />
+											))}
+										</datalist>
+									)}
 									<div className="mt-4 space-y-3">
 										{currentProduct.variants.map((variant) => (
 											<div key={variant.id} className="rounded-2xl border border-slate-200 bg-white p-4">
 												<div className="flex items-center justify-between gap-3">
-													<p className="font-semibold text-slate-900">{variant.name || "Untitled variant"}</p>
+													<p className="font-semibold text-slate-900">{variantLabel(variant.name, variant.color) || "Untitled variant"}</p>
 													<button type="button" onClick={() => removeVariant(variant.id)} className="text-sm font-semibold text-slate-500">
 														Remove
 													</button>
@@ -557,6 +565,12 @@ export default function AdminProductsPage() {
 														<span className="font-medium text-slate-700">Name</span>
 														<input value={variant.name} onChange={(e) => updateVariant(variant.id, "name", e.target.value)} className={SUBFIELD_INPUT} />
 													</label>
+													{isClothCategory && (
+														<label className={FIELD_LABEL}>
+															<span className="font-medium text-slate-700">Colour</span>
+															<input list="variant-color-options" value={variant.color ?? ""} onChange={(e) => updateVariant(variant.id, "color", e.target.value)} placeholder="e.g. Red" className={SUBFIELD_INPUT} />
+														</label>
+													)}
 													<label className={FIELD_LABEL}>
 														<span className="font-medium text-slate-700">Price</span>
 														<input type="number" value={variant.price} onChange={(e) => updateVariant(variant.id, "price", Number(e.target.value))} className={SUBFIELD_INPUT} />

@@ -7,6 +7,7 @@ import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 import { getBringOptionsForCheckout } from "@/lib/bring-shipping-integration";
 import { STORE_PICKUP_ID, STORE_PICKUP_DISPLAY_NAME } from "@/lib/shipping-client";
 import { getExchangeRates } from "@/lib/exchange-rates";
+import { variantLabel } from "@/lib/product-transform";
 
 export const runtime = "nodejs";
 
@@ -110,7 +111,8 @@ async function priceCheckoutItems(items: CheckoutItem[]): Promise<PricedCheckout
 
 			const addonTotal = addons.reduce((sum, addon) => sum + addon.price, 0);
 			const unitAmount = variant.price + addonTotal;
-			const name = `${variant.product.name}${variant.name ? ` (${variant.name})` : ""}`;
+			const variantDisplay = variantLabel(variant.name, variant.color);
+			const name = `${variant.product.name}${variantDisplay ? ` (${variantDisplay})` : ""}`;
 
 			return {
 				productId: item.productId,

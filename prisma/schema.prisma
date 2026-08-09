@@ -62,6 +62,7 @@ model Variant {
   productId  String
   product    Product     @relation(fields: [productId], references: [id])
   name       String
+  color      String      @default("")
   price      Float
   width      String
   height     String

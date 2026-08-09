@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { generateDocument } from "@/lib/documents";
 import { BUSINESS } from "@/lib/documents/business-config";
+import { variantLabel } from "@/lib/product-transform";
 
 export const runtime = "nodejs";
 
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
 						unitPrice: variant.price + addonTotal,
 						addonNames: addons.map((addon) => addon.name),
 						name: variant.product.name,
-						variantName: variant.name,
+						variantName: variantLabel(variant.name, variant.color),
 					};
 				}),
 			);

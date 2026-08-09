@@ -61,6 +61,7 @@ type DbProductRecord = {
 	variants: Array<{
 		id: string;
 		name: string;
+		color: string;
 		price: number;
 		width: string;
 		height: string;
@@ -75,6 +76,10 @@ type DbProductRecord = {
 		description: string;
 	}>;
 };
+
+export function variantLabel(name?: string | null, color?: string | null): string {
+	return [name?.trim(), color?.trim()].filter((part): part is string => Boolean(part)).join(" - ");
+}
 
 export function toStoreProduct(record: DbProductRecord): Product {
 	const category = record.category.name;
@@ -109,6 +114,7 @@ export function toStoreProduct(record: DbProductRecord): Product {
 		variants: record.variants.map((variant) => ({
 			id: variant.id,
 			name: variant.name,
+			color: variant.color,
 			price: variant.price,
 			width: variant.width,
 			height: variant.height,

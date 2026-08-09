@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { isOrderStatus } from "@/lib/order-status";
 import { buildPackagesFromLines, parseMeasurement, STORE_PICKUP_ID } from "@/lib/shipping-client";
 import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
+import { variantLabel } from "@/lib/product-transform";
 import { BUSINESS } from "../business-config";
 import { isCurrencyCode } from "../utils/currency";
 import type { Address, Customer, Discount, OrderDocumentData, OrderItem, Payment, PaymentStatus, ReturnInformation, ShippingInformation, Order as DocumentOrder, OrderStatus as DocumentOrderStatus, Tax } from "../types";
@@ -104,7 +105,7 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 		return {
 			sku: item.variant.sku,
 			productName: item.product.name,
-			variantName: item.variant.name,
+			variantName: variantLabel(item.variant.name, item.variant.color),
 			description: item.product.shortDescription,
 			quantity: item.quantity,
 			unitPrice: item.unitPrice,
@@ -165,7 +166,7 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 	// Built in the same order (order.items, then one entry per unit of quantity)
 	// as buildPackagesFromLines below, so packageContents[i] describes packages[i].
 	const packageContents = order.items.flatMap((item) => {
-		const label = [item.product.name, item.variant.name].filter(Boolean).join(" — ");
+		const label = [item.product.name, variantLabel(item.variant.name, item.variant.color)].filter(Boolean).join(" — ");
 		return Array<string>(Math.max(1, Math.round(item.quantity))).fill(label);
 	});
 	const packageInputs = isPickup ? [] : buildPackagesFromLines(order.items.map((item) => ({ weight: item.variant.weight, width: item.variant.width, height: item.variant.height, depth: item.variant.depth, quantity: item.quantity })));

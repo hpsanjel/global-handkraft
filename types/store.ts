@@ -1,6 +1,7 @@
 export type ProductVariant = {
 	id: string;
 	name: string;
+	color?: string;
 	price: number;
 	width: string;
 	height: string;

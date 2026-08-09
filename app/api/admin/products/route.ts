@@ -24,6 +24,7 @@ type ProductRequestPayload = {
 	variants: Array<{
 		id?: string;
 		name: string;
+		color?: string;
 		price: number;
 		width: string;
 		height: string;
@@ -119,6 +120,7 @@ async function syncVariants(tx: Prisma.TransactionClient, productId: string, pro
 	for (const [index, variant] of incomingVariants.entries()) {
 		const data = {
 			name: variant.name.trim(),
+			color: (variant.color ?? "").trim(),
 			price: Number(variant.price ?? 0),
 			width: variant.width ?? "",
 			height: variant.height ?? "",
@@ -246,6 +248,7 @@ export async function POST(request: Request) {
 				variants: {
 					create: body.variants.map((variant, index) => ({
 						name: variant.name.trim(),
+						color: (variant.color ?? "").trim(),
 						price: Number(variant.price ?? 0),
 						width: variant.width ?? "",
 						height: variant.height ?? "",
