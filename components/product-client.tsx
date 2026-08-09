@@ -285,7 +285,7 @@ export function ProductClient({ product }: { product: Product }) {
 
 	if (customInquiryEnabled) {
 		return (
-			<div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
+			<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
 				<div className="space-y-4">
 					<div className="aspect-[4/5] rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
 				</div>
@@ -368,16 +368,16 @@ export function ProductClient({ product }: { product: Product }) {
 	}
 
 	return (
-		<div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-			<div className="hidden lg:flex lg:gap-4">
-				<div className="flex flex-col gap-4">
+		<div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+			<div className="hidden lg:flex lg:min-w-0 lg:gap-4">
+				<div className="flex shrink-0 flex-col gap-4">
 					{product.gallery.map((image) => (
 						<button key={image} type="button" onClick={() => setSelectedGalleryImage(image)} className={`aspect-square w-20 shrink-0 rounded-[1.25rem] border bg-stone-100 bg-cover bg-center transition ${selectedGalleryImage === image ? "border-stone-900 ring-2 ring-stone-900" : "border-stone-200 hover:border-stone-400"}`} style={{ backgroundImage: `url('${image}')` }} aria-label="View image" />
 					))}
 				</div>
-				<div className="aspect-[4/5] flex-1 rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${selectedGalleryImage}')` }} />
+				<div className="aspect-[4/5] min-w-0 flex-1 rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${selectedGalleryImage}')` }} />
 			</div>
-			<div className="pb-24 lg:pb-0">
+			<div className="min-w-0 pb-24 lg:pb-0">
 				<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">{product.category}</p>
 				<h1 className="mt-3 text-2xl font-semibold text-stone-900 sm:text-4xl">{product.name}</h1>
 				<p className="mt-3 text-base leading-7 text-stone-600 sm:text-lg sm:leading-8">{product.shortDescription}</p>
