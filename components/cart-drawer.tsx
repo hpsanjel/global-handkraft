@@ -10,13 +10,15 @@ import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
 import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
 import type { CartItem } from "@/types/store";
 import { PriceEstimate } from "@/components/price-estimate";
+import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 
 type CartDrawerProps = {
 	isOpen: boolean;
 	onClose: () => void;
+	priceZones: PriceZoneWithCountries[];
 };
 
-export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	const products = useProductsCatalog();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -167,7 +169,19 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, [isOpen, onClose]);
 
-	const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
+	const subtotal = useMemo(() => {
+		return items.reduce((sum, item) => {
+			const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
+			const basePrice = variant?.price ?? item.price;
+			const addonSum = item.addonIds.reduce((addonSum, addonId) => {
+				const product = products.find((p) => p.id === item.productId);
+				const addon = product?.addons.find((a) => a.id === addonId);
+				return addonSum + (addon?.price ?? 0);
+			}, 0);
+			const markup = resolveZoneMarkup(priceZones, shippingCountry);
+			return sum + (basePrice + addonSum + markup) * item.quantity;
+		}, 0);
+	}, [items, products, shippingCountry, priceZones]);
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
 
 	const handleQuantityChange = (item: CartItem, delta: number) => {

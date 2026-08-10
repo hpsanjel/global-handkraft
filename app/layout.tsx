@@ -5,6 +5,7 @@ import { CookieNotice } from "@/components/cookie-notice";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { CurrencyInit } from "@/components/currency-init";
 import { CountryDetection } from "@/components/country-detection";
+import { getPriceZones } from "@/lib/price-zones";
 import { siteConfig } from "@/app/metadata";
 
 export const metadata: Metadata = {
@@ -73,16 +74,18 @@ export const viewport: Viewport = {
 	maximumScale: 5,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const priceZones = await getPriceZones();
+
 	return (
 		<html lang="en" className="h-full antialiased" suppressHydrationWarning>
 			<body className="min-h-full flex flex-col">
 				{children}
-				<CartDrawerProvider />
+				<CartDrawerProvider priceZones={priceZones} />
 				<CookieNotice />
 				<WhatsAppButton />
 				<CurrencyInit />

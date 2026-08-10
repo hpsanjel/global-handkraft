@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 
 const DETECTED_COUNTRY_COOKIE = "detected_country";
+const UNDETECTED_TIMEOUT_MS = 2000;
 
 function getCookieValue(name: string): string | null {
 	if (typeof document === "undefined") return null;
@@ -33,7 +34,12 @@ export function useDetectedCountry() {
 		};
 
 		window.addEventListener("country:detected", handleDetected as EventListener);
-		return () => window.removeEventListener("country:detected", handleDetected as EventListener);
+		const undetectedTimeout = window.setTimeout(() => setIsDetecting(false), UNDETECTED_TIMEOUT_MS);
+
+		return () => {
+			window.removeEventListener("country:detected", handleDetected as EventListener);
+			window.clearTimeout(undetectedTimeout);
+		};
 	}, []);
 
 	return { country, isDetecting };

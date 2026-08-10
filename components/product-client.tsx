@@ -135,6 +135,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 	}, [selectedAddons, selectedVariant]);
 
 	const totalPrice = useMemo(() => basePrice + zoneMarkup, [basePrice, zoneMarkup]);
+	const countryUndetected = !isDetectingCountry && !detectedCountry;
 
 	const toggleAddon = (addonId: string) => {
 		setSelectedAddonIds((current) => (current.includes(addonId) ? current.filter((id) => id !== addonId) : [...current, addonId]));
@@ -400,11 +401,9 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 					<div className="flex items-center justify-between gap-3">
 						<p className="text-sm font-medium text-stone-500">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
 						<div className="text-right">
-							<p className="text-3xl font-semibold text-stone-900">
-								NOK {totalPrice}
-								{zoneMarkup > 0 && !isDetectingCountry ? <span className="ml-2 text-xs font-normal text-stone-500"></span> : null}
-							</p>
+							<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
 							<PriceEstimate amountNok={totalPrice} className="text-sm text-stone-500" />
+							{countryUndetected ? <p className="mt-1 text-xs text-stone-400">Final price may include a regional adjustment, confirmed at checkout.</p> : null}
 						</div>
 					</div>
 					<div className="mt-6 space-y-4">
@@ -591,6 +590,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 						<p className="text-xs text-stone-500">Total</p>
 						<p className="text-lg font-semibold text-stone-900">NOK {totalPrice}</p>
 						<PriceEstimate amountNok={totalPrice} className="text-xs text-stone-500" />
+						{countryUndetected ? <p className="text-[11px] text-stone-400">Regional adjustment confirmed at checkout</p> : null}
 					</div>
 					<div className="flex flex-col items-end gap-2">
 						<Button className="rounded-full px-6 disabled:cursor-not-allowed disabled:opacity-50" onClick={handleAddToCart} disabled={!selectedVariant || isOutOfStock}>

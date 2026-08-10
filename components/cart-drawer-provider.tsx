@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { CartDrawer } from "@/components/cart-drawer";
+import type { PriceZoneWithCountries } from "@/lib/price-zones-shared";
 
-export function CartDrawerProvider() {
+export function CartDrawerProvider({ priceZones }: { priceZones: PriceZoneWithCountries[] }) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	useEffect(() => {
@@ -12,5 +13,5 @@ export function CartDrawerProvider() {
 		return () => window.removeEventListener("cart:drawer:open", handleOpen);
 	}, []);
 
-	return <CartDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />;
+	return <CartDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} priceZones={priceZones} />;
 }

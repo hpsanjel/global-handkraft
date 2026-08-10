@@ -168,10 +168,10 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 				return addonSum + (addon?.price ?? 0);
 			}, 0);
 			const itemBasePrice = basePrice + addonSum;
-			const markup = resolveZoneMarkup(priceZones, detectedCountry);
+			const markup = resolveZoneMarkup(priceZones, shippingCountry);
 			return sum + (itemBasePrice + markup) * item.quantity;
 		}, 0);
-	}, [items, products, detectedCountry, priceZones]);
+	}, [items, products, shippingCountry, priceZones]);
 
 	const handleFetchBringOptions = () => {
 		if (!shippingPostalCode.trim()) {
