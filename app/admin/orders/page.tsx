@@ -121,7 +121,10 @@ export default async function AdminOrdersPage() {
 										paymentStatus: inquiry.paymentStatus,
 										adminNote: inquiry.adminNote,
 										quotedPrice: inquiry.quotedPrice,
+										depositAmount: inquiry.depositAmount,
+										amountPaid: inquiry.amountPaid,
 										stripePaymentLink: inquiry.stripePaymentLink,
+										transactions: inquiry.transactions,
 									}}
 								/>
 

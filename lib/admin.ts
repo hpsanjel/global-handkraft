@@ -9,6 +9,15 @@ export interface AdminMandapInquiryMessage {
 	createdAt: string;
 }
 
+export interface AdminMandapInquiryTransaction {
+	id: string;
+	kind: string;
+	amount: number;
+	status: string;
+	createdAt: string;
+	paidAt: string | null;
+}
+
 export interface AdminMandapInquiry {
 	id: string;
 	productId: string;
@@ -28,12 +37,15 @@ export interface AdminMandapInquiry {
 	paymentStatus: string;
 	adminNote: string | null;
 	quotedPrice: number | null;
+	depositAmount: number | null;
+	amountPaid: number;
 	stripePaymentLink: string | null;
 	createdAt: string;
 	updatedAt: string;
 	paymentAcceptedAt: string | null;
 	paymentDeclinedAt: string | null;
 	messages: AdminMandapInquiryMessage[];
+	transactions: AdminMandapInquiryTransaction[];
 }
 
 export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry[]> {
@@ -44,6 +56,7 @@ export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry
 	const inquiries = await prisma.mandapInquiry.findMany({
 		include: {
 			messages: { orderBy: { createdAt: "asc" } },
+			transactions: { orderBy: { createdAt: "desc" } },
 		},
 		orderBy: { createdAt: "desc" },
 		take: limit,
@@ -58,6 +71,11 @@ export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry
 		messages: inquiry.messages.map((message) => ({
 			...message,
 			createdAt: message.createdAt.toISOString(),
+		})),
+		transactions: inquiry.transactions.map((transaction) => ({
+			...transaction,
+			createdAt: transaction.createdAt.toISOString(),
+			paidAt: transaction.paidAt?.toISOString() ?? null,
 		})),
 	}));
 }

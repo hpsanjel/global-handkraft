@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AccountPageHeader } from "@/components/account/account-page-header";
 import { MandapInquiryThread, type MandapInquiryThreadMessage } from "@/components/mandap-inquiry-thread";
+import { MandapInquiryTransactions, type MandapInquiryTransactionRow } from "@/components/mandap-inquiry-transactions";
 
 type AccountMandapInquiry = {
 	id: string;
@@ -20,45 +22,93 @@ type AccountMandapInquiry = {
 	paymentStatus: string;
 	adminNote: string | null;
 	quotedPrice: number | null;
+	depositAmount: number | null;
+	amountPaid: number;
 	stripePaymentLink: string | null;
 	createdAt: string;
 	messages: MandapInquiryThreadMessage[];
+	transactions: MandapInquiryTransactionRow[];
 };
 
-export default function AccountCustomRequestsPage() {
+async function fetchInquiries(): Promise<AccountMandapInquiry[]> {
+	const response = await fetch("/api/account/mandap-inquiries", { cache: "no-store" });
+	const payload = (await response.json()) as AccountMandapInquiry[] | { error?: string };
+
+	if (!response.ok || !Array.isArray(payload)) {
+		throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Unable to load custom requests.");
+	}
+
+	return payload;
+}
+
+function payLabel(inquiry: AccountMandapInquiry) {
+	const remaining = (inquiry.quotedPrice ?? 0) - inquiry.amountPaid;
+	const depositOutstanding = inquiry.depositAmount != null && inquiry.amountPaid < inquiry.depositAmount;
+	const due = depositOutstanding ? inquiry.depositAmount! - inquiry.amountPaid : remaining;
+	return depositOutstanding ? `Pay deposit (NOK ${due.toFixed(2)})` : `Pay remaining balance (NOK ${due.toFixed(2)})`;
+}
+
+function AccountCustomRequestsPageContent() {
 	const [inquiries, setInquiries] = useState<AccountMandapInquiry[] | null>(null);
 	const [error, setError] = useState("");
+	const [payingId, setPayingId] = useState<string | null>(null);
+	const searchParams = useSearchParams();
+	const paymentReturn = searchParams.get("payment");
 
 	useEffect(() => {
 		let active = true;
 
-		const loadInquiries = async () => {
-			try {
-				const response = await fetch("/api/account/mandap-inquiries", { cache: "no-store" });
-				const payload = (await response.json()) as AccountMandapInquiry[] | { error?: string };
-
-				if (!active) {
-					return;
-				}
-
-				if (!response.ok || !Array.isArray(payload)) {
-					throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Unable to load custom requests.");
-				}
-
-				setInquiries(payload);
-			} catch (err) {
-				if (active) {
-					setError(err instanceof Error ? err.message : "Unable to load custom requests.");
-				}
-			}
-		};
-
-		void loadInquiries();
+		fetchInquiries().then(
+			(data) => {
+				if (active) setInquiries(data);
+			},
+			(err) => {
+				if (active) setError(err instanceof Error ? err.message : "Unable to load custom requests.");
+			},
+		);
 
 		return () => {
 			active = false;
 		};
 	}, []);
+
+	useEffect(() => {
+		if (paymentReturn !== "success") {
+			return;
+		}
+		let active = true;
+		// The Stripe webhook usually lands well under a second after redirect —
+		// a single delayed refetch is enough, no polling loop needed.
+		const timer = setTimeout(() => {
+			fetchInquiries().then(
+				(data) => {
+					if (active) setInquiries(data);
+				},
+				() => {},
+			);
+		}, 2000);
+
+		return () => {
+			active = false;
+			clearTimeout(timer);
+		};
+	}, [paymentReturn]);
+
+	const handlePayNow = async (inquiryId: string) => {
+		setPayingId(inquiryId);
+		setError("");
+		try {
+			const response = await fetch(`/api/account/mandap-inquiries/${inquiryId}/checkout`, { method: "POST" });
+			const payload = await response.json();
+			if (!response.ok) {
+				throw new Error(payload.error ?? "Unable to start payment.");
+			}
+			window.location.assign(payload.url);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Unable to start payment.");
+			setPayingId(null);
+		}
+	};
 
 	const getPaymentStatusBadge = (paymentStatus: string) => {
 		switch (paymentStatus) {
@@ -68,6 +118,8 @@ export default function AccountCustomRequestsPage() {
 				return <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-green-700">Payment Accepted</span>;
 			case "DECLINED":
 				return <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-red-700">Payment Declined</span>;
+			case "DEPOSIT_PAID":
+				return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-amber-700">Deposit Paid — Balance Due</span>;
 			case "PAID":
 				return <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-blue-700">Paid</span>;
 			default:
@@ -158,7 +210,7 @@ export default function AccountCustomRequestsPage() {
 
 							<p className="mt-3 text-sm leading-6 text-slate-600">{inquiry.description}</p>
 
-							{inquiry.quotedPrice && <p className="mt-2 text-sm font-medium text-slate-700">Quoted Price: NOK {inquiry.quotedPrice.toFixed(2)}</p>}
+							{inquiry.quotedPrice && <p className="mt-2 text-sm font-medium text-slate-700">Total Agreed Price: NOK {inquiry.quotedPrice.toFixed(2)}</p>}
 
 							{inquiry.adminNote && (
 								<div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
@@ -167,13 +219,21 @@ export default function AccountCustomRequestsPage() {
 								</div>
 							)}
 
-							{inquiry.paymentStatus === "ACCEPTED" && inquiry.stripePaymentLink && (
+							{["ACCEPTED", "DEPOSIT_PAID"].includes(inquiry.paymentStatus) && inquiry.quotedPrice && inquiry.amountPaid < inquiry.quotedPrice && (
 								<div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
-									<p className="text-sm font-medium text-green-800">Your custom design request has been accepted!</p>
-									<p className="mt-1 text-sm text-green-700">Please complete the payment to confirm your order.</p>
-									<a href={inquiry.stripePaymentLink} target="_blank" rel="noreferrer" className="mt-3 inline-block rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white hover:bg-green-700">
-										Pay Now
-									</a>
+									<p className="text-sm font-medium text-green-800">{inquiry.paymentStatus === "DEPOSIT_PAID" ? "Deposit received — balance due to complete your order." : "Your custom design request has been accepted!"}</p>
+									<p className="mt-1 text-sm text-green-700">
+										Total agreed: NOK {inquiry.quotedPrice.toFixed(2)} · Paid so far: NOK {inquiry.amountPaid.toFixed(2)}
+									</p>
+									<button type="button" onClick={() => handlePayNow(inquiry.id)} disabled={payingId === inquiry.id} className="mt-3 rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:opacity-50">
+										{payingId === inquiry.id ? "Redirecting…" : payLabel(inquiry)}
+									</button>
+								</div>
+							)}
+
+							{inquiry.quotedPrice && inquiry.amountPaid >= inquiry.quotedPrice && (
+								<div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+									<p className="text-sm font-medium text-blue-800">Fully paid — thank you!</p>
 								</div>
 							)}
 
@@ -184,11 +244,21 @@ export default function AccountCustomRequestsPage() {
 								</div>
 							)}
 
+							<MandapInquiryTransactions transactions={inquiry.transactions} />
+
 							<MandapInquiryThread messages={inquiry.messages} postUrl={`/api/account/mandap-inquiries/${inquiry.id}/messages`} viewerRole="CUSTOMER" />
 						</div>
 					))}
 				</div>
 			) : null}
 		</div>
+	);
+}
+
+export default function AccountCustomRequestsPage() {
+	return (
+		<Suspense fallback={null}>
+			<AccountCustomRequestsPageContent />
+		</Suspense>
 	);
 }

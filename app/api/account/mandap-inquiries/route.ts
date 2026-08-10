@@ -26,11 +26,29 @@ export async function GET() {
 			},
 			include: {
 				messages: { orderBy: { createdAt: "asc" } },
+				transactions: { orderBy: { createdAt: "desc" } },
 			},
 			orderBy: { createdAt: "desc" },
 		});
 
-		return NextResponse.json(inquiries);
+		return NextResponse.json(
+			inquiries.map((inquiry) => ({
+				...inquiry,
+				createdAt: inquiry.createdAt.toISOString(),
+				updatedAt: inquiry.updatedAt.toISOString(),
+				paymentAcceptedAt: inquiry.paymentAcceptedAt?.toISOString() ?? null,
+				paymentDeclinedAt: inquiry.paymentDeclinedAt?.toISOString() ?? null,
+				messages: inquiry.messages.map((message) => ({
+					...message,
+					createdAt: message.createdAt.toISOString(),
+				})),
+				transactions: inquiry.transactions.map((transaction) => ({
+					...transaction,
+					createdAt: transaction.createdAt.toISOString(),
+					paidAt: transaction.paidAt?.toISOString() ?? null,
+				})),
+			})),
+		);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to load custom requests.";
 		return NextResponse.json({ error: message }, { status: 500 });

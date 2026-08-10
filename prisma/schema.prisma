@@ -276,6 +276,8 @@ model MandapInquiry {
   paymentStatus         String   @default("PENDING")
   adminNote             String?
   quotedPrice           Float?
+  depositAmount         Float?
+  amountPaid            Float    @default(0)
   stripePaymentLink     String?
   paymentAcceptedAt     DateTime?
   paymentDeclinedAt     DateTime?
@@ -283,6 +285,7 @@ model MandapInquiry {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   messages              MandapInquiryMessage[]
+  transactions          MandapInquiryTransaction[]
 }
 
 model MandapInquiryMessage {
@@ -293,6 +296,22 @@ model MandapInquiryMessage {
   message     String
   attachments String[]      @default([])
   createdAt   DateTime      @default(now())
+
+  @@index([inquiryId])
+}
+
+model MandapInquiryTransaction {
+  id                    String        @id @default(cuid())
+  inquiryId             String
+  inquiry               MandapInquiry @relation(fields: [inquiryId], references: [id])
+  kind                  String
+  amount                Float
+  status                String        @default("PENDING")
+  stripeSessionId       String        @unique
+  stripePaymentIntentId String?
+  paidAt                DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   @@index([inquiryId])
 }

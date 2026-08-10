@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MandapInquiryTransactions, type MandapInquiryTransactionRow } from "@/components/mandap-inquiry-transactions";
 
 type Inquiry = {
 	id: string;
@@ -8,7 +9,10 @@ type Inquiry = {
 	paymentStatus: string;
 	adminNote: string | null;
 	quotedPrice: number | null;
+	depositAmount: number | null;
+	amountPaid: number;
 	stripePaymentLink: string | null;
+	transactions: MandapInquiryTransactionRow[];
 };
 
 type Props = {
@@ -20,7 +24,7 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 	const [paymentStatus, setPaymentStatus] = useState(inquiry.paymentStatus);
 	const [adminNote, setAdminNote] = useState(inquiry.adminNote || "");
 	const [quotedPrice, setQuotedPrice] = useState(inquiry.quotedPrice?.toString() || "");
-	const [stripePaymentLink, setStripePaymentLink] = useState(inquiry.stripePaymentLink || "");
+	const [depositAmount, setDepositAmount] = useState(inquiry.depositAmount?.toString() || "");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
 
@@ -36,7 +40,7 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 					paymentStatus,
 					adminNote: adminNote || undefined,
 					quotedPrice: quotedPrice ? parseFloat(quotedPrice) : undefined,
-					stripePaymentLink: stripePaymentLink || undefined,
+					depositAmount: depositAmount ? parseFloat(depositAmount) : 0,
 				}),
 			});
 
@@ -61,6 +65,8 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 				return <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-green-700">Request Accepted</span>;
 			case "DECLINED":
 				return <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-red-700">Request Declined</span>;
+			case "DEPOSIT_PAID":
+				return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-amber-700">Deposit Paid — Balance Due</span>;
 			case "PAID":
 				return <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-blue-700">Paid</span>;
 			default:
@@ -95,18 +101,36 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 					<textarea value={adminNote} onChange={(e) => setAdminNote(e.target.value)} rows={3} placeholder="Add a note for the customer..." className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
 				</div>
 
-				{paymentStatus === "ACCEPTED" && (
-					<div>
-						<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Stripe Payment Link</label>
-						<input type="url" value={stripePaymentLink} onChange={(e) => setStripePaymentLink(e.target.value)} placeholder="https://checkout.stripe.com/..." className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+				<div>
+					<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Deposit Required (NOK)</label>
+					<div className="mt-1 flex gap-2">
+						<input type="number" step="0.01" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="Leave blank to require full payment" className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+						<button
+							type="button"
+							disabled={!quotedPrice}
+							onClick={() => setDepositAmount((parseFloat(quotedPrice) * 0.6).toFixed(2))}
+							className="whitespace-nowrap rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							Quick-fill 60%
+						</button>
 					</div>
-				)}
+				</div>
+
+				{(inquiry.amountPaid > 0 || inquiry.paymentStatus === "DEPOSIT_PAID") && inquiry.quotedPrice ? (
+					<p className="text-sm font-medium text-slate-700">
+						Paid: NOK {inquiry.amountPaid.toFixed(2)} of NOK {inquiry.quotedPrice.toFixed(2)} ({Math.round((inquiry.amountPaid / inquiry.quotedPrice) * 100)}%)
+					</p>
+				) : null}
 
 				{error && <p className="text-sm text-red-600">{error}</p>}
 
 				<button type="button" onClick={handleSubmit} disabled={isSubmitting} className="rounded-lg bg-[#1B365D] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#152a4a] disabled:opacity-50">
 					{isSubmitting ? "Saving..." : "Save Changes"}
 				</button>
+
+				{inquiry.stripePaymentLink ? <p className="text-xs text-slate-400">Legacy payment link (unused by the new checkout flow): {inquiry.stripePaymentLink}</p> : null}
+
+				<MandapInquiryTransactions transactions={inquiry.transactions} />
 			</div>
 		</div>
 	);
