@@ -29,7 +29,7 @@ export function OrderSummaryTemplate({ data }: OrderSummaryTemplateProps) {
 
 				<PriceSummary currency={order.currency} subtotal={order.subtotal} shippingCost={order.shippingCost} discountTotal={order.discountTotal} vatTotal={order.vatTotal} grandTotal={order.grandTotal} />
 
-				<PaymentInfo payment={payment} />
+				<PaymentInfo payment={payment} currency={order.currency} />
 
 				<View style={sharedStyles.sectionSpacing}>
 					<AddressBlock title="Delivery address" name={shipping.address.fullName} address={shipping.address} phone={shipping.address.phone} />

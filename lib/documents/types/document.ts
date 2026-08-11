@@ -6,9 +6,9 @@ import type { Payment, Tax, Discount } from "./payment";
 import type { ShippingInformation } from "./shipment";
 import type { DocumentMetadata, ReturnInformation } from "./invoice";
 
-export type DocumentType = "COMMERCIAL_INVOICE" | "PACKING_LIST" | "RECEIPT" | "CUSTOMS_INVOICE" | "RETURN_CARD" | "SHIPPING_SUMMARY" | "ORDER_SUMMARY" | "GIFT_RECEIPT";
+export type DocumentType = "COMMERCIAL_INVOICE" | "PACKING_LIST" | "RECEIPT" | "CUSTOMS_INVOICE" | "RETURN_CARD" | "SHIPPING_SUMMARY" | "ORDER_SUMMARY" | "GIFT_RECEIPT" | "PRO_FORMA_INVOICE" | "DEPOSIT_RECEIPT";
 
-export const DOCUMENT_TYPES: readonly DocumentType[] = ["COMMERCIAL_INVOICE", "PACKING_LIST", "RECEIPT", "CUSTOMS_INVOICE", "RETURN_CARD", "SHIPPING_SUMMARY", "ORDER_SUMMARY", "GIFT_RECEIPT"];
+export const DOCUMENT_TYPES: readonly DocumentType[] = ["COMMERCIAL_INVOICE", "PACKING_LIST", "RECEIPT", "CUSTOMS_INVOICE", "RETURN_CARD", "SHIPPING_SUMMARY", "ORDER_SUMMARY", "GIFT_RECEIPT", "PRO_FORMA_INVOICE", "DEPOSIT_RECEIPT"];
 
 /** Single source of truth for validating a DocumentType coming from an untrusted source (e.g. a route param). */
 export function isDocumentType(value: string): value is DocumentType {
@@ -20,6 +20,17 @@ export const SHIPPING_ONLY_DOCUMENT_TYPES: readonly DocumentType[] = ["PACKING_L
 
 export function isShippingOnlyDocumentType(type: DocumentType): boolean {
 	return (SHIPPING_ONLY_DOCUMENT_TYPES as DocumentType[]).includes(type);
+}
+
+/** Document types applicable to a regular, paid-in-full-at-checkout Order — excludes the staged-payment types that only make sense for a MandapInquiry's quote → deposit → balance lifecycle. */
+export const ORDER_DOCUMENT_TYPES: readonly DocumentType[] = DOCUMENT_TYPES.filter((type) => type !== "PRO_FORMA_INVOICE" && type !== "DEPOSIT_RECEIPT");
+
+/** Document types applicable to a custom MandapInquiry — excludes RETURN_CARD/GIFT_RECEIPT, which don't fit a no-returns bespoke commission. */
+export const MANDAP_DOCUMENT_TYPES: readonly DocumentType[] = DOCUMENT_TYPES.filter((type) => type !== "RETURN_CARD" && type !== "GIFT_RECEIPT");
+
+/** Mandap document types that require a shipping address to be on file before they can be generated — every type except the pre-sale Pro Forma. */
+export function mandapDocumentRequiresAddress(type: DocumentType): boolean {
+	return type !== "PRO_FORMA_INVOICE";
 }
 
 /**

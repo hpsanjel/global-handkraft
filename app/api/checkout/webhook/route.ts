@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
-import { generateDocument } from "@/lib/documents";
+import { generateDocument, generateMandapInquiryDocument } from "@/lib/documents";
 import { BUSINESS } from "@/lib/documents/business-config";
 import { variantLabel } from "@/lib/product-transform";
 
@@ -77,6 +77,21 @@ export async function POST(request: Request) {
 					}),
 				]);
 
+				// Generate the payment-stage document (deposit receipt vs. final commercial
+				// invoice) and attach it to the status email — mirrors how the regular
+				// order webhook below attaches a RECEIPT to the confirmation email. A
+				// failed PDF should never block the status update or its email.
+				let mandapAttachment: { filename: string; content: Buffer } | undefined;
+				try {
+					const docType = newPaymentStatus === "PAID" ? "COMMERCIAL_INVOICE" : mandapTransaction.kind === "DEPOSIT" ? "DEPOSIT_RECEIPT" : undefined;
+					if (docType) {
+						const output = await generateMandapInquiryDocument({ inquiryId: inquiry.id, type: docType, format: "buffer" });
+						mandapAttachment = { filename: output.fileName, content: output.data };
+					}
+				} catch (documentError) {
+					console.error("Failed to generate mandap inquiry payment document:", documentError);
+				}
+
 				// Send confirmation email to customer
 				try {
 					const { sendMandapInquiryStatusUpdateEmail } = await import("@/lib/email");
@@ -88,6 +103,7 @@ export async function POST(request: Request) {
 						quotedPrice: inquiry.quotedPrice ?? undefined,
 						amountPaid: newAmountPaid,
 						remainingBalance: newPaymentStatus === "DEPOSIT_PAID" ? (inquiry.quotedPrice ?? 0) - newAmountPaid : undefined,
+						attachment: mandapAttachment,
 					});
 				} catch (emailError) {
 					console.error("Failed to send mandap payment confirmation email:", emailError);

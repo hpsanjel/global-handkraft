@@ -11,7 +11,8 @@ interface CommercialInvoiceTemplateProps {
 }
 
 export function CommercialInvoiceTemplate({ data }: CommercialInvoiceTemplateProps) {
-	const { business, customer, order, taxes } = data;
+	const { business, customer, order, taxes, shipping } = data;
+	const incoterm = shipping.incoterm ?? business.defaultIncoterm;
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Commercial Invoice`} author={business.seller.legalName}>
@@ -22,7 +23,7 @@ export function CommercialInvoiceTemplate({ data }: CommercialInvoiceTemplatePro
 					order={order}
 					extraFields={[
 						{ label: "Country of origin", value: business.defaultCountryOfOrigin },
-						...(business.defaultIncoterm ? [{ label: "Incoterm", value: business.defaultIncoterm }] : []),
+						...(incoterm ? [{ label: "Incoterm", value: incoterm }] : []),
 					]}
 				/>
 

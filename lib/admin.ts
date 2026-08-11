@@ -18,6 +18,19 @@ export interface AdminMandapInquiryTransaction {
 	paidAt: string | null;
 }
 
+export interface AdminMandapInquiryAddress {
+	id: string;
+	fullName: string;
+	phone: string;
+	email: string;
+	country: string;
+	address: string;
+	postalCode: string;
+	city: string;
+	companyName: string | null;
+	vatNumber: string | null;
+}
+
 export interface AdminMandapInquiry {
 	id: string;
 	productId: string;
@@ -44,6 +57,15 @@ export interface AdminMandapInquiry {
 	updatedAt: string;
 	paymentAcceptedAt: string | null;
 	paymentDeclinedAt: string | null;
+	// Export/shipping paperwork fields — see prisma/migrations/20260811020000_add_mandap_document_fields.
+	addressId: string | null;
+	address: AdminMandapInquiryAddress | null;
+	weightKg: number | null;
+	hsCode: string | null;
+	incoterm: string | null;
+	fulfillmentStatus: string;
+	referenceNumber: string | null;
+	invoiceNumber: string | null;
 	messages: AdminMandapInquiryMessage[];
 	transactions: AdminMandapInquiryTransaction[];
 }
@@ -55,6 +77,7 @@ export async function getMandapInquiries(limit = 20): Promise<AdminMandapInquiry
 
 	const inquiries = await prisma.mandapInquiry.findMany({
 		include: {
+			address: true,
 			messages: { orderBy: { createdAt: "asc" } },
 			transactions: { orderBy: { createdAt: "desc" } },
 		},

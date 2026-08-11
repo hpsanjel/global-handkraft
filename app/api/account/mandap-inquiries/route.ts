@@ -25,6 +25,7 @@ export async function GET() {
 				},
 			},
 			include: {
+				address: true,
 				messages: { orderBy: { createdAt: "asc" } },
 				transactions: { orderBy: { createdAt: "desc" } },
 			},

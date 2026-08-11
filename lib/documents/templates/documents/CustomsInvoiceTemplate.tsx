@@ -13,6 +13,7 @@ interface CustomsInvoiceTemplateProps {
 export function CustomsInvoiceTemplate({ data }: CustomsInvoiceTemplateProps) {
 	const { business, customer, order, shipping } = data;
 	const totalWeightKg = shipping.shipment ? (shipping.shipment.totalWeightInGrams / 1000).toFixed(2) : order.items.reduce((sum, item) => sum + (item.weightInGrams ?? 0) * item.quantity, 0) / 1000;
+	const incoterm = shipping.incoterm ?? business.defaultIncoterm;
 
 	return (
 		<Document title={`${data.metadata.documentNumber} — Customs Invoice`} author={business.seller.legalName}>
@@ -25,6 +26,7 @@ export function CustomsInvoiceTemplate({ data }: CustomsInvoiceTemplateProps) {
 						{ label: "Country of origin", value: business.defaultCountryOfOrigin },
 						{ label: "Package weight", value: `${totalWeightKg} kg` },
 						{ label: "Declared value", value: order.currency },
+						...(incoterm ? [{ label: "Incoterm", value: incoterm }] : []),
 					]}
 				/>
 

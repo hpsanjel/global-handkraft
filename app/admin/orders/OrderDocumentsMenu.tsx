@@ -15,6 +15,10 @@ const DOCUMENT_LABELS: Record<DocumentType, string> = {
 	SHIPPING_SUMMARY: "Shipping Summary",
 	ORDER_SUMMARY: "Order Summary",
 	GIFT_RECEIPT: "Gift Receipt",
+	// Not applicable to a regular, paid-in-full Order — never listed in DOCUMENT_ORDER below,
+	// but still required here since DOCUMENT_LABELS is exhaustive over DocumentType.
+	PRO_FORMA_INVOICE: "Pro Forma Invoice",
+	DEPOSIT_RECEIPT: "Deposit Receipt",
 };
 
 const DOCUMENT_ORDER: DocumentType[] = ["COMMERCIAL_INVOICE", "PACKING_LIST", "RECEIPT", "CUSTOMS_INVOICE", "SHIPPING_SUMMARY", "ORDER_SUMMARY", "RETURN_CARD", "GIFT_RECEIPT"];

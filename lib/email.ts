@@ -335,6 +335,8 @@ type MandapInquiryStatusUpdateParams = {
 	depositAmount?: number;
 	amountPaid?: number;
 	remainingBalance?: number;
+	/** Optional deposit-receipt or commercial-invoice PDF (from the document generation module) attached to the status update. */
+	attachment?: OrderConfirmationAttachment;
 };
 
 const MANDAP_STATUS_LABELS: Record<string, string> = {
@@ -398,6 +400,7 @@ export async function sendMandapInquiryStatusUpdateEmail(params: MandapInquirySt
 		to: params.to,
 		subject: `Custom ${params.category.toLowerCase()} request ${statusLabel} — ${params.productName}`,
 		html,
+		attachments: params.attachment ? [{ filename: params.attachment.filename, content: params.attachment.content }] : undefined,
 	});
 }
 

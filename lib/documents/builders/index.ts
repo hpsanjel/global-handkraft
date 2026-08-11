@@ -6,3 +6,5 @@ export * from "./return-card.builder";
 export * from "./shipping-summary.builder";
 export * from "./order-summary.builder";
 export * from "./gift-receipt.builder";
+export * from "./pro-forma-invoice.builder";
+export * from "./deposit-receipt.builder";

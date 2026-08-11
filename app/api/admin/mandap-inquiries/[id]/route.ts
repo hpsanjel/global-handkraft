@@ -3,6 +3,19 @@ import { hasAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { sendMandapInquiryStatusUpdateEmail } from "@/lib/email";
+import { isMandapFulfillmentStatus } from "@/lib/mandap-fulfillment-status";
+
+type AddressInput = {
+	fullName: string;
+	phone: string;
+	email: string;
+	country: string;
+	address: string;
+	postalCode: string;
+	city: string;
+	companyName?: string;
+	vatNumber?: string;
+};
 
 async function requireAdmin() {
 	const supabase = await createClient();
@@ -39,11 +52,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			quotedPrice?: number;
 			depositAmount?: number;
 			stripePaymentLink?: string;
+			weightKg?: number | null;
+			hsCode?: string | null;
+			incoterm?: string | null;
+			fulfillmentStatus?: string;
+			address?: AddressInput;
 		};
 
 		const inquiry = await prisma.mandapInquiry.findUnique({ where: { id } });
 		if (!inquiry) {
 			return NextResponse.json({ error: "Request not found." }, { status: 404 });
+		}
+
+		if (body.fulfillmentStatus && !isMandapFulfillmentStatus(body.fulfillmentStatus)) {
+			return NextResponse.json({ error: "Invalid fulfilment status." }, { status: 400 });
 		}
 
 		// DEPOSIT_PAID and PAID are derived exclusively from paid transactions in
@@ -77,9 +99,52 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			updatedAt?: Date;
 			paymentAcceptedAt?: Date;
 			paymentDeclinedAt?: Date;
+			weightKg?: number | null;
+			hsCode?: string | null;
+			incoterm?: string | null;
+			fulfillmentStatus?: string;
+			addressId?: string;
 		} = {
 			updatedAt: new Date(),
 		};
+
+		if (body.weightKg !== undefined) {
+			updateData.weightKg = body.weightKg;
+		}
+
+		if (body.hsCode !== undefined) {
+			updateData.hsCode = body.hsCode;
+		}
+
+		if (body.incoterm !== undefined) {
+			updateData.incoterm = body.incoterm;
+		}
+
+		if (body.fulfillmentStatus) {
+			updateData.fulfillmentStatus = body.fulfillmentStatus;
+		}
+
+		if (body.address) {
+			const addressData = {
+				fullName: body.address.fullName,
+				phone: body.address.phone,
+				email: body.address.email,
+				country: body.address.country,
+				address: body.address.address,
+				postalCode: body.address.postalCode,
+				city: body.address.city,
+				companyName: body.address.companyName || null,
+				vatNumber: body.address.vatNumber || null,
+			};
+
+			const existingAddressId = inquiry.addressId;
+			if (existingAddressId) {
+				await prisma.address.update({ where: { id: existingAddressId }, data: addressData });
+			} else {
+				const createdAddress = await prisma.address.create({ data: addressData });
+				updateData.addressId = createdAddress.id;
+			}
+		}
 
 		if (body.paymentStatus) {
 			updateData.paymentStatus = body.paymentStatus;
