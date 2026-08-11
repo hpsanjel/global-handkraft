@@ -30,10 +30,9 @@ This section reflects what is actually built in the codebase today, as opposed t
 
 **Custom orders (Mandap/Temple builds)**
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
-- Threaded messaging between customer and admin with unread indicators
-- Admin quoting workflow with Stripe payment links and accept/decline responses
-- Advance (deposit) payments via Stripe, with per-inquiry deposit/balance payment tracking
-- Pro forma invoice (cost estimate) and advance payment receipt PDF documents, plus an address-collection step for these orders
+- Dedicated admin Custom Orders dashboard (`/admin/custom-requests`), segregated from the regular Orders view
+- Threaded messaging between customer and admin with unread indicators and rich-text formatting
+- Admin quoting workflow: request status (Pending/Accepted/Declined/Paid), quoted price, and a manually-entered Stripe payment link — no in-app deposit/balance split or pro forma invoicing at this time
 
 **Accounts**
 - Supabase email/password authentication; admin role via email allow-list (`ADMIN_EMAILS`) or user metadata
@@ -42,12 +41,12 @@ This section reflects what is actually built in the codebase today, as opposed t
 
 **Admin dashboard**
 - Live overview stats
-- Sales reporting dashboard (`/admin/reports`): date-range trend chart, revenue/refunds/deposit summary, country breakdown, CSV export
+- Sales reporting dashboard (`/admin/reports`): date-range trend chart, revenue/refunds summary, country breakdown, CSV export
 - Products CRUD with variant/add-on management, automatic slug generation, and image upload to Supabase Storage
 - Categories CRUD
 - Orders management, status control, and document generation
 - Coupons CRUD
-- Custom/mandap inquiry management with messaging and payment status control
+- Custom Orders section (`/admin/custom-requests`), segregated from the Orders dashboard: mandap/temple inquiry management with threaded messaging and payment status control
 - Shipping zone and rate configuration
 - Pricing zone configuration for international markup
 

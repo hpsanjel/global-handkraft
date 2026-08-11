@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { useProductsCatalog } from "@/lib/products-catalog";
-import Image from "next/image";
 import { HomeCategoryProductsSection } from "@/components/home-category-products-section";
 import { CouponPopup } from "@/components/coupon-popup";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useTestimonialsCatalog, type PublicTestimonial } from "@/lib/testimonials-catalog";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { HeroSection } from "@/components/hero-section";
 
 function TestimonialCard({ item }: { item: PublicTestimonial }) {
 	return (
@@ -32,11 +32,7 @@ function TestimonialCard({ item }: { item: PublicTestimonial }) {
 			</div>
 			<p className="mt-4 flex-1 text-sm leading-7 text-stone-700">“{item.quote}”</p>
 			<div className="mt-5 flex items-center gap-3 border-t border-stone-200 pt-4">
-				{item.image ? (
-					<img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" />
-				) : (
-					<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-500 ring-2 ring-stone-100">{item.name.charAt(0).toUpperCase()}</div>
-				)}
+				{item.image ? <img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" /> : <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-500 ring-2 ring-stone-100">{item.name.charAt(0).toUpperCase()}</div>}
 				<div className="flex-1 min-w-0">
 					<p className="font-semibold text-stone-900 text-sm">{item.name}</p>
 					<p className="text-xs text-stone-500 flex items-center gap-1">
@@ -59,13 +55,21 @@ export default function HomePage() {
 	const categoriesWithProducts = categories.filter((category) => category.productCount > 0);
 	const featuredProducts = (products.filter((product) => product.featured).length > 0 ? products.filter((product) => product.featured) : products).slice(0, 4);
 	const highlightedCategories = categoriesWithProducts;
-	const dynamicCategorySections = highlightedCategories.map((category) => {
-		return {
-			title: category.name,
-			href: `/shop?category=${encodeURIComponent(category.slug)}`,
-			products: products.filter((product) => product.categorySlug === category.slug).slice(0, 4),
-		};
-	});
+	const templeCategory = categories.find((category) => /temple/i.test(category.name) || /temple/i.test(category.slug));
+	const secondaryCtaHref = templeCategory ? `/shop?category=${encodeURIComponent(templeCategory.slug)}` : "/shop";
+	const secondaryCtaLabel = templeCategory ? "Explore Temples" : "Explore Collections";
+	const mandapCategory = categories.find((category) => /mandap/i.test(category.name) || /mandap/i.test(category.slug));
+	const mandapProducts = mandapCategory ? products.filter((product) => product.categorySlug === mandapCategory.slug) : [];
+	const mandapCtaHref = mandapProducts[0] ? `/product/${mandapProducts[0].slug}` : "/contact";
+	const dynamicCategorySections = highlightedCategories
+		.filter((category) => category.slug !== mandapCategory?.slug)
+		.map((category) => {
+			return {
+				title: category.name,
+				href: `/shop?category=${encodeURIComponent(category.slug)}`,
+				products: products.filter((product) => product.categorySlug === category.slug).slice(0, 4),
+			};
+		});
 	const categoryHighlights = categoriesWithProducts.map((category) => {
 		const matchedProducts = products.filter((product) => product.categorySlug === category.slug);
 		return {
@@ -75,7 +79,6 @@ export default function HomePage() {
 			previewImage: category.imageUrl ?? matchedProducts[0]?.image ?? "/images/temple-1.webp",
 		};
 	});
-	const trustHighlights = ["Verified craftsmanship", "Secure checkout", "Responsive support"];
 	const reviewFacts = [
 		{ label: "Avg. satisfaction", value: "4.9/5" },
 		{ label: "Repeat customers", value: "95%" },
@@ -124,28 +127,7 @@ export default function HomePage() {
 			<CouponPopup />
 			<SiteHeader />
 			<main className="flex-1">
-				<section className="hidden sm:block sm:relative overflow-hidden">
-					<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#4CAF5020_0%,transparent_42%),radial-gradient(circle_at_top_right,#F7931E2E_0%,transparent_44%),linear-gradient(180deg,#fff8eb_0%,transparent_100%)]" />
-					<div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
-						<div className="max-w-2xl">
-							<p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-[#1B365D]">Global Handcrafts AS</p>
-							<h1 className="text-4xl font-semibold leading-tight text-stone-900 sm:text-5xl">Authentic Handcrafted Treasures Delivered Across Europe</h1>
-							<p className="mt-6 text-lg leading-8 text-stone-600">Premium handcrafted temples, pooja items, traditional clothing, and cultural products sourced directly from skilled artisans across Nepal and South Asia.</p>
-							<div className="mt-8 flex flex-wrap gap-4">
-								<Button asChild className="bg-[#1B365D] text-white hover:bg-[#152d4c]">
-									<Link href="/shop">Explore Products</Link>
-								</Button>
-							</div>
-							<div className="mt-10 flex flex-wrap gap-6 text-sm text-stone-700">
-								<span>• Authentic Craftsmanship</span>
-								<span>• Ethical Sourcing</span>
-								<span>• Secure Payments</span>
-								<span>• Europe-Wide Shipping</span>
-							</div>
-						</div>
-						<Image src="/images/temple-main.webp" alt="Handcrafted Temple" width={600} height={400} className="mt-4 rounded-[1.25rem] shadow-md w-full h-[400px]" />
-					</div>
-				</section>
+				<HeroSection secondaryCtaHref={secondaryCtaHref} secondaryCtaLabel={secondaryCtaLabel} rating={4.9} />
 
 				{highlightedCategories.length > 0 ? (
 					<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
@@ -154,18 +136,69 @@ export default function HomePage() {
 								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Featured Categories</p>
 								<h2 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Collections curated for culture, prayer, and gifting</h2>
 							</div>
+							<Link href="/shop" className="hidden sm:block text-sm font-semibold text-[#1B365D] hover:text-[#152d4c]">
+								View all
+							</Link>
 						</div>
-						<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+
+						{/* Mobile / tablet: horizontal snap-scroll row */}
+						<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] lg:hidden [&::-webkit-scrollbar]:hidden">
 							{categoryHighlights.map((category) => (
 								<Link key={category.slug} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="group flex w-40 shrink-0 snap-start flex-col overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-sm transition sm:w-48 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
-									<div className="aspect-square w-full bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${category.previewImage}')` }} />
-									<div className="px-3 py-3 md:align-middle md:text-center">
+									<div className="relative aspect-square w-full overflow-hidden bg-stone-100">
+										<div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-xl" style={{ backgroundImage: `url('${category.previewImage}')` }} aria-hidden="true" />
+										<div className="absolute inset-0 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url('${category.previewImage}')` }} />
+									</div>
+									<div className="px-3 py-3 text-center md:align-middle">
 										<p className="text-sm font-semibold text-stone-900 group-hover:text-[#1B365D]">{category.label}</p>
 										<p className="mt-1 text-xs text-stone-600">{category.count} products</p>
 									</div>
 								</Link>
 							))}
 						</div>
+
+						{/* Desktop: bento showcase — one large spotlight category plus a stacked list, so the row fills the width with intent instead of trailing off into empty space */}
+						{(() => {
+							const isTemple = (category: (typeof categoryHighlights)[number]) => /temple/i.test(category.label) || /temple/i.test(category.slug);
+							const [heroCategory, ...restCategories] = [...categoryHighlights].sort((a, b) => Number(isTemple(b)) - Number(isTemple(a)) || b.count - a.count);
+							if (!heroCategory) return null;
+							return (
+								<div className="mt-8 hidden lg:grid lg:grid-cols-5 lg:gap-6">
+									<Link href={`/shop?category=${encodeURIComponent(heroCategory.slug)}`} className={`group relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-[2rem] border border-stone-200 shadow-sm transition duration-300 hover:shadow-xl ${restCategories.length > 0 ? "lg:col-span-3" : "lg:col-span-5"}`}>
+										<div className="absolute inset-0 scale-110 bg-stone-200 bg-cover bg-center opacity-70 blur-2xl" style={{ backgroundImage: `url('${heroCategory.previewImage}')` }} aria-hidden="true" />
+										<div className="absolute inset-0 bg-contain bg-center bg-no-repeat transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url('${heroCategory.previewImage}')` }} />
+										<div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+										<div className="relative z-10 p-8">
+											<span className="inline-flex items-center rounded-full bg-[#F7931E] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-sm">{isTemple(heroCategory) ? "Signature Collection" : "Most Popular"}</span>
+											<h3 className="mt-4 text-3xl font-semibold text-white">{heroCategory.label}</h3>
+											<p className="mt-1.5 text-sm text-white/80">{heroCategory.count} products</p>
+											<span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-[#1B365D] transition group-hover:gap-2.5">
+												Shop Collection
+												<ArrowRight className="h-3.5 w-3.5" />
+											</span>
+										</div>
+									</Link>
+
+									{restCategories.length > 0 && (
+										<div className="flex flex-col gap-6 lg:col-span-2">
+											{restCategories.map((category) => (
+												<Link key={category.slug} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="group relative flex flex-1 items-center gap-4 overflow-hidden rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-lg">
+													<div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-stone-100">
+														<div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-lg" style={{ backgroundImage: `url('${category.previewImage}')` }} aria-hidden="true" />
+														<div className="absolute inset-0 bg-contain bg-center bg-no-repeat transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url('${category.previewImage}')` }} />
+													</div>
+													<div className="min-w-0 flex-1">
+														<p className="font-semibold text-stone-900 group-hover:text-[#1B365D]">{category.label}</p>
+														<p className="mt-1 text-xs text-stone-600">{category.count} products</p>
+													</div>
+													<ArrowRight className="h-4 w-4 shrink-0 text-stone-300 transition group-hover:translate-x-1 group-hover:text-[#1B365D]" />
+												</Link>
+											))}
+										</div>
+									)}
+								</div>
+							);
+						})()}
 					</section>
 				) : null}
 
@@ -179,7 +212,8 @@ export default function HomePage() {
 							Shop all
 						</Link>
 					</div>
-					<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+					{/* Mobile / tablet: horizontal snap-scroll cards */}
+					<div className="mt-8 no-scrollbar scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] lg:hidden [&::-webkit-scrollbar]:hidden">
 						{featuredProducts.map((product) => {
 							const displayPrice = product.variants[0]?.price ?? 0;
 							const originalPrice = displayPrice * 1.2;
@@ -223,11 +257,120 @@ export default function HomePage() {
 							);
 						})}
 					</div>
+
+					{/* Desktop: editorial spotlight layout — two large feature panels instead of small cards */}
+					<div className="mt-10 hidden lg:grid lg:grid-cols-2 lg:gap-8">
+						{featuredProducts.slice(0, 2).map((product, index) => {
+							const displayPrice = product.variants[0]?.price ?? 0;
+							const originalPrice = displayPrice * 1.2;
+							const discount = Math.round(((originalPrice - displayPrice) / originalPrice) * 100);
+							const tags = [product.sizeLabel, product.material].filter(Boolean);
+							return (
+								<Link key={product.id} href={`/product/${product.slug}`} className="group relative isolate flex overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-stone-300 hover:shadow-xl">
+									<span className="pointer-events-none absolute -left-3 -top-8 -z-10 select-none text-[8rem] font-black leading-none text-stone-100 transition group-hover:text-stone-100/80">0{index + 1}</span>
+
+									<div className="relative w-2/5 shrink-0 overflow-hidden">
+										<div className="absolute inset-0 bg-stone-100 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url('${product.image}')` }} />
+										<div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+										<div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+											{product.featured && <span className="rounded-full bg-[#F7931E] px-3 py-1 text-[11px] font-bold text-white shadow-sm">⭐ Best Seller</span>}
+											{discount > 0 && <span className="rounded-full bg-red-500 px-3 py-1 text-[11px] font-bold text-white shadow-sm">-{discount}%</span>}
+										</div>
+									</div>
+
+									<div className="flex min-w-0 flex-1 flex-col justify-between p-7">
+										<div className="min-w-0">
+											<p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F7931E]">{product.category}</p>
+											<h3 className="mt-2 truncate text-2xl font-semibold text-stone-900" title={product.name}>
+												{product.name}
+											</h3>
+											<p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{product.shortDescription}</p>
+
+											<div className="mt-3 flex items-center gap-1.5">
+												<div className="flex items-center">
+													{Array.from({ length: 5 }).map((_, i) => (
+														<Star key={i} className={`h-3.5 w-3.5 ${i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "fill-stone-200 text-stone-200"}`} />
+													))}
+												</div>
+												<span className="text-xs text-stone-500">({product.reviewCount} reviews)</span>
+											</div>
+
+											{tags.length > 0 && (
+												<div className="mt-4 flex flex-wrap gap-2">
+													{tags.map((tag) => (
+														<span key={tag} className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[11px] font-medium text-stone-700">
+															{tag}
+														</span>
+													))}
+												</div>
+											)}
+										</div>
+
+										<div className="mt-6 flex items-end justify-between gap-3 border-t border-stone-100 pt-5">
+											<div className="flex flex-col">
+												<span className="text-[11px] font-medium uppercase tracking-[0.15em] text-stone-400">Price</span>
+												<p className="text-xl font-bold text-[#1B365D]">NOK {displayPrice}</p>
+												{discount > 0 && <p className="text-xs text-stone-400 line-through">NOK {originalPrice.toFixed(2)}</p>}
+											</div>
+											<span className="inline-flex items-center gap-1.5 rounded-full bg-[#1B365D] px-5 py-2.5 text-xs font-semibold text-white transition group-hover:gap-2.5 group-hover:bg-[#152d4c]">
+												Shop Now
+												<ArrowRight className="h-3.5 w-3.5" />
+											</span>
+										</div>
+									</div>
+								</Link>
+							);
+						})}
+					</div>
 				</section>
 
 				{dynamicCategorySections.map((section) => (
 					<HomeCategoryProductsSection key={section.title} title={section.title} href={section.href} products={section.products} />
 				))}
+
+				{mandapCategory ? (
+					<section className="py-14 sm:py-20 md:py-24">
+						<div className="relative overflow-hidden border-y-4 border-[#F7931E] shadow-xl">
+							<div className="absolute inset-0 bg-stone-900">
+								<div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url('${mandapCategory.imageUrl ?? mandapProducts[0]?.image ?? "/images/temple-2.jpg"}')` }} />
+								<div className="absolute inset-0 bg-gradient-to-r from-[#1B365D]/95 via-[#1B365D]/85 to-[#1B365D]/55" />
+							</div>
+							<div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-10 px-4 py-16 sm:gap-12 sm:px-6 sm:py-20 md:py-24 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-28">
+								<div className="max-w-2xl">
+									<span className="inline-flex items-center gap-2 rounded-full bg-[#F7931E] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-white shadow-sm">
+										<span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+										Made To Order
+									</span>
+									<h2 className="mt-5 text-4xl font-bold leading-tight text-white sm:text-5xl">Custom Mandaps &amp; Temples, Built To Your Design</h2>
+									<p className="mt-4 max-w-xl text-base leading-7 text-white/85 sm:text-lg">Every celebration deserves a mandap that fits its space and story. Share your size, style, material, and preferences — our artisans design and craft it to order, for indoor or outdoor events.</p>
+									<ul className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm font-medium text-white/80">
+										<li className="flex items-center gap-2">
+											<span className="h-1.5 w-1.5 rounded-full bg-[#F7931E]" />
+											Tell us your dimensions &amp; style
+										</li>
+										<li className="flex items-center gap-2">
+											<span className="h-1.5 w-1.5 rounded-full bg-[#F7931E]" />
+											Personalized quote within 24 hours
+										</li>
+										<li className="flex items-center gap-2">
+											<span className="h-1.5 w-1.5 rounded-full bg-[#F7931E]" />
+											Handcrafted for indoor &amp; outdoor events
+										</li>
+									</ul>
+								</div>
+								<div className="flex shrink-0 flex-col items-start gap-3 lg:items-end">
+									<Button asChild className="rounded-full bg-[#F7931E] px-6 sm:px-8 py-4 sm:py-6 text-base font-semibold text-white shadow-lg shadow-[#F7931E]/30 transition hover:scale-105 hover:bg-[#d87810]">
+										<Link href={mandapCtaHref} className="inline-flex items-center gap-2">
+											Request a Custom Mandap
+											<ArrowRight className="h-5 w-5" />
+										</Link>
+									</Button>
+									<p className="text-xs text-white/60">No obligation — just tell us what you have in mind.</p>
+								</div>
+							</div>
+						</div>
+					</section>
+				) : null}
 
 				{/* <section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="grid gap-2 lg:gap-6 grid-cols-2 lg:grid-cols-4">
@@ -278,82 +421,85 @@ export default function HomePage() {
 					</div>
 				</section>
 
-				<section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 md:py-16 lg:px-8">
-					<div className="grid min-w-0 items-stretch gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-						{/* Left: intro card */}
-						<div className="flex h-full min-w-0 flex-col rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Customer Voice</p>
-							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Proof that your order is in safe hands</h2>
-
-							<div className="mt-5 flex flex-wrap gap-2">
-								{trustHighlights.map((item) => (
-									<span key={item} className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
-										{item}
-									</span>
-								))}
-							</div>
-
-							<div className="mt-6 grid gap-3 sm:grid-cols-3">
-								{reviewFacts.map((fact) => (
-									<div key={fact.label} className="rounded-2xl border border-stone-200 bg-stone-50 p-3 text-center">
-										<p className="text-lg font-semibold text-[#1B365D]">{fact.value}</p>
-										<p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-stone-500">{fact.label}</p>
-									</div>
-								))}
-							</div>
-
-							{/* pushes CTAs to the bottom so the card's own content fills its height */}
-							<div className="mt-6 flex flex-1 flex-wrap items-end gap-3">
-								<Button asChild className="bg-[#1B365D] text-white hover:bg-[#152d4c]">
-									<Link href="/shop">Shop Now</Link>
-								</Button>
-								<Button asChild variant="outline" className="border-stone-300 text-stone-800 hover:bg-stone-100">
-									<Link href="/contact">Ask Before You Buy</Link>
-								</Button>
-							</div>
+				<section className="py-8 sm:py-12 md:py-16">
+					<div className="relative overflow-hidden border-y border-stone-200/70 bg-gradient-to-br from-[#FFF3E0] via-white to-[#F4EDE4] lg:shadow-md">
+						{/* Decorative shared background: dot pattern + soft glow blobs, desktop only */}
+						<div className="pointer-events-none absolute inset-0 hidden lg:block">
+							<div className="absolute inset-0 opacity-40 [background-image:radial-gradient(rgba(27,54,93,0.14)_1.5px,transparent_1.5px)] [background-size:22px_22px]" />
+							<div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#F7931E]/15 blur-3xl" />
+							<div className="absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-[#1B365D]/10 blur-3xl" />
 						</div>
 
-						{/* Right: testimonials, vertically centered to fill the same height */}
-						<div className="flex h-full min-w-0 flex-col justify-center">
-							{showSlider && (
-								<div className="mb-4 hidden items-center justify-end gap-2 md:flex">
-									<button onClick={goPrev} disabled={page === 0} aria-label="Previous testimonials" className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40">
-										<ChevronLeft className="h-4 w-4" />
-									</button>
-									<button onClick={goNext} disabled={page === pageCount - 1} aria-label="Next testimonials" className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40">
-										<ChevronRight className="h-4 w-4" />
-									</button>
-								</div>
-							)}
+						<div className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 md:py-12 lg:px-8 lg:py-14">
+							<div className="grid min-w-0 items-stretch gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
+								{/* Left: intro card */}
+								<div className="flex h-full min-w-0 flex-col">
+									<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Customer Voice</p>
+									<h2 className="mt-3 text-3xl font-semibold text-stone-900">Proof that your order is in safe hands</h2>
 
-							{/* Desktop: paged, equal-height cards */}
-							<div className="hidden overflow-hidden md:block">
-								<div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${page * 100}%)` }}>
-									{Array.from({ length: pageCount }).map((_, p) => (
-										<div key={p} className="grid w-full flex-shrink-0 auto-rows-fr grid-cols-2 gap-4">
-											{testimonials.slice(p * perPage, p * perPage + perPage).map((item) => (
-												<TestimonialCard key={item.id} item={item} />
+									<div className="mt-6 flex flex-wrap gap-x-8 gap-y-4">
+										{reviewFacts.map((fact) => (
+											<div key={fact.label}>
+												<p className="text-2xl font-semibold text-[#1B365D]">{fact.value}</p>
+												<p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-stone-500">{fact.label}</p>
+											</div>
+										))}
+									</div>
+
+									{/* pushes CTAs to the bottom so the card's own content fills its height */}
+									<div className="mt-6 flex flex-1 flex-wrap items-end gap-3">
+										<Button asChild className="bg-[#1B365D] text-white hover:bg-[#152d4c]">
+											<Link href="/shop">Shop Now</Link>
+										</Button>
+										<Button asChild variant="outline" className="border-stone-300 text-stone-800 hover:bg-stone-100">
+											<Link href="/contact">Ask Before You Buy</Link>
+										</Button>
+									</div>
+								</div>
+
+								{/* Right: testimonials, vertically centered to fill the same height */}
+								<div className="flex h-full min-w-0 flex-col justify-center mt-3 md:mt-0">
+									{showSlider && (
+										<div className="mb-4 hidden items-center justify-end gap-2 md:flex">
+											<button onClick={goPrev} disabled={page === 0} aria-label="Previous testimonials" className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40">
+												<ChevronLeft className="h-4 w-4" />
+											</button>
+											<button onClick={goNext} disabled={page === pageCount - 1} aria-label="Next testimonials" className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40">
+												<ChevronRight className="h-4 w-4" />
+											</button>
+										</div>
+									)}
+
+									{/* Desktop: paged, equal-height cards */}
+									<div className="hidden overflow-hidden md:block">
+										<div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${page * 100}%)` }}>
+											{Array.from({ length: pageCount }).map((_, p) => (
+												<div key={p} className="grid w-full flex-shrink-0 auto-rows-fr grid-cols-2 gap-4">
+													{testimonials.slice(p * perPage, p * perPage + perPage).map((item) => (
+														<TestimonialCard key={item.id} item={item} />
+													))}
+												</div>
 											))}
 										</div>
-									))}
-								</div>
-							</div>
-
-							{showSlider && (
-								<div className="mt-4 hidden justify-center gap-1.5 md:flex">
-									{Array.from({ length: pageCount }).map((_, p) => (
-										<button key={p} onClick={() => setPage(p)} aria-label={`Go to page ${p + 1}`} className={`h-1.5 rounded-full transition-all ${p === page ? "w-6 bg-[#1B365D]" : "w-1.5 bg-stone-300"}`} />
-									))}
-								</div>
-							)}
-
-							{/* Mobile: native swipe, one card at a time */}
-							<div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-								{testimonials.map((item) => (
-									<div key={item.id} className="w-[85%] flex-shrink-0 snap-center">
-										<TestimonialCard item={item} />
 									</div>
-								))}
+
+									{showSlider && (
+										<div className="mt-4 hidden justify-center gap-1.5 md:flex">
+											{Array.from({ length: pageCount }).map((_, p) => (
+												<button key={p} onClick={() => setPage(p)} aria-label={`Go to page ${p + 1}`} className={`h-1.5 rounded-full transition-all ${p === page ? "w-6 bg-[#1B365D]" : "w-1.5 bg-stone-300"}`} />
+											))}
+										</div>
+									)}
+
+									{/* Mobile: native swipe, one card at a time */}
+									<div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+										{testimonials.map((item) => (
+											<div key={item.id} className="w-[85%] flex-shrink-0 snap-center">
+												<TestimonialCard item={item} />
+											</div>
+										))}
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>

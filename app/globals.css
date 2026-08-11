@@ -22,8 +22,33 @@
 	--color-stone-950: #3a0f08;
 	--color-red-500: #c62828;
 	--color-red-600: #a61b1b;
-	--font-sans: var(--font-geist-sans);
+	--color-navy: #1b365d;
+	--color-navy-light: #274a7a;
+	--color-gold: #d4af37;
+	--color-gold-light: #f1d78c;
+	--font-sans: "Inter", "Segoe UI", sans-serif;
+	--font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
 	--font-mono: var(--font-geist-mono);
+}
+
+@keyframes hero-float {
+	0%,
+	100% {
+		transform: translateY(0) translateX(0);
+	}
+	50% {
+		transform: translateY(-16px) translateX(6px);
+	}
+}
+
+@keyframes hero-drift {
+	0%,
+	100% {
+		transform: translate(0, 0) scale(1);
+	}
+	50% {
+		transform: translate(-3%, 4%) scale(1.06);
+	}
 }
 
 body {
@@ -36,4 +61,15 @@ body {
 	transition:
 		background-color 0.3s ease,
 		color 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }

@@ -31,10 +31,9 @@ The complete project scope, brand guidelines, product universe, and implementati
 
 **Custom Orders (Mandap/Temple builds)**
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
-- Threaded messaging between customer and admin with unread indicators
-- Admin quoting workflow with Stripe payment links and accept/decline responses
-- Advance (deposit) payments via Stripe, with per-inquiry deposit/balance payment tracking
-- Pro forma invoice (cost estimate) and advance payment receipt PDF documents, plus an address-collection step for these orders
+- Dedicated admin Custom Orders dashboard, segregated from the regular Orders view
+- Threaded messaging between customer and admin with unread indicators, rich-text notes
+- Admin quoting workflow: request status (Pending/Accepted/Declined/Paid), quoted price, and a manually-entered Stripe payment link
 
 **Accounts**
 - Supabase email/password authentication, with admin role granted via an email allow-list or user metadata
@@ -43,12 +42,12 @@ The complete project scope, brand guidelines, product universe, and implementati
 
 **Admin Dashboard**
 - Live overview stats
-- Sales reporting dashboard: date-range trend chart, revenue/refunds/deposit summary, country breakdown, CSV export
+- Sales reporting dashboard: date-range trend chart, revenue/refunds summary, country breakdown, CSV export
 - Products CRUD with variant/add-on management, automatic slug generation, and image uploads (Supabase Storage)
 - Categories CRUD
 - Orders management, status control, and document generation
 - Coupons CRUD
-- Custom/mandap inquiry management with messaging and payment status control
+- Dedicated Custom Orders section: mandap/temple inquiry management with threaded messaging and payment status control
 - Shipping zone and rate configuration
 - Pricing zone configuration for international markup
 

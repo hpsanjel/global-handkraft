@@ -54,15 +54,15 @@ export function SiteFooter() {
 			</div>
 			<div className="border-t border-stone-200">
 				<div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-					<p className="text-xs text-stone-500 text-center mb-4">&copy; {new Date().getFullYear()} Global Handcrafts AS. All rights reserved.</p>
-					<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-4">
+					<p className="text-xs text-stone-500 text-left sm:text-center mb-4">&copy; {new Date().getFullYear()} Global Handcrafts AS. All rights reserved.</p>
+					<div className="flex flex-wrap items-center justify-start sm:justify-center gap-x-6 gap-y-2 mb-4">
 						{legalLinks.map((item) => (
 							<Link key={item.href} href={item.href} className="text-xs text-stone-600 transition hover:text-stone-950">
 								{item.label}
 							</Link>
 						))}
 					</div>
-					<div className="flex flex-wrap items-center justify-center gap-3">
+					<div className="flex flex-wrap items-center justify-start sm:justify-center gap-3">
 						<span className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">We accept</span>
 						<div className="flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 shadow-sm">
 							<Lock className="h-3.5 w-3.5 text-stone-500" />
