@@ -11,16 +11,18 @@ The complete project scope, brand guidelines, product universe, and implementati
 ## Implemented Features
 
 **Storefront**
-- Home, Shop (category + filter browsing), product detail pages, cart, checkout, account, contact, privacy/terms/returns/shipping info pages
-- Products with variants (price/size/stock per variant) and paid add-ons
+- Home, Shop (category + filter browsing), product detail pages, cart, checkout, account, contact, FAQ, About, privacy/terms/returns/shipping info pages
+- Products with variants (price/size/stock per color and size combination) and paid add-ons
 - Slide-in cart drawer, coupon code entry, site-wide active-coupon promo popup
+- Currency switcher with live exchange rates (NOK/EUR/USD)
+- Zone-based international pricing: admin-configurable markup applied automatically by shipping country
 - Dynamic Open Graph image generation, `sitemap.xml`/`robots.txt`, newsletter signup, cookie/GDPR notice, WhatsApp contact button
 
 **Checkout & Payments**
 - Stripe Checkout with webhook-driven order creation
 - Live shipping rate quotes via Bring (Posten Norge) and PostNord integrations, with admin-configurable shipping zones and free-shipping thresholds
 - Per-country VAT rates
-- Coupon engine: percentage discounts, free shipping, expiry, and per-customer/global usage caps
+- Coupon engine: percentage discounts, free shipping, expiry, minimum cart-value requirement, and per-customer/global usage caps
 
 **Orders & Documents**
 - Full order status lifecycle (Pending → Paid → Processing → Shipped → Delivered, plus Cancelled/Refunded) with a status history timeline and customer email at each transition
@@ -31,6 +33,8 @@ The complete project scope, brand guidelines, product universe, and implementati
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
 - Threaded messaging between customer and admin with unread indicators
 - Admin quoting workflow with Stripe payment links and accept/decline responses
+- Advance (deposit) payments via Stripe, with per-inquiry deposit/balance payment tracking
+- Pro forma invoice (cost estimate) and advance payment receipt PDF documents, plus an address-collection step for these orders
 
 **Accounts**
 - Supabase email/password authentication, with admin role granted via an email allow-list or user metadata
@@ -39,12 +43,14 @@ The complete project scope, brand guidelines, product universe, and implementati
 
 **Admin Dashboard**
 - Live overview stats
-- Products CRUD with variant/add-on management and image uploads (Supabase Storage)
+- Sales reporting dashboard: date-range trend chart, revenue/refunds/deposit summary, country breakdown, CSV export
+- Products CRUD with variant/add-on management, automatic slug generation, and image uploads (Supabase Storage)
 - Categories CRUD
 - Orders management, status control, and document generation
 - Coupons CRUD
 - Custom/mandap inquiry management with messaging and payment status control
 - Shipping zone and rate configuration
+- Pricing zone configuration for international markup
 
 **Transactional Email (Resend)**
 - Order confirmation (with optional PDF receipt attached), order status updates, custom-inquiry notifications and replies, payment-status updates, and account-deletion admin alerts
@@ -72,7 +78,7 @@ The complete project scope, brand guidelines, product universe, and implementati
 
 - shadcn/ui, Framer Motion, Zustand, TanStack Query, React Hook Form + Zod are installed but not yet integrated across the UI
 - Additional payment methods: Vipps, Klarna, PayPal, Apple Pay, Google Pay
-- Wishlist, multilingual and multi-currency support
+- Wishlist and multilingual support
 
 ## Getting Started
 

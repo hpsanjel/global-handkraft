@@ -9,9 +9,11 @@ This section reflects what is actually built in the codebase today, as opposed t
 ### Live today
 
 **Storefront**
-- Home, Shop with category/filter browsing, Product Detail, Cart, Checkout, Account, Contact, Privacy, Terms, Shipping, Returns pages
-- Product variants (price/size/stock per variant) and paid add-ons
+- Home, Shop with category/filter browsing, Product Detail, Cart, Checkout, Account, Contact, FAQ, About, Privacy, Terms, Shipping, Returns pages
+- Product variants (price/size/stock per color and size combination) and paid add-ons
 - Slide-in cart drawer, coupon code entry at checkout, site-wide active-coupon promo popup
+- Currency switcher with live exchange rates (NOK/EUR/USD)
+- Zone-based international pricing: admin-configurable markup applied automatically by shipping country (`/admin/settings/pricing-zones`)
 - Newsletter signup, cookie/GDPR notice, WhatsApp contact button
 - Dynamic Open Graph image generation, `sitemap.xml`, `robots.txt`
 
@@ -19,7 +21,7 @@ This section reflects what is actually built in the codebase today, as opposed t
 - Stripe Checkout with webhook-driven order creation
 - Live shipping rate quotes via Bring (Posten Norge) and PostNord, admin-configurable shipping zones and free-shipping thresholds
 - Per-country VAT rates
-- Coupon engine: percentage discount, free shipping, expiry, global and per-customer usage caps
+- Coupon engine: percentage discount, free shipping, expiry, minimum cart-value requirement, global and per-customer usage caps
 
 **Orders & documents**
 - Full order status lifecycle (Pending, Paid, Processing, Shipped, Delivered, Cancelled, Refunded) with a status-history timeline and a customer email sent on every transition
@@ -30,6 +32,8 @@ This section reflects what is actually built in the codebase today, as opposed t
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
 - Threaded messaging between customer and admin with unread indicators
 - Admin quoting workflow with Stripe payment links and accept/decline responses
+- Advance (deposit) payments via Stripe, with per-inquiry deposit/balance payment tracking
+- Pro forma invoice (cost estimate) and advance payment receipt PDF documents, plus an address-collection step for these orders
 
 **Accounts**
 - Supabase email/password authentication; admin role via email allow-list (`ADMIN_EMAILS`) or user metadata
@@ -38,12 +42,14 @@ This section reflects what is actually built in the codebase today, as opposed t
 
 **Admin dashboard**
 - Live overview stats
-- Products CRUD with variant/add-on management and image upload to Supabase Storage
+- Sales reporting dashboard (`/admin/reports`): date-range trend chart, revenue/refunds/deposit summary, country breakdown, CSV export
+- Products CRUD with variant/add-on management, automatic slug generation, and image upload to Supabase Storage
 - Categories CRUD
 - Orders management, status control, and document generation
 - Coupons CRUD
 - Custom/mandap inquiry management with messaging and payment status control
 - Shipping zone and rate configuration
+- Pricing zone configuration for international markup
 
 **Transactional email (Resend)**
 - Order confirmation (with optional PDF receipt attached), order status updates, custom-inquiry admin notifications and customer replies, payment-status updates, account-deletion admin alerts
@@ -61,8 +67,8 @@ This section reflects what is actually built in the codebase today, as opposed t
 
 - Wishlist, product comparison, recently viewed, quick view, voice/advanced search, 360° image view
 - Additional payment methods: Vipps, Klarna, PayPal, Apple Pay, Google Pay
-- Blog, FAQ knowledge base, CMS-managed homepage/content blocks (the `SiteSettings` model exists but is not yet wired into any admin UI or page)
-- Multilingual (EN/NO/NE/HI) and multi-currency (NOK/EUR/USD) support
+- Blog, searchable FAQ knowledge base (a static FAQ page is live; article search/categorization is not), CMS-managed homepage/content blocks (the `SiteSettings` model exists but is not yet wired into any admin UI or page)
+- Multilingual (EN/NO/NE/HI) support
 - Loyalty/rewards, referrals, gift cards, subscription kits, multi-vendor marketplace, 3D custom temple builder, AI recommendations
 - shadcn/ui, Framer Motion, Zustand, TanStack Query, and React Hook Form + Zod are installed as dependencies but not yet integrated into the UI
 

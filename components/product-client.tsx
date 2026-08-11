@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
@@ -47,6 +47,23 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 	const [isSubmittingMandap, setIsSubmittingMandap] = useState(false);
 	const [cartFeedback, setCartFeedback] = useState("");
 	const [showCustomTempleForm, setShowCustomTempleForm] = useState(false);
+	const mobileCartBarRef = useRef<HTMLDivElement>(null);
+
+	// Lets the floating WhatsApp button (rendered globally in the layout) know how
+	// tall this bar is so it can lift clear instead of overlapping it on mobile.
+	useEffect(() => {
+		const bar = mobileCartBarRef.current;
+		if (!bar) return;
+		const root = document.documentElement;
+		const observer = new ResizeObserver(() => {
+			root.style.setProperty("--mobile-cart-bar-height", `${bar.offsetHeight}px`);
+		});
+		observer.observe(bar);
+		return () => {
+			observer.disconnect();
+			root.style.removeProperty("--mobile-cart-bar-height");
+		};
+	}, []);
 
 	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
 	const [zoneMarkup, setZoneMarkup] = useState(0);
@@ -584,7 +601,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				</div>
 			</div>
 
-			<div className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+			<div ref={mobileCartBarRef} className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
 				<div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
 					<div>
 						<p className="text-xs text-stone-500">Total</p>
