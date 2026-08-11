@@ -8,8 +8,6 @@ import {
 	shippingSummaryGenerator,
 	orderSummaryGenerator,
 	giftReceiptGenerator,
-	proFormaInvoiceGenerator,
-	depositReceiptGenerator,
 } from "../builders";
 
 const DOCUMENT_REGISTRY: Record<DocumentType, DocumentGenerator> = {
@@ -21,8 +19,6 @@ const DOCUMENT_REGISTRY: Record<DocumentType, DocumentGenerator> = {
 	SHIPPING_SUMMARY: shippingSummaryGenerator,
 	ORDER_SUMMARY: orderSummaryGenerator,
 	GIFT_RECEIPT: giftReceiptGenerator,
-	PRO_FORMA_INVOICE: proFormaInvoiceGenerator,
-	DEPOSIT_RECEIPT: depositReceiptGenerator,
 };
 
 export function getDocumentGenerator(type: DocumentType): DocumentGenerator {

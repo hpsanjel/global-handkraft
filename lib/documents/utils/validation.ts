@@ -106,12 +106,9 @@ const paymentSchema = z.object({
 	provider: z.literal("stripe"),
 	paymentIntentId: z.string().nullable(),
 	method: z.string().optional(),
-	status: z.enum(["PENDING", "PAID", "PARTIALLY_PAID", "REFUNDED", "PARTIALLY_REFUNDED", "FAILED"]),
+	status: z.enum(["PENDING", "PAID", "REFUNDED", "PARTIALLY_REFUNDED", "FAILED"]),
 	paidAt: z.date().nullable(),
 	amount: z.number().nonnegative(),
-	amountPaid: z.number().nonnegative().optional(),
-	balanceDue: z.number().nonnegative().optional(),
-	depositRequired: z.number().nonnegative().optional(),
 });
 
 const taxSchema = z.object({
@@ -152,7 +149,6 @@ const shippingInformationSchema = z.object({
 	estimatedDelivery: z.string().nullable(),
 	address: addressSchema,
 	shipment: shipmentSchema.nullable(),
-	incoterm: z.string().optional(),
 });
 
 const returnInformationSchema = z.object({
@@ -164,7 +160,7 @@ const returnInformationSchema = z.object({
 
 const documentMetadataSchema = z.object({
 	documentNumber: z.string().min(1),
-	type: z.enum(["COMMERCIAL_INVOICE", "PACKING_LIST", "RECEIPT", "CUSTOMS_INVOICE", "RETURN_CARD", "SHIPPING_SUMMARY", "ORDER_SUMMARY", "GIFT_RECEIPT", "PRO_FORMA_INVOICE", "DEPOSIT_RECEIPT"]),
+	type: z.enum(["COMMERCIAL_INVOICE", "PACKING_LIST", "RECEIPT", "CUSTOMS_INVOICE", "RETURN_CARD", "SHIPPING_SUMMARY", "ORDER_SUMMARY", "GIFT_RECEIPT"]),
 	issuedAt: z.date(),
 });
 

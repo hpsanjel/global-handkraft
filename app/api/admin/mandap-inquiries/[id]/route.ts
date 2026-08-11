@@ -3,19 +3,6 @@ import { hasAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { sendMandapInquiryStatusUpdateEmail } from "@/lib/email";
-import { isMandapFulfillmentStatus } from "@/lib/mandap-fulfillment-status";
-
-type AddressInput = {
-	fullName: string;
-	phone: string;
-	email: string;
-	country: string;
-	address: string;
-	postalCode: string;
-	city: string;
-	companyName?: string;
-	vatNumber?: string;
-};
 
 async function requireAdmin() {
 	const supabase = await createClient();
@@ -50,13 +37,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			paymentStatus?: string;
 			adminNote?: string;
 			quotedPrice?: number;
-			depositAmount?: number;
 			stripePaymentLink?: string;
-			weightKg?: number | null;
-			hsCode?: string | null;
-			incoterm?: string | null;
-			fulfillmentStatus?: string;
-			address?: AddressInput;
 		};
 
 		const inquiry = await prisma.mandapInquiry.findUnique({ where: { id } });
@@ -64,87 +45,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			return NextResponse.json({ error: "Request not found." }, { status: 404 });
 		}
 
-		if (body.fulfillmentStatus && !isMandapFulfillmentStatus(body.fulfillmentStatus)) {
-			return NextResponse.json({ error: "Invalid fulfilment status." }, { status: 400 });
-		}
-
-		// DEPOSIT_PAID and PAID are derived exclusively from paid transactions in
-		// the checkout webhook — admins can only set the pre-payment states.
-		if (body.paymentStatus && !["PENDING", "ACCEPTED", "DECLINED"].includes(body.paymentStatus)) {
-			return NextResponse.json({ error: "This status is set automatically once a payment is received." }, { status: 400 });
-		}
-
-		const effectiveQuotedPrice = body.quotedPrice !== undefined ? body.quotedPrice : inquiry.quotedPrice;
-
-		if (body.quotedPrice !== undefined && body.quotedPrice < inquiry.amountPaid) {
-			return NextResponse.json({ error: `Quoted price cannot be less than the amount already paid (NOK ${inquiry.amountPaid.toFixed(2)}).` }, { status: 400 });
-		}
-
-		if (body.depositAmount !== undefined && body.depositAmount > 0) {
-			if (!effectiveQuotedPrice) {
-				return NextResponse.json({ error: "Set the quoted price before setting a deposit amount." }, { status: 400 });
-			}
-			if (body.depositAmount < 0 || body.depositAmount > effectiveQuotedPrice) {
-				return NextResponse.json({ error: "Deposit cannot exceed the quoted price." }, { status: 400 });
-			}
-		} else if (body.depositAmount === undefined && body.quotedPrice !== undefined && inquiry.depositAmount && inquiry.depositAmount > body.quotedPrice) {
-			return NextResponse.json({ error: "Quoted price cannot be lower than the existing deposit amount. Update the deposit first." }, { status: 400 });
-		}
-
 		const updateData: {
 			paymentStatus?: string;
 			adminNote?: string;
 			quotedPrice?: number;
-			depositAmount?: number | null;
+			stripePaymentLink?: string;
 			updatedAt?: Date;
 			paymentAcceptedAt?: Date;
 			paymentDeclinedAt?: Date;
-			weightKg?: number | null;
-			hsCode?: string | null;
-			incoterm?: string | null;
-			fulfillmentStatus?: string;
-			addressId?: string;
 		} = {
 			updatedAt: new Date(),
 		};
-
-		if (body.weightKg !== undefined) {
-			updateData.weightKg = body.weightKg;
-		}
-
-		if (body.hsCode !== undefined) {
-			updateData.hsCode = body.hsCode;
-		}
-
-		if (body.incoterm !== undefined) {
-			updateData.incoterm = body.incoterm;
-		}
-
-		if (body.fulfillmentStatus) {
-			updateData.fulfillmentStatus = body.fulfillmentStatus;
-		}
-
-		if (body.address) {
-			const addressData = {
-				fullName: body.address.fullName,
-				phone: body.address.phone,
-				email: body.address.email,
-				country: body.address.country,
-				address: body.address.address,
-				postalCode: body.address.postalCode,
-				city: body.address.city,
-				companyName: body.address.companyName || null,
-				vatNumber: body.address.vatNumber || null,
-			};
-
-			const existingAddressId = inquiry.addressId;
-			if (existingAddressId) {
-				await prisma.address.update({ where: { id: existingAddressId }, data: addressData });
-			} else {
-				const createdAddress = await prisma.address.create({ data: addressData });
-				updateData.addressId = createdAddress.id;
-			}
-		}
 
 		if (body.paymentStatus) {
 			updateData.paymentStatus = body.paymentStatus;
@@ -164,8 +75,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			updateData.quotedPrice = body.quotedPrice;
 		}
 
-		if (body.depositAmount !== undefined) {
-			updateData.depositAmount = body.depositAmount > 0 ? body.depositAmount : null;
+		if (body.stripePaymentLink !== undefined) {
+			updateData.stripePaymentLink = body.stripePaymentLink;
 		}
 
 		const updated = await prisma.mandapInquiry.update({
@@ -182,7 +93,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 				paymentStatus: body.paymentStatus,
 				adminNote: body.adminNote || "",
 				quotedPrice: body.quotedPrice,
-				depositAmount: updateData.depositAmount ?? undefined,
+				stripePaymentLink: body.stripePaymentLink,
 			}).catch((error) => {
 				console.error("Unable to send status update email:", error);
 			});
@@ -217,7 +128,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 			where: { id },
 			include: {
 				messages: { orderBy: { createdAt: "asc" } },
-				transactions: { orderBy: { createdAt: "desc" } },
 			},
 		});
 
@@ -234,12 +144,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 			messages: inquiry.messages.map((message) => ({
 				...message,
 				createdAt: message.createdAt.toISOString(),
-			})),
-			transactions: inquiry.transactions.map((transaction) => ({
-				...transaction,
-				createdAt: transaction.createdAt.toISOString(),
-				updatedAt: transaction.updatedAt.toISOString(),
-				paidAt: transaction.paidAt?.toISOString() ?? null,
 			})),
 		});
 	} catch (error) {

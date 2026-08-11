@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import JSZip from "jszip";
 import { hasAdminRole } from "@/lib/admin-auth";
 import { createClient } from "@/lib/supabase/server";
-import { generateDocument, assembleOrderDocumentData, ORDER_DOCUMENT_TYPES, isShippingOnlyDocumentType, OrderNotFoundError, type DocumentType } from "@/lib/documents";
+import { generateDocument, assembleOrderDocumentData, DOCUMENT_TYPES, isShippingOnlyDocumentType, OrderNotFoundError, type DocumentType } from "@/lib/documents";
 
 export const runtime = "nodejs";
 
@@ -15,8 +15,6 @@ const DOCUMENT_LABELS: Record<DocumentType, string> = {
 	SHIPPING_SUMMARY: "Shipping Summary",
 	ORDER_SUMMARY: "Order Summary",
 	GIFT_RECEIPT: "Gift Receipt",
-	PRO_FORMA_INVOICE: "Pro Forma Invoice",
-	DEPOSIT_RECEIPT: "Deposit Receipt",
 };
 
 /** GET /api/admin/orders/[id]/documents/all — bundles every document applicable to this order into a single zip for the admin to download. */
@@ -38,7 +36,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 		// assembly generateDocument() runs per-type below, exposed for reuse per its
 		// own doc comment.
 		const { order, shipping } = await assembleOrderDocumentData(id, "RECEIPT");
-		const applicableTypes = ORDER_DOCUMENT_TYPES.filter((type) => shipping.isPickup === false || !isShippingOnlyDocumentType(type));
+		const applicableTypes = DOCUMENT_TYPES.filter((type) => shipping.isPickup === false || !isShippingOnlyDocumentType(type));
 
 		const zip = new JSZip();
 		for (const type of applicableTypes) {

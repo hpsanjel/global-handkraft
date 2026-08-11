@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
-import { generateDocument, generateMandapInquiryDocument } from "@/lib/documents";
+import { generateDocument } from "@/lib/documents";
 import { BUSINESS } from "@/lib/documents/business-config";
 import { variantLabel } from "@/lib/product-transform";
 
@@ -37,79 +37,32 @@ export async function POST(request: Request) {
 			const shippingMethod = typeof shippingRate === "object" && shippingRate ? shippingRate.display_name : null;
 			const shippingProductId = typeof shippingRate === "object" && shippingRate ? (shippingRate.metadata?.bring_product_id ?? null) : null;
 
-			// Handle custom mandap/temple inquiry deposit/balance payment
-			const mandapTransaction = await prisma.mandapInquiryTransaction.findUnique({
-				where: { stripeSessionId: session.id },
-			});
-
-			if (mandapTransaction) {
-				// Idempotent: Stripe may redeliver the same event.
-				if (mandapTransaction.status === "PAID") {
-					return NextResponse.json({ received: true, transactionId: mandapTransaction.id });
-				}
-
-				const inquiry = await prisma.mandapInquiry.findUnique({ where: { id: mandapTransaction.inquiryId } });
-				if (!inquiry) {
-					return NextResponse.json({ received: true });
-				}
-
-				const newAmountPaid = inquiry.amountPaid + mandapTransaction.amount;
-				const quotedCents = Math.round((inquiry.quotedPrice ?? 0) * 100);
-				const newPaidCents = Math.round(newAmountPaid * 100);
-				const newPaymentStatus = newPaidCents >= quotedCents ? "PAID" : "DEPOSIT_PAID";
-
-				await prisma.$transaction([
-					prisma.mandapInquiryTransaction.update({
-						where: { id: mandapTransaction.id },
-						data: {
-							status: "PAID",
-							paidAt: new Date(),
-							stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
-						},
-					}),
-					prisma.mandapInquiry.update({
-						where: { id: inquiry.id },
-						data: {
-							amountPaid: newAmountPaid,
-							paymentStatus: newPaymentStatus,
-							...(newPaymentStatus === "PAID" ? { status: "PAID" } : {}),
-						},
-					}),
-				]);
-
-				// Generate the payment-stage document (deposit receipt vs. final commercial
-				// invoice) and attach it to the status email — mirrors how the regular
-				// order webhook below attaches a RECEIPT to the confirmation email. A
-				// failed PDF should never block the status update or its email.
-				let mandapAttachment: { filename: string; content: Buffer } | undefined;
-				try {
-					const docType = newPaymentStatus === "PAID" ? "COMMERCIAL_INVOICE" : mandapTransaction.kind === "DEPOSIT" ? "DEPOSIT_RECEIPT" : undefined;
-					if (docType) {
-						const output = await generateMandapInquiryDocument({ inquiryId: inquiry.id, type: docType, format: "buffer" });
-						mandapAttachment = { filename: output.fileName, content: output.data };
-					}
-				} catch (documentError) {
-					console.error("Failed to generate mandap inquiry payment document:", documentError);
-				}
-
-				// Send confirmation email to customer
-				try {
-					const { sendMandapInquiryStatusUpdateEmail } = await import("@/lib/email");
-					await sendMandapInquiryStatusUpdateEmail({
-						to: inquiry.email || session.customer_email || "",
-						category: inquiry.category,
-						productName: inquiry.productName,
-						paymentStatus: newPaymentStatus,
-						quotedPrice: inquiry.quotedPrice ?? undefined,
-						amountPaid: newAmountPaid,
-						remainingBalance: newPaymentStatus === "DEPOSIT_PAID" ? (inquiry.quotedPrice ?? 0) - newAmountPaid : undefined,
-						attachment: mandapAttachment,
+			// Handle custom mandap/temple inquiry payment
+			if (session.metadata?.inquiryId) {
+				const inquiryId = session.metadata.inquiryId;
+				const inquiry = await prisma.mandapInquiry.findUnique({ where: { id: inquiryId } });
+				if (inquiry) {
+					await prisma.mandapInquiry.update({
+						where: { id: inquiryId },
+						data: { paymentStatus: "PAID", status: "PAID" },
 					});
-				} catch (emailError) {
-					console.error("Failed to send mandap payment confirmation email:", emailError);
-				}
 
-				return NextResponse.json({ received: true, inquiryId: inquiry.id, transactionId: mandapTransaction.id });
+					// Send confirmation email to customer
+					try {
+						const { sendMandapInquiryStatusUpdateEmail } = await import("@/lib/email");
+						await sendMandapInquiryStatusUpdateEmail({
+							to: inquiry.email || session.customer_email || "",
+							category: inquiry.category,
+							productName: inquiry.productName,
+							paymentStatus: "PAID",
+							adminNote: "Payment received. Our team will start working on your custom order.",
+						});
+					} catch (emailError) {
+						console.error("Failed to send mandap payment confirmation email:", emailError);
+					}
+
+					return NextResponse.json({ received: true, inquiryId });
+				}
 			}
 
 			// Handle regular order payment

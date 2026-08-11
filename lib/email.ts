@@ -332,25 +332,7 @@ type MandapInquiryStatusUpdateParams = {
 	paymentStatus: string;
 	adminNote?: string;
 	quotedPrice?: number;
-	depositAmount?: number;
-	amountPaid?: number;
-	remainingBalance?: number;
-	/** Optional deposit-receipt or commercial-invoice PDF (from the document generation module) attached to the status update. */
-	attachment?: OrderConfirmationAttachment;
-};
-
-const MANDAP_STATUS_LABELS: Record<string, string> = {
-	ACCEPTED: "Accepted",
-	DECLINED: "Declined",
-	DEPOSIT_PAID: "Deposit received",
-	PAID: "Fully paid",
-};
-
-const MANDAP_STATUS_COLORS: Record<string, string> = {
-	ACCEPTED: "#16a34a",
-	DECLINED: "#dc2626",
-	DEPOSIT_PAID: "#d97706",
-	PAID: "#16a34a",
+	stripePaymentLink?: string;
 };
 
 /**
@@ -368,28 +350,19 @@ export async function sendMandapInquiryStatusUpdateEmail(params: MandapInquirySt
 		return;
 	}
 
-	const statusLabel = MANDAP_STATUS_LABELS[params.paymentStatus] ?? "Updated";
-	const statusColor = MANDAP_STATUS_COLORS[params.paymentStatus] ?? "#1B365D";
-	// Money is due whenever the request is accepted (deposit or full amount) or
-	// the deposit has been paid and a balance remains — send the customer to the
-	// dashboard to pay in-app rather than a standalone link.
-	const paymentDueHtml = ["ACCEPTED", "DEPOSIT_PAID"].includes(params.paymentStatus) ? `<p style="margin-top:16px;"><a href="https://handcraftsglobal.com/account/custom-requests" style="background:#1B365D; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">Pay Now</a></p>` : "";
-	const priceHtml = params.quotedPrice ? `<p style="margin-top:12px;"><strong>Total agreed price:</strong> NOK ${params.quotedPrice.toFixed(2)}</p>` : "";
-	const depositHtml = params.depositAmount ? `<p style="margin-top:4px;"><strong>Deposit required:</strong> NOK ${params.depositAmount.toFixed(2)}</p>` : "";
-	const amountPaidHtml = params.amountPaid ? `<p style="margin-top:4px;"><strong>Amount paid:</strong> NOK ${params.amountPaid.toFixed(2)}</p>` : "";
-	const remainingHtml = params.remainingBalance ? `<p style="margin-top:4px;"><strong>Remaining balance:</strong> NOK ${params.remainingBalance.toFixed(2)}</p>` : "";
+	const statusLabel = params.paymentStatus === "ACCEPTED" ? "Accepted" : params.paymentStatus === "DECLINED" ? "Declined" : "Updated";
+	const statusColor = params.paymentStatus === "ACCEPTED" ? "#16a34a" : params.paymentStatus === "DECLINED" ? "#dc2626" : "#1B365D";
+	const paymentLinkHtml = params.stripePaymentLink ? `<p style="margin-top:16px;"><a href="${params.stripePaymentLink}" style="background:#1B365D; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">Pay Now</a></p>` : "";
+	const priceHtml = params.quotedPrice ? `<p style="margin-top:12px;"><strong>Quoted price:</strong> NOK ${params.quotedPrice.toFixed(2)}</p>` : "";
 
 	const html = `
 		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
 			<h2 style="color:${statusColor}; margin-bottom:4px;">Custom ${params.category.toLowerCase()} request ${statusLabel}</h2>
 			<p>Hi there,</p>
-			<p>Your custom order request for <strong>${params.productName}</strong> has been updated: <strong>${statusLabel}</strong>.</p>
+			<p>Your custom order request for <strong>${params.productName}</strong> has been <strong>${statusLabel.toLowerCase()}</strong>.</p>
 			${priceHtml}
-			${depositHtml}
-			${amountPaidHtml}
-			${remainingHtml}
 			${params.adminNote ? `<p style="margin-top:12px; color:#57534e; font-style:italic;">"${params.adminNote}"</p>` : ""}
-			${paymentDueHtml}
+			${paymentLinkHtml}
 			<p style="margin-top:28px;">You can view and reply to this request from your <a href="https://handcraftsglobal.com/account/custom-requests" style="color:#1B365D;">account dashboard</a>.</p>
 			<p>Warm regards,<br/>Global Handcrafts Team</p>
 		</div>
@@ -400,7 +373,6 @@ export async function sendMandapInquiryStatusUpdateEmail(params: MandapInquirySt
 		to: params.to,
 		subject: `Custom ${params.category.toLowerCase()} request ${statusLabel} — ${params.productName}`,
 		html,
-		attachments: params.attachment ? [{ filename: params.attachment.filename, content: params.attachment.content }] : undefined,
 	});
 }
 

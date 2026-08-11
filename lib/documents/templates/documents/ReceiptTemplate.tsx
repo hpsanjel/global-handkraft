@@ -28,7 +28,7 @@ export function ReceiptTemplate({ data }: ReceiptTemplateProps) {
 
 				<PriceSummary currency={order.currency} subtotal={order.subtotal} shippingCost={order.shippingCost} discountTotal={order.discountTotal} vatTotal={order.vatTotal} grandTotal={order.grandTotal} />
 
-				<PaymentInfo payment={payment} currency={order.currency} />
+				<PaymentInfo payment={payment} />
 
 				<View style={[sharedStyles.row, sharedStyles.sectionSpacing, { alignItems: "center" }]}>
 					<View>

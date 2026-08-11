@@ -6,5 +6,3 @@ export * from "./ReturnCardTemplate";
 export * from "./ShippingSummaryTemplate";
 export * from "./OrderSummaryTemplate";
 export * from "./GiftReceiptTemplate";
-export * from "./ProFormaInvoiceTemplate";
-export * from "./DepositReceiptTemplate";

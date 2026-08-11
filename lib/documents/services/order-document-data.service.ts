@@ -25,7 +25,7 @@ function resolveCountryName(countryCode: string): string {
 	return SHIPPING_COUNTRIES.find((country) => country.code === countryCode)?.name ?? countryCode;
 }
 
-export type PrismaOrderAddress = {
+type PrismaOrderAddress = {
 	fullName: string;
 	companyName: string | null;
 	phone: string;
@@ -38,8 +38,7 @@ export type PrismaOrderAddress = {
 	notes: string | null;
 };
 
-/** Exported for reuse by mandap-document-data.service.ts — both sources point at the same Address model. */
-export function mapAddress(address: PrismaOrderAddress): Address {
+function mapAddress(address: PrismaOrderAddress): Address {
 	return {
 		fullName: address.fullName,
 		companyName: address.companyName ?? undefined,

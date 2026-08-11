@@ -28,6 +28,4 @@ export interface ShippingInformation {
 	estimatedDelivery: string | null;
 	address: Address;
 	shipment: Shipment | null;
-	/** Per-order Incoterms override (e.g. "EXW", "FOB", "DAP"). Falls back to Business.defaultIncoterm when unset. */
-	incoterm?: string;
 }
