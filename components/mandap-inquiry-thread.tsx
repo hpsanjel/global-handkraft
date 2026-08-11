@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { RichTextarea } from "@/components/rich-textarea";
+import { FormattedText } from "@/components/formatted-text";
 
 export type MandapInquiryThreadMessage = {
 	id: string;
@@ -25,6 +27,7 @@ function formatTimestamp(value: string) {
 		month: "short",
 		hour: "numeric",
 		minute: "2-digit",
+		timeZone: "Europe/Oslo",
 	});
 }
 
@@ -119,7 +122,7 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 							<li key={msg.id} className="relative pl-5">
 								<span className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${msg.sender === "ADMIN" ? "bg-[#1B365D]" : "bg-[#4CAF50]"}`} />
 								<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-								<p className="mt-0.5 text-sm text-slate-700">{msg.message}</p>
+								<FormattedText text={msg.message} className="mt-0.5 text-sm text-slate-700" />
 								{msg.attachments && msg.attachments.length > 0 ? (
 									<div className="mt-2 flex flex-wrap gap-2">
 										{msg.attachments.map((url) => (
@@ -139,13 +142,13 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 			)}
 
 			<div className="mt-4 space-y-2">
-				<textarea
+				<RichTextarea
 					value={draft}
-					onChange={(event) => setDraft(event.target.value)}
+					onChange={setDraft}
 					disabled={isSending}
 					placeholder={viewerRole === "ADMIN" ? "Reply to this request..." : "Write a message..."}
-					rows={2}
-					className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100 disabled:opacity-60"
+					minRows={2}
+					showToolbar={viewerRole === "ADMIN"}
 				/>
 
 				{attachmentPreview ? (

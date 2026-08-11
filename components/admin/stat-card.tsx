@@ -5,6 +5,7 @@ const TONE_CLASSES = {
 	orange: "bg-stone-100 text-stone-600",
 	green: "bg-emerald-50 text-emerald-600",
 	red: "bg-red-50 text-red-600",
+	blue: "bg-sky-50 text-sky-600",
 } as const;
 
 export function AdminStatCard({ label, value, icon: Icon, tone = "neutral", hint }: { label: string; value: string; icon: LucideIcon; tone?: keyof typeof TONE_CLASSES; hint?: string }) {

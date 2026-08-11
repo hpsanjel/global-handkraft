@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { MandapInquiryStatusBadge } from "@/components/mandap-inquiry-status-badge";
+import { RichTextarea } from "@/components/rich-textarea";
 
 type Inquiry = {
 	id: string;
@@ -53,26 +55,11 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 		}
 	};
 
-	const getStatusBadge = (status: string) => {
-		switch (status) {
-			case "PENDING":
-				return <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-yellow-700">Pending Response</span>;
-			case "ACCEPTED":
-				return <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-green-700">Request Accepted</span>;
-			case "DECLINED":
-				return <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-red-700">Request Declined</span>;
-			case "PAID":
-				return <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-blue-700">Paid</span>;
-			default:
-				return null;
-		}
-	};
-
 	return (
 		<div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
 			<div className="flex items-center justify-between">
 				<h4 className="text-sm font-semibold text-slate-900">Custom Order Request Management</h4>
-				{getStatusBadge(paymentStatus)}
+				<MandapInquiryStatusBadge status={paymentStatus} />
 			</div>
 
 			<div className="mt-4 space-y-3">
@@ -92,7 +79,9 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 
 				<div>
 					<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Admin Note</label>
-					<textarea value={adminNote} onChange={(e) => setAdminNote(e.target.value)} rows={3} placeholder="Add a note for the customer..." className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+					<div className="mt-1">
+						<RichTextarea value={adminNote} onChange={setAdminNote} minRows={3} placeholder="Add a note for the customer..." showToolbar disabled={isSubmitting} />
+					</div>
 				</div>
 
 				{paymentStatus === "ACCEPTED" && (

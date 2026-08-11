@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AccountPageHeader } from "@/components/account/account-page-header";
 import { MandapInquiryThread, type MandapInquiryThreadMessage } from "@/components/mandap-inquiry-thread";
+import { FormattedText } from "@/components/formatted-text";
 
 type AccountMandapInquiry = {
 	id: string;
@@ -156,14 +157,14 @@ export default function AccountCustomRequestsPage() {
 								</div>
 							</div>
 
-							<p className="mt-3 text-sm leading-6 text-slate-600">{inquiry.description}</p>
+							<FormattedText text={inquiry.description} className="mt-3 text-sm leading-6 text-slate-600" />
 
 							{inquiry.quotedPrice && <p className="mt-2 text-sm font-medium text-slate-700">Quoted Price: NOK {inquiry.quotedPrice.toFixed(2)}</p>}
 
 							{inquiry.adminNote && (
 								<div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
 									<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Admin Note</p>
-									<p className="mt-1 text-sm text-slate-700">{inquiry.adminNote}</p>
+									<FormattedText text={inquiry.adminNote} className="mt-1 text-sm text-slate-700" />
 								</div>
 							)}
 
@@ -180,7 +181,7 @@ export default function AccountCustomRequestsPage() {
 							{inquiry.paymentStatus === "DECLINED" && (
 								<div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
 									<p className="text-sm font-medium text-red-800">This request has been declined.</p>
-									{inquiry.adminNote && <p className="mt-1 text-sm text-red-700">{inquiry.adminNote}</p>}
+									{inquiry.adminNote && <FormattedText text={inquiry.adminNote} className="mt-1 text-sm text-red-700" />}
 								</div>
 							)}
 

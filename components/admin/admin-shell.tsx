@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LayoutDashboard, Package, ShoppingCart, FileBarChart2, Tags, Ticket, Star, Quote, Settings, Menu, X, LogOut, Store, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileBarChart2, Tags, Ticket, Star, Quote, Settings, Menu, X, LogOut, Store, ChevronDown, Landmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
 	{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
 	{ href: "/admin/products", label: "Products", icon: Package },
 	{ href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+	{ href: "/admin/custom-requests", label: "Custom Orders", icon: Landmark },
 	{ href: "/admin/reports", label: "Reports", icon: FileBarChart2 },
 	{ href: "/admin/categories", label: "Categories", icon: Tags },
 	{ href: "/admin/coupons", label: "Coupons", icon: Ticket },
