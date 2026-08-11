@@ -91,11 +91,22 @@ function createEmptyAddon(): ProductAddon {
 	return { id: generateId("addon"), name: "New add-on", price: 0, description: "" };
 }
 
+type EditorTab = "details" | "images" | "variants" | "addons";
+
+const EDITOR_TABS: { id: EditorTab; label: string }[] = [
+	{ id: "details", label: "Details" },
+	{ id: "images", label: "Images" },
+	{ id: "variants", label: "Variants" },
+	{ id: "addons", label: "Add-ons" },
+];
+
 export default function AdminProductsPage() {
 	const [productsState, setProductsState] = useState<Product[]>([]);
 	const [categories, setCategories] = useState<CategorySummary[]>([]);
 	const [selectedProductId, setSelectedProductId] = useState<string>("");
 	const [draftProduct, setDraftProduct] = useState<Product | null>(null);
+	const [productSearch, setProductSearch] = useState("");
+	const [activeTab, setActiveTab] = useState<EditorTab>("details");
 	const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
 	const [saveFeedback, setSaveFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
@@ -140,6 +151,7 @@ export default function AdminProductsPage() {
 	const selectProduct = (productId: string) => {
 		setSelectedProductId(productId);
 		setImageUploadError(null);
+		setActiveTab("details");
 		slugEditedRef.current = false;
 		const nextProduct = productsState.find((product) => product.id === productId);
 		if (nextProduct) setDraftProduct(nextProduct);
@@ -354,6 +366,7 @@ export default function AdminProductsPage() {
 		setProductsState((current) => [nextProduct, ...current]);
 		setSelectedProductId(nextProduct.id);
 		setDraftProduct(nextProduct);
+		setActiveTab("details");
 	};
 
 	const deleteProduct = async (productId: string) => {
@@ -387,6 +400,7 @@ export default function AdminProductsPage() {
 
 	const currentProduct = draftProduct ?? productsState.find((product) => product.id === selectedProductId) ?? null;
 	const isClothCategory = (currentProduct?.category ?? "").toLowerCase().includes("cloth");
+	const visibleProducts = productSearch.trim() ? productsState.filter((product) => product.name.toLowerCase().includes(productSearch.trim().toLowerCase())) : productsState;
 
 	return (
 		<div className="space-y-6">
@@ -405,27 +419,36 @@ export default function AdminProductsPage() {
 				}
 			/>
 
-			<div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+			<div className="grid gap-6 xl:grid-cols-[0.6fr_1.4fr]">
 				<div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 					<div>
 						<h2 className="text-base font-semibold text-slate-900">Products</h2>
 						<p className="mt-1 text-sm text-slate-500">{productsState.length} products in the catalog</p>
 						<p className="mt-1 text-xs text-slate-400">Categories available: {categories.length}</p>
 					</div>
-					<div className="mt-6 space-y-2.5">
+
+					<input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products by name..." className="mt-4 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+
+					<div className="mt-4 max-h-[70vh] space-y-2.5 overflow-y-auto pr-0.5">
 						{isLoadingCatalog && <p className="text-sm text-slate-500">Loading products...</p>}
-						{productsState.map((product) => {
+						{!isLoadingCatalog && visibleProducts.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No products match &quot;{productSearch}&quot;.</p>}
+						{visibleProducts.map((product) => {
 							const isSelected = selectedProductId === product.id;
 							return (
-								<button key={product.id} type="button" onClick={() => selectProduct(product.id)} className={`w-full rounded-xl border p-4 text-left transition ${isSelected ? "border-[#1B365D] bg-[#1B365D] text-white" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}`}>
-									<div className="flex items-center justify-between gap-3">
-										<div>
-											<p className="font-semibold">{product.name}</p>
-											<p className={`mt-1 text-sm ${isSelected ? "text-slate-300" : "text-slate-500"}`}>{product.category}</p>
-										</div>
-										<div className={`text-sm ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
-											{product.variants.length} sizes • {product.addons.length} add-ons
-										</div>
+								<button key={product.id} type="button" onClick={() => selectProduct(product.id)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${isSelected ? "border-[#1B365D] bg-[#1B365D] text-white" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}`}>
+									{product.image ? (
+										// eslint-disable-next-line @next/next/no-img-element
+										<img src={product.image} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover" />
+									) : (
+										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border text-[10px] ${isSelected ? "border-white/30 text-slate-300" : "border-dashed border-slate-200 text-slate-400"}`}>No image</div>
+									)}
+									<div className="min-w-0 flex-1">
+										<p className="truncate font-semibold">{product.name}</p>
+										<p className={`mt-0.5 truncate text-sm ${isSelected ? "text-slate-300" : "text-slate-500"}`}>{product.category}</p>
+									</div>
+									<div className={`shrink-0 text-right text-xs ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+										<p>{product.variants.length} sizes</p>
+										<p>{product.addons.length} add-ons</p>
 									</div>
 								</button>
 							);
@@ -437,7 +460,7 @@ export default function AdminProductsPage() {
 					{!currentProduct ? (
 						<div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">Create a product to begin editing variants and add-ons.</div>
 					) : (
-						<div className="space-y-8">
+						<div className="space-y-6">
 							<div className="flex flex-wrap items-center justify-between gap-3">
 								<div>
 									<h2 className="text-base font-semibold text-slate-900">{currentProduct.name}</h2>
@@ -450,37 +473,79 @@ export default function AdminProductsPage() {
 
 							{saveFeedback && <div className={`rounded-xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{saveFeedback.message}</div>}
 
-								<div className="grid gap-4 md:grid-cols-2">
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-slate-700">Product name</span>
-										<input value={currentProduct.name} onChange={(e) => updateProductName(e.target.value)} className={FIELD_INPUT} />
-									</label>
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-slate-700">Slug</span>
-										<input value={currentProduct.slug} onChange={(e) => updateProductSlug(e.target.value)} className={FIELD_INPUT} />
-									</label>
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-slate-700">Category</span>
-										<select value={currentProduct.category} onChange={(e) => updateProductCategory(e.target.value)} className={FIELD_INPUT}>
-											{!categories.some((c) => c.name === currentProduct.category) && <option value={currentProduct.category}>{currentProduct.category}</option>}
-											{categories.map((category) => (
-												<option key={category.id} value={category.name}>
-													{category.name}
-												</option>
-											))}
-										</select>
-									</label>
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-slate-700">Size label</span>
-										<input value={currentProduct.sizeLabel ?? ""} onChange={(e) => updateDraftField("sizeLabel", e.target.value)} placeholder={DEFAULT_SIZE_LABEL} className={FIELD_INPUT} />
-									</label>
-									<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
-										<input type="checkbox" checked={currentProduct.featured} onChange={(e) => updateDraftField("featured", e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-										<span>Featured on storefront</span>
-									</label>
-								</div>
+							<div className="flex flex-wrap gap-1.5 border-b border-slate-200">
+								{EDITOR_TABS.map((tab) => {
+									const count = tab.id === "images" ? currentProduct.gallery.length : tab.id === "variants" ? currentProduct.variants.length : tab.id === "addons" ? currentProduct.addons.length : null;
+									const isActive = activeTab === tab.id;
+									return (
+										<button
+											key={tab.id}
+											type="button"
+											onClick={() => setActiveTab(tab.id)}
+											className={`-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${isActive ? "border-stone-600 text-stone-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+										>
+											{tab.label}
+											{count !== null ? <span className={`ml-1.5 text-xs font-normal ${isActive ? "text-stone-500" : "text-slate-400"}`}>({count})</span> : null}
+										</button>
+									);
+								})}
+							</div>
 
-								{/* Image uploads */}
+							{activeTab === "details" ? (
+								<div className="space-y-6">
+									<div className="grid gap-4 md:grid-cols-2">
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Product name</span>
+											<input value={currentProduct.name} onChange={(e) => updateProductName(e.target.value)} className={FIELD_INPUT} />
+										</label>
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Slug</span>
+											<input value={currentProduct.slug} onChange={(e) => updateProductSlug(e.target.value)} className={FIELD_INPUT} />
+										</label>
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Category</span>
+											<select value={currentProduct.category} onChange={(e) => updateProductCategory(e.target.value)} className={FIELD_INPUT}>
+												{!categories.some((c) => c.name === currentProduct.category) && <option value={currentProduct.category}>{currentProduct.category}</option>}
+												{categories.map((category) => (
+													<option key={category.id} value={category.name}>
+														{category.name}
+													</option>
+												))}
+											</select>
+										</label>
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Size label</span>
+											<input value={currentProduct.sizeLabel ?? ""} onChange={(e) => updateDraftField("sizeLabel", e.target.value)} placeholder={DEFAULT_SIZE_LABEL} className={FIELD_INPUT} />
+										</label>
+										<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
+											<input type="checkbox" checked={currentProduct.featured} onChange={(e) => updateDraftField("featured", e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+											<span>Featured on storefront</span>
+										</label>
+									</div>
+
+									<label className={`block ${FIELD_LABEL}`}>
+										<span className="font-medium text-slate-700">Short description</span>
+										<input value={currentProduct.shortDescription} onChange={(e) => updateDraftField("shortDescription", e.target.value)} className={FIELD_INPUT} />
+									</label>
+									<label className={`block ${FIELD_LABEL}`}>
+										<span className="font-medium text-slate-700">Description</span>
+										<textarea value={currentProduct.description} onChange={(e) => updateDraftField("description", e.target.value)} rows={4} className={FIELD_INPUT} />
+									</label>
+
+									<div className="grid gap-4 md:grid-cols-2">
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Dimensions</span>
+											<input value={currentProduct.dimensions ?? ""} onChange={(e) => updateDraftField("dimensions", e.target.value)} placeholder={DEFAULT_DIMENSIONS} className={FIELD_INPUT} />
+										</label>
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Weight</span>
+											<input value={currentProduct.weight ?? ""} onChange={(e) => updateDraftField("weight", e.target.value)} placeholder={DEFAULT_WEIGHT} className={FIELD_INPUT} />
+										</label>
+									</div>
+								</div>
+							) : null}
+
+							{activeTab === "images" ? (
 								<div className={FIELD_LABEL}>
 									<div className="flex items-center justify-between">
 										<span className="font-medium text-slate-700">Product images</span>
@@ -535,30 +600,12 @@ export default function AdminProductsPage() {
 
 									{imageUploadError && <p className="text-xs font-medium text-red-600">{imageUploadError}</p>}
 								</div>
+							) : null}
 
-								<label className={`block ${FIELD_LABEL}`}>
-									<span className="font-medium text-slate-700">Short description</span>
-									<input value={currentProduct.shortDescription} onChange={(e) => updateDraftField("shortDescription", e.target.value)} className={FIELD_INPUT} />
-								</label>
-								<label className={`block ${FIELD_LABEL}`}>
-									<span className="font-medium text-slate-700">Description</span>
-									<textarea value={currentProduct.description} onChange={(e) => updateDraftField("description", e.target.value)} rows={4} className={FIELD_INPUT} />
-								</label>
-
-								<div className="grid gap-4 md:grid-cols-2">
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-slate-700">Dimensions</span>
-										<input value={currentProduct.dimensions ?? ""} onChange={(e) => updateDraftField("dimensions", e.target.value)} placeholder={DEFAULT_DIMENSIONS} className={FIELD_INPUT} />
-									</label>
-									<label className={FIELD_LABEL}>
-										<span className="font-medium text-slate-700">Weight</span>
-										<input value={currentProduct.weight ?? ""} onChange={(e) => updateDraftField("weight", e.target.value)} placeholder={DEFAULT_WEIGHT} className={FIELD_INPUT} />
-									</label>
-								</div>
-
-								<div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+							{activeTab === "variants" ? (
+								<div>
 									<div className="flex items-center justify-between gap-3">
-										<h3 className="text-lg font-semibold text-slate-900">Variants</h3>
+										<p className="text-sm text-slate-500">Each row is a purchasable size/option with its own price and stock.</p>
 										<Button type="button" variant="secondary" onClick={addVariant}>
 											Add size
 										</Button>
@@ -572,6 +619,7 @@ export default function AdminProductsPage() {
 										</datalist>
 									)}
 									<div className="mt-4 space-y-3">
+										{currentProduct.variants.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No variants yet. Add a size to make this product purchasable.</p>}
 										{currentProduct.variants.map((variant) => (
 											<div key={variant.id} className="rounded-2xl border border-slate-200 bg-white p-4">
 												<div className="flex items-center justify-between gap-3">
@@ -620,15 +668,18 @@ export default function AdminProductsPage() {
 										))}
 									</div>
 								</div>
+							) : null}
 
-								<div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+							{activeTab === "addons" ? (
+								<div>
 									<div className="flex items-center justify-between gap-3">
-										<h3 className="text-lg font-semibold text-slate-900">Add-ons</h3>
+										<p className="text-sm text-slate-500">Optional extras customers can add to this product at checkout.</p>
 										<Button type="button" variant="secondary" onClick={addAddon}>
 											Add add-on
 										</Button>
 									</div>
 									<div className="mt-4 space-y-3">
+										{currentProduct.addons.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No add-ons yet.</p>}
 										{currentProduct.addons.map((addon) => (
 											<div key={addon.id} className="rounded-2xl border border-slate-200 bg-white p-4">
 												<div className="flex items-center justify-between gap-3">
@@ -655,16 +706,17 @@ export default function AdminProductsPage() {
 										))}
 									</div>
 								</div>
+							) : null}
 
-								<div className="flex justify-end">
-									<Button variant="primary" onClick={saveProduct} disabled={isLoadingCatalog || isSaving || isUploadingImages}>
-										{isSaving ? "Saving..." : "Save product"}
-									</Button>
-								</div>
+							<div className="flex justify-end border-t border-slate-100 pt-6">
+								<Button variant="primary" onClick={saveProduct} disabled={isLoadingCatalog || isSaving || isUploadingImages}>
+									{isSaving ? "Saving..." : "Save product"}
+								</Button>
 							</div>
-						)}
-					</div>
+						</div>
+					)}
 				</div>
 			</div>
+		</div>
 	);
 }
