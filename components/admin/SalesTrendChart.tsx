@@ -3,13 +3,11 @@
 import { useState } from "react";
 import type { SalesReportTrendBucket } from "@/lib/reports/sales-report.service";
 
-// Slots 1 & 2 of the validated categorical palette (node scripts/validate_palette.js
-// "#2a78d6,#eb6834" --mode light --surface "#ffffff" — all checks pass: CVD ΔE 24.7,
-// normal-vision ΔE 33.6, both clear >=3:1 contrast). The app's own navy brand color
+// Slot 1 of the validated categorical palette (node scripts/validate_palette.js
+// "#2a78d6" --mode light --surface "#ffffff"). The app's own navy brand color
 // fails the chart-mark lightness/chroma bands (it's a chrome/text color, not a mark
-// hue), so this reuses the reference palette's chart slots instead of forcing it.
+// hue), so this reuses the reference palette's chart slot instead of forcing it.
 const CATALOG_COLOR = "#2a78d6";
-const CUSTOM_COLOR = "#eb6834";
 
 const GRIDLINE_COLOR = "#e2e8f0"; // matches border-slate-200, used everywhere else in the admin UI
 const AXIS_TEXT_COLOR = "#94a3b8"; // slate-400
@@ -48,7 +46,6 @@ const LEFT_PADDING = 44;
 const RIGHT_PADDING = 12;
 const BAND_WIDTH = 48;
 const BAR_WIDTH = 20;
-const SEGMENT_GAP = 2;
 
 export function SalesTrendChart({ trend, currency }: Props) {
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -60,7 +57,7 @@ export function SalesTrendChart({ trend, currency }: Props) {
 	const plotWidth = trend.length * BAND_WIDTH;
 	const width = LEFT_PADDING + plotWidth + RIGHT_PADDING;
 	const plotHeight = CHART_HEIGHT - TOP_PADDING - BOTTOM_PADDING;
-	const maxTotal = niceMax(Math.max(...trend.map((bucket) => bucket.catalogRevenue + bucket.customRevenue)));
+	const maxTotal = niceMax(Math.max(...trend.map((bucket) => bucket.catalogRevenue)));
 	const yTicks = [0, maxTotal / 2, maxTotal];
 	const labelEvery = Math.max(1, Math.ceil(trend.length / 10));
 
@@ -74,10 +71,6 @@ export function SalesTrendChart({ trend, currency }: Props) {
 				<span className="flex items-center gap-1.5">
 					<span aria-hidden className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: CATALOG_COLOR }} />
 					Catalog orders
-				</span>
-				<span className="flex items-center gap-1.5">
-					<span aria-hidden className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: CUSTOM_COLOR }} />
-					Custom orders (deposits + balances)
 				</span>
 			</div>
 
@@ -99,23 +92,13 @@ export function SalesTrendChart({ trend, currency }: Props) {
 						const bandX = LEFT_PADDING + index * BAND_WIDTH;
 						const barX = bandX + (BAND_WIDTH - BAR_WIDTH) / 2;
 						const catalogHeight = maxTotal === 0 ? 0 : (bucket.catalogRevenue / maxTotal) * plotHeight;
-						const customHeight = maxTotal === 0 ? 0 : (bucket.customRevenue / maxTotal) * plotHeight;
 						const baseline = TOP_PADDING + plotHeight;
 						const catalogTop = baseline - catalogHeight;
-						const hasCustomOnTop = bucket.customRevenue > 0;
-						const customTop = catalogTop - (hasCustomOnTop ? SEGMENT_GAP + customHeight : 0);
 						const isHovered = activeIndex === index;
 
 						return (
 							<g key={bucket.bucketStart} opacity={activeIndex === null || isHovered ? 1 : 0.55}>
-								{bucket.catalogRevenue > 0 ? (
-									hasCustomOnTop ? (
-										<rect x={barX} y={catalogTop} width={BAR_WIDTH} height={catalogHeight} fill={CATALOG_COLOR} />
-									) : (
-										<path d={roundedTopRectPath(barX, catalogTop, BAR_WIDTH, catalogHeight, 4)} fill={CATALOG_COLOR} />
-									)
-								) : null}
-								{hasCustomOnTop ? <path d={roundedTopRectPath(barX, customTop, BAR_WIDTH, customHeight, 4)} fill={CUSTOM_COLOR} /> : null}
+								{bucket.catalogRevenue > 0 ? <path d={roundedTopRectPath(barX, catalogTop, BAR_WIDTH, catalogHeight, 4)} fill={CATALOG_COLOR} /> : null}
 
 								{index % labelEvery === 0 ? (
 									<text x={bandX + BAND_WIDTH / 2} y={CHART_HEIGHT - 8} textAnchor="middle" fontSize={10} fill={AXIS_TEXT_COLOR}>
@@ -131,7 +114,7 @@ export function SalesTrendChart({ trend, currency }: Props) {
 									height={plotHeight}
 									fill="transparent"
 									tabIndex={0}
-									aria-label={`${bucket.label}: catalog ${formatCompact(bucket.catalogRevenue)}, custom ${formatCompact(bucket.customRevenue)}`}
+									aria-label={`${bucket.label}: catalog ${formatCompact(bucket.catalogRevenue)}`}
 									onMouseEnter={() => setActiveIndex(index)}
 									onMouseLeave={() => setActiveIndex(null)}
 									onFocus={() => setActiveIndex(index)}
@@ -154,12 +137,6 @@ export function SalesTrendChart({ trend, currency }: Props) {
 							<span className="text-slate-500">Catalog</span>
 							<span className="font-semibold text-slate-900">
 								{currency} {active.catalogRevenue.toFixed(0)}
-							</span>
-						</p>
-						<p className="flex items-center justify-between gap-3">
-							<span className="text-slate-500">Custom</span>
-							<span className="font-semibold text-slate-900">
-								{currency} {active.customRevenue.toFixed(0)}
 							</span>
 						</p>
 					</div>

@@ -9,12 +9,6 @@ export interface SalesReportSummary {
 	refundedAmount: number;
 	refundedCount: number;
 	cancelledCount: number;
-	customDepositsReceived: number;
-	customDepositsCount: number;
-	customBalanceReceived: number;
-	customBalanceCount: number;
-	customTotalReceived: number;
-	grandTotalReceived: number;
 }
 
 export interface SalesReportCountryBreakdown {
@@ -27,12 +21,11 @@ export interface SalesReportTrendBucket {
 	bucketStart: string;
 	label: string;
 	catalogRevenue: number;
-	customRevenue: number;
 }
 
 export interface SalesReportLineItem {
 	date: string;
-	type: "Catalog Order" | "Custom Deposit" | "Custom Balance";
+	type: "Catalog Order";
 	reference: string;
 	detail: string;
 	country: string;
@@ -80,33 +73,22 @@ function bucketFor(date: Date, granularity: ReportGranularity): { key: string; s
 }
 
 /**
- * Aggregates the two independent revenue sources in this app into one report:
- * `Order` rows (only ever created once Stripe payment succeeds, so every row
- * in range is real received money) and `MandapInquiryTransaction` rows (the
- * append-only ledger of custom-order deposit/balance charges — the *transaction*
- * table, not MandapInquiry.amountPaid, since only paidAt gives period-correct
- * "received within this window" figures rather than a running total).
+ * Reports on `Order` rows — only ever created once Stripe payment succeeds,
+ * so every row in range is real received money.
  *
  * VAT is deliberately not computed anywhere here — no tax is calculated at
  * checkout in this app today (no Stripe automatic_tax, unused VATRate model),
- * so a VAT figure here would be fabricated. The report surfaces revenue,
- * shipping, and advance-payment figures only.
+ * so a VAT figure here would be fabricated. The report surfaces revenue and
+ * shipping figures only.
  */
 export async function getSalesReport({ from, to }: { from: Date; to: Date }): Promise<SalesReport> {
 	const granularity = resolveGranularity(from, to);
 
-	const [orders, transactions] = await Promise.all([
-		prisma.order.findMany({
-			where: { createdAt: { gte: from, lt: to } },
-			select: { orderNumber: true, createdAt: true, subtotal: true, shipping: true, total: true, status: true, shippingCountry: true, currency: true },
-			orderBy: { createdAt: "asc" },
-		}),
-		prisma.mandapInquiryTransaction.findMany({
-			where: { status: "PAID", paidAt: { gte: from, lt: to } },
-			include: { inquiry: { select: { productName: true, referenceNumber: true, address: { select: { country: true } } } } },
-			orderBy: { paidAt: "asc" },
-		}),
-	]);
+	const orders = await prisma.order.findMany({
+		where: { createdAt: { gte: from, lt: to } },
+		select: { orderNumber: true, createdAt: true, subtotal: true, shipping: true, total: true, status: true, shippingCountry: true, currency: true },
+		orderBy: { createdAt: "asc" },
+	});
 
 	const summary: SalesReportSummary = {
 		catalogRevenue: 0,
@@ -115,12 +97,6 @@ export async function getSalesReport({ from, to }: { from: Date; to: Date }): Pr
 		refundedAmount: 0,
 		refundedCount: 0,
 		cancelledCount: 0,
-		customDepositsReceived: 0,
-		customDepositsCount: 0,
-		customBalanceReceived: 0,
-		customBalanceCount: 0,
-		customTotalReceived: 0,
-		grandTotalReceived: 0,
 	};
 
 	const countryMap = new Map<string, SalesReportCountryBreakdown>();
@@ -134,10 +110,10 @@ export async function getSalesReport({ from, to }: { from: Date; to: Date }): Pr
 		countryMap.set(country, existing);
 	}
 
-	function addToTrend(date: Date, field: "catalogRevenue" | "customRevenue", amount: number) {
+	function addToTrend(date: Date, amount: number) {
 		const { key, start, label } = bucketFor(date, granularity);
-		const bucket = trendMap.get(key) ?? { bucketStart: start.toISOString(), label, catalogRevenue: 0, customRevenue: 0 };
-		bucket[field] += amount;
+		const bucket = trendMap.get(key) ?? { bucketStart: start.toISOString(), label, catalogRevenue: 0 };
+		bucket.catalogRevenue += amount;
 		trendMap.set(key, bucket);
 	}
 
@@ -152,7 +128,7 @@ export async function getSalesReport({ from, to }: { from: Date; to: Date }): Pr
 			summary.catalogOrderCount += 1;
 			summary.catalogShipping += order.shipping;
 			addToCountry(order.shippingCountry || "Unknown", order.total);
-			addToTrend(order.createdAt, "catalogRevenue", order.total);
+			addToTrend(order.createdAt, order.total);
 		}
 
 		lineItems.push({
@@ -165,33 +141,6 @@ export async function getSalesReport({ from, to }: { from: Date; to: Date }): Pr
 			currency: order.currency,
 		});
 	}
-
-	for (const txn of transactions) {
-		if (txn.kind === "DEPOSIT") {
-			summary.customDepositsReceived += txn.amount;
-			summary.customDepositsCount += 1;
-		} else {
-			summary.customBalanceReceived += txn.amount;
-			summary.customBalanceCount += 1;
-		}
-		summary.customTotalReceived += txn.amount;
-
-		const country = txn.inquiry.address?.country || "Unknown";
-		addToCountry(country, txn.amount);
-		if (txn.paidAt) addToTrend(txn.paidAt, "customRevenue", txn.amount);
-
-		lineItems.push({
-			date: (txn.paidAt ?? txn.createdAt).toISOString(),
-			type: txn.kind === "DEPOSIT" ? "Custom Deposit" : "Custom Balance",
-			reference: txn.inquiry.referenceNumber ?? txn.inquiryId,
-			detail: txn.inquiry.productName,
-			country,
-			amount: txn.amount,
-			currency: "NOK",
-		});
-	}
-
-	summary.grandTotalReceived = summary.catalogRevenue + summary.customTotalReceived;
 
 	const byCountry = Array.from(countryMap.values()).sort((a, b) => b.revenue - a.revenue);
 	const trend = Array.from(trendMap.values()).sort((a, b) => a.bucketStart.localeCompare(b.bucketStart));

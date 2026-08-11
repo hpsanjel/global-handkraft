@@ -26,7 +26,7 @@ function parseRange(url: URL): { from: Date; to: Date } | null {
 	return { from, to: toEndOfDay };
 }
 
-/** GET /api/admin/reports/sales?from=&to= — JSON sales/shipping/advance-payment report for the admin Reports page. */
+/** GET /api/admin/reports/sales?from=&to= — JSON sales/shipping report for the admin Reports page. */
 export async function GET(request: Request) {
 	try {
 		const supabase = await createClient();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Package, Wallet, Coins, TrendingUp, RotateCcw } from "lucide-react";
+import { Download, Package, RotateCcw } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { AdminStatCard } from "@/components/admin/stat-card";
 import { SalesTrendChart } from "@/components/admin/SalesTrendChart";
@@ -90,9 +90,6 @@ function ReportResults({ from, to }: { from: Date; to: Date }) {
 		<div className={`space-y-6 transition-opacity ${loading ? "opacity-60" : "opacity-100"}`}>
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<AdminStatCard label="Catalog revenue" value={summary ? formatMoney(summary.catalogRevenue) : "—"} icon={Package} hint={summary ? `${summary.catalogOrderCount} orders` : undefined} />
-				<AdminStatCard label="Custom deposits received" value={summary ? formatMoney(summary.customDepositsReceived) : "—"} icon={Wallet} tone="orange" hint={summary ? `${summary.customDepositsCount} payments` : undefined} />
-				<AdminStatCard label="Custom balance received" value={summary ? formatMoney(summary.customBalanceReceived) : "—"} icon={Coins} tone="orange" hint={summary ? `${summary.customBalanceCount} payments` : undefined} />
-				<AdminStatCard label="Grand total received" value={summary ? formatMoney(summary.grandTotalReceived) : "—"} icon={TrendingUp} tone="green" hint="Catalog + custom" />
 			</div>
 
 			{summary && (summary.refundedCount > 0 || summary.cancelledCount > 0) ? (
@@ -153,7 +150,7 @@ export default function AdminReportsPage() {
 		<div className="space-y-6">
 			<AdminPageHeader
 				title="Reports"
-				description="Sales, shipping, and advance-payment revenue for the selected period. VAT is not included — no tax is currently calculated at checkout."
+				description="Sales and shipping revenue for the selected period. VAT is not included — no tax is currently calculated at checkout."
 				actions={
 					<a href={exportUrl} className="inline-flex items-center gap-2 rounded-lg bg-[#1B365D] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#152a4a]">
 						<Download className="h-4 w-4" />
