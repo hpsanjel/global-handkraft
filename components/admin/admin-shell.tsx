@@ -8,15 +8,15 @@ import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
 	{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+	{ href: "/admin/categories", label: "Categories", icon: Tags },
 	{ href: "/admin/products", label: "Products", icon: Package },
 	{ href: "/admin/orders", label: "Orders", icon: ShoppingCart },
 	{ href: "/admin/custom-requests", label: "Custom Orders", icon: Landmark },
-	{ href: "/admin/reports", label: "Reports", icon: FileBarChart2 },
-	{ href: "/admin/categories", label: "Categories", icon: Tags },
 	{ href: "/admin/coupons", label: "Coupons", icon: Ticket },
 	{ href: "/admin/reviews", label: "Reviews", icon: Star },
 	{ href: "/admin/testimonials", label: "Testimonials", icon: Quote },
-	{ href: "/admin/settings", label: "Settings", icon: Settings },
+	{ href: "/admin/reports", label: "Reports", icon: FileBarChart2 },
+	// { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;
 
 function isActive(pathname: string, href: string, exact?: boolean) {

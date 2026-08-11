@@ -29,25 +29,12 @@ export default async function AdminPage() {
 
 	return (
 		<div className="space-y-6">
-			<AdminPageHeader
-				title="Dashboard"
-				description="An overview of your store's inventory and recent activity."
-				actions={
-					<>
-						<Button asChild variant="primary">
-							<Link href="/admin/products">Manage products</Link>
-						</Button>
-						<Button asChild variant="secondary">
-							<Link href="/admin/categories">Manage categories</Link>
-						</Button>
-					</>
-				}
-			/>
+			<AdminPageHeader title="Dashboard" description="An overview of your store's inventory and recent activity." />
 
 			<AdminLiveStats />
 
 			<div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-				<div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+				<div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
 					<div className="flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
 						<div>
 							<h2 className="text-base font-semibold text-slate-900">Recent orders</h2>
@@ -100,7 +87,7 @@ export default async function AdminPage() {
 					)}
 				</div>
 
-				<div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+				<div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
 					<h2 className="px-2 pt-2 text-base font-semibold text-slate-900">Quick actions</h2>
 					<div className="mt-3 space-y-1">
 						{QUICK_ACTIONS.map((action) => {

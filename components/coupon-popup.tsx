@@ -143,8 +143,8 @@ export function CouponPopup() {
 											</>
 										) : (
 											<>
-												<Copy className="h-3.5 w-3.5" />
 												{coupon.code}
+												<Copy className="h-3.5 w-3.5" />
 											</>
 										)}
 									</button>
@@ -154,7 +154,6 @@ export function CouponPopup() {
 										Min. purchase NOK {coupon.minPurchaseAmount} <PriceEstimate amountNok={coupon.minPurchaseAmount} className="text-[11px] text-stone-500" />
 									</p>
 								) : null}
-								<p className="mt-2 text-right text-[11px] text-stone-700">Use this Coupon Code</p>
 							</div>
 						);
 					})}
