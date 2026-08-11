@@ -69,6 +69,7 @@ export interface AdminOrder {
 	email: string;
 	address: string;
 	item: string;
+	itemImage: string | null;
 	variant: string;
 	status: string;
 	amount: number;
@@ -108,6 +109,7 @@ export async function getRecentOrders(limit = 10): Promise<AdminOrder[]> {
 			email: order.address.email || "No email provided",
 			address: address || "Address not provided",
 			item: firstItem?.product.name || "Handcrafted product",
+			itemImage: firstItem?.product.image || null,
 			variant: variantLabel(firstItem?.variant.name, firstItem?.variant.color) || "Selected option",
 			status: order.status,
 			amount: order.total,

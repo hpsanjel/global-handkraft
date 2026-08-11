@@ -73,8 +73,9 @@ export default async function AdminPage() {
 								</thead>
 								<tbody className="divide-y divide-slate-100">
 									{recentOrders.map((order) => (
-										<Link key={order.id} href={`/admin/orders#order-${order.orderId}`} className="table-row cursor-pointer transition hover:bg-slate-50" title={`Open order ${order.id} in Orders`}>
+										<tr key={order.id} className="relative transition hover:bg-slate-50">
 											<td className="whitespace-nowrap px-6 py-3.5">
+												<Link href={`/admin/orders#order-${order.orderId}`} className="absolute inset-0" title={`Open order ${order.id} in Orders`} aria-label={`Open order ${order.id} in Orders`} />
 												<p className="font-medium text-slate-900">{order.customer}</p>
 												<p className="text-xs text-slate-500">{order.id}</p>
 											</td>
@@ -89,7 +90,7 @@ export default async function AdminPage() {
 											<td className="whitespace-nowrap px-3 py-3.5 text-right">
 												<ChevronRight className="ml-auto h-4 w-4 text-slate-300" />
 											</td>
-										</Link>
+										</tr>
 									))}
 								</tbody>
 							</table>

@@ -44,7 +44,7 @@ export function OrderStatusControl({ orderId, currentStatus }: Props) {
 	};
 
 	return (
-		<div className="flex flex-col items-start gap-1 sm:items-end">
+		<div className="flex flex-col items-start gap-1">
 			<select
 				value={status}
 				disabled={isSaving}
