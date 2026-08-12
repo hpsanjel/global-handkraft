@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 const TONE_CLASSES = {
 	neutral: "bg-slate-100 text-slate-600",
@@ -9,7 +10,7 @@ const TONE_CLASSES = {
 	blue: "bg-sky-50 text-sky-600",
 } as const;
 
-export function AdminStatCard({ label, value, icon: Icon, tone = "neutral", hint, href }: { label: string; value: string; icon: LucideIcon; tone?: keyof typeof TONE_CLASSES; hint?: string; href?: string }) {
+export function AdminStatCard({ label, value, icon: Icon, tone = "neutral", hint, href }: { label: string; value: string; icon: LucideIcon; tone?: keyof typeof TONE_CLASSES; hint?: ReactNode; href?: string }) {
 	const card = (
 		<div className={`rounded-2xl border bg-white p-5 shadow-sm transition ${href ? "cursor-pointer hover:border-slate-300 hover:shadow-md" : "border-slate-200"}`}>
 			<div className="flex items-start justify-between gap-3">
