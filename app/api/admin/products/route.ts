@@ -17,6 +17,7 @@ type ProductRequestPayload = {
 	gallery?: string[];
 	galleryColors?: string[];
 	featured?: boolean;
+	active?: boolean;
 	rating?: number;
 	reviewCount?: number;
 	dimensions?: string;
@@ -238,7 +239,7 @@ export async function POST(request: Request) {
 				gallery: body.gallery ?? [body.image],
 				galleryColors: normalizeGalleryColors(body.gallery ?? [body.image], body.galleryColors),
 				featured: Boolean(body.featured),
-				active: true,
+				active: body.active === false ? false : true,
 				rating: Number(body.rating ?? 0),
 				reviewCount: Number(body.reviewCount ?? 0),
 				dimensions: body.dimensions?.trim() || null,
@@ -317,6 +318,7 @@ export async function PUT(request: Request) {
 					gallery: body.gallery ?? [body.image],
 					galleryColors: normalizeGalleryColors(body.gallery ?? [body.image], body.galleryColors),
 					featured: Boolean(body.featured),
+					active: body.active === false ? false : true,
 					rating: Number(body.rating ?? 0),
 					reviewCount: Number(body.reviewCount ?? 0),
 					dimensions: body.dimensions?.trim() || null,

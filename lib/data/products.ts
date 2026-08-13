@@ -15,6 +15,7 @@ const baseProducts: Product[] = [
 		rating: 4.8,
 		reviewCount: 84,
 		featured: true,
+		active: true,
 		shippingInfo: "Norway: 3-5 days. Sweden/Denmark: 4-7 days. Finland/Germany: 5-10 days.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -39,6 +40,7 @@ const baseProducts: Product[] = [
 		rating: 4.9,
 		reviewCount: 112,
 		featured: true,
+		active: true,
 		shippingInfo: "Delivered in 4-8 days across Scandinavia and 5-10 days in Germany.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -63,6 +65,7 @@ const baseProducts: Product[] = [
 		rating: 5,
 		reviewCount: 63,
 		featured: true,
+		active: true,
 		shippingInfo: "White-glove pallet shipping with tracking. Delivery 5-10 business days.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -87,6 +90,7 @@ const baseProducts: Product[] = [
 		rating: 4.7,
 		reviewCount: 57,
 		featured: false,
+		active: true,
 		shippingInfo: "Ships in reinforced packaging with mounting template. Delivery in 3-7 days.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -108,6 +112,7 @@ const baseProducts: Product[] = [
 		rating: 4.9,
 		reviewCount: 91,
 		featured: true,
+		active: true,
 		shippingInfo: "Carbon-aware shipping partners across Norway and EU.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -129,6 +134,7 @@ const baseProducts: Product[] = [
 		rating: 4.8,
 		reviewCount: 66,
 		featured: false,
+		active: true,
 		shippingInfo: "Tracked shipping with moisture-control wrapping for long-distance delivery.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -150,6 +156,7 @@ const baseProducts: Product[] = [
 		rating: 4.9,
 		reviewCount: 41,
 		featured: true,
+		active: true,
 		shippingInfo: "Production 3-6 weeks. Delivery 5-10 days after completion.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -171,6 +178,7 @@ const baseProducts: Product[] = [
 		rating: 4.7,
 		reviewCount: 38,
 		featured: false,
+		active: true,
 		shippingInfo: "Ships in 3-6 days across Norway and EU.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -192,6 +200,7 @@ const baseProducts: Product[] = [
 		rating: 4.8,
 		reviewCount: 49,
 		featured: true,
+		active: true,
 		shippingInfo: "Gift-ready packaging. Delivery in 4-8 business days.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -213,6 +222,7 @@ const baseProducts: Product[] = [
 		rating: 4.6,
 		reviewCount: 35,
 		featured: false,
+		active: true,
 		shippingInfo: "Ships within 2-4 business days.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -234,6 +244,7 @@ const baseProducts: Product[] = [
 		rating: 4.8,
 		reviewCount: 77,
 		featured: true,
+		active: true,
 		shippingInfo: "Ships in protective anti-tarnish packing. Delivery 3-7 days.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -255,6 +266,7 @@ const baseProducts: Product[] = [
 		rating: 4.7,
 		reviewCount: 52,
 		featured: false,
+		active: true,
 		shippingInfo: "Ships within 2-5 days with anti-dent packaging.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -276,6 +288,7 @@ const baseProducts: Product[] = [
 		rating: 4.9,
 		reviewCount: 68,
 		featured: true,
+		active: true,
 		shippingInfo: "Ships in 1-3 days. Secure pouch packaging.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -297,6 +310,7 @@ const baseProducts: Product[] = [
 		rating: 4.8,
 		reviewCount: 27,
 		featured: false,
+		active: true,
 		shippingInfo: "Flat-pack shipping with guided assembly support. Delivery in 5-10 days.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
@@ -318,6 +332,7 @@ const baseProducts: Product[] = [
 		rating: 4.7,
 		reviewCount: 19,
 		featured: true,
+		active: true,
 		shippingInfo: "Freight shipping with setup coordination available.",
 		returnPolicy: DEFAULT_RETURN_POLICY,
 		variants: [
