@@ -19,7 +19,7 @@ The complete project scope, brand guidelines, product universe, and implementati
 - Dynamic Open Graph image generation, `sitemap.xml`/`robots.txt`, newsletter signup, cookie/GDPR notice, WhatsApp contact button
 
 **Checkout & Payments**
-- Stripe Checkout with webhook-driven order creation
+- Stripe Checkout and Vipps (ePayment API) with webhook-driven order creation — buyer chooses either at checkout. Vipps requires `VIPPS_*` credentials to be configured (see Getting Started) before it's selectable.
 - Live shipping rate quotes via Bring (Posten Norge) and PostNord integrations, with admin-configurable shipping zones and free-shipping thresholds
 - Per-country VAT rates
 - Coupon engine: percentage discounts, free shipping, expiry, minimum cart-value requirement, and per-customer/global usage caps
@@ -68,7 +68,7 @@ The complete project scope, brand guidelines, product universe, and implementati
 - Tailwind CSS
 - Prisma ORM + PostgreSQL (Supabase-hosted)
 - Supabase Authentication + Supabase Storage
-- Stripe Checkout
+- Stripe Checkout, Vipps ePayment API
 - Resend (transactional email)
 - Bring and PostNord shipping APIs
 - `@react-pdf/renderer`, `bwip-js` (barcodes), `qrcode` (QR codes) for document generation
@@ -76,7 +76,7 @@ The complete project scope, brand guidelines, product universe, and implementati
 ## Planned Additions
 
 - shadcn/ui, Framer Motion, Zustand, TanStack Query, React Hook Form + Zod are installed but not yet integrated across the UI
-- Additional payment methods: Vipps, Klarna, PayPal, Apple Pay, Google Pay
+- Additional payment methods: Klarna, PayPal, Apple Pay, Google Pay
 - Wishlist and multilingual support
 
 ## Getting Started
@@ -90,6 +90,16 @@ The complete project scope, brand guidelines, product universe, and implementati
    cp .env.example .env.local
    ```
 3. Configure PostgreSQL (Supabase) and service credentials (Stripe, Resend, Supabase, Bring/PostNord).
+   For Vipps, set these in `.env.local` (test values from the [Vipps MobilePay developer portal](https://developer.vippsmobilepay.com/)):
+   ```bash
+   VIPPS_CLIENT_ID=
+   VIPPS_CLIENT_SECRET=
+   VIPPS_SUBSCRIPTION_KEY=
+   VIPPS_MERCHANT_SERIAL_NUMBER=
+   VIPPS_WEBHOOK_SECRET=       # issued when registering the webhook, see below
+   VIPPS_ENV=test              # "test" or "prod" — defaults to test if unset
+   ```
+   The Vipps payment option is selectable at checkout regardless, but requests fail with a clear "Vipps is not configured yet" error until these are set. After setting them, register the webhook once (`POST /webhooks/v1/webhooks` against the Vipps API, pointing at `<site-url>/api/checkout/webhook/vipps` for the `epayments.payment.captured.v1` event) to obtain `VIPPS_WEBHOOK_SECRET`.
 4. Configure admin email allow-list for dashboard access.
    ```bash
    ADMIN_EMAILS=admin@globalhandcrafts.no,owner@globalhandcrafts.no

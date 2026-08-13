@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
-import { sendOrderConfirmationEmail } from "@/lib/email";
-import { generateDocument } from "@/lib/documents";
-import { BUSINESS } from "@/lib/documents/business-config";
 import { variantLabel } from "@/lib/product-transform";
+import { fulfillOrder, type FulfillOrderItemInput } from "@/lib/order-fulfillment";
 
 export const runtime = "nodejs";
 
@@ -67,14 +65,6 @@ export async function POST(request: Request) {
 
 			// Handle regular order payment
 			const orderNumber = `ORD-${session.id.slice(-8).toUpperCase()}`;
-			const existingOrder = await prisma.order.findUnique({
-				where: { orderNumber },
-				select: { id: true },
-			});
-
-			if (existingOrder) {
-				return NextResponse.json({ received: true, orderId: existingOrder.id });
-			}
 
 			const itemsMetadata = session.metadata?.items || "";
 			const parsedItems = itemsMetadata
@@ -85,7 +75,7 @@ export async function POST(request: Request) {
 					return { productId, variantId, quantity: Number(quantity || 0), addonIds: addonIds ? addonIds.split("+").filter(Boolean) : [] };
 				});
 
-			const pricedItems = await Promise.all(
+			const items: FulfillOrderItemInput[] = await Promise.all(
 				parsedItems.map(async (item) => {
 					const variant = await prisma.variant.findUnique({
 						where: { id: item.variantId },
@@ -116,97 +106,29 @@ export async function POST(request: Request) {
 				}),
 			);
 
-			const order = await prisma.$transaction(async (tx) => {
-				const address = await tx.address.create({
-					data: {
-						fullName: session.customer_details?.name || "Guest",
-						email: session.customer_details?.email || session.customer_email || "",
-						phone: session.customer_details?.phone || "",
-						country: session.customer_details?.address?.country || "",
-						address: [session.customer_details?.address?.line1, session.customer_details?.address?.line2].filter(Boolean).join(", "),
-						postalCode: session.customer_details?.address?.postal_code || "",
-						city: session.customer_details?.address?.city || "",
-					},
-				});
-
-				const newOrder = await tx.order.create({
-					data: {
-						orderNumber,
-						status: "PAID",
-						subtotal: (session.amount_subtotal ?? 0) / 100,
-						shipping: ((session.total_details?.amount_shipping ?? 0) || 0) / 100,
-						total: (session.amount_total ?? 0) / 100,
-						currency: (session.currency || "nok").toUpperCase(),
-						paymentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
-						shippingCountry: session.customer_details?.address?.country || "",
-						shippingMethod,
-						shippingProductId,
-						addressId: address.id,
-						items: {
-							create: pricedItems.map(({ name, variantName, ...orderItem }) => orderItem),
-						},
-					},
-				});
-
-				await tx.orderStatusEvent.create({
-					data: { orderId: newOrder.id, status: "PAID" },
-				});
-
-				await Promise.all(
-					pricedItems.map((item) =>
-						tx.variant.update({
-							where: { id: item.variantId },
-							data: { stock: { decrement: item.quantity } },
-						}),
-					),
-				);
-
-				return newOrder;
+			const { order } = await fulfillOrder({
+				orderNumber,
+				paymentMethod: "STRIPE",
+				paymentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
+				customer: {
+					fullName: session.customer_details?.name || "Guest",
+					email: session.customer_details?.email || session.customer_email || "",
+					phone: session.customer_details?.phone || "",
+					country: session.customer_details?.address?.country || "",
+					address: [session.customer_details?.address?.line1, session.customer_details?.address?.line2].filter(Boolean).join(", "),
+					postalCode: session.customer_details?.address?.postal_code || "",
+					city: session.customer_details?.address?.city || "",
+				},
+				amounts: {
+					subtotal: (session.amount_subtotal ?? 0) / 100,
+					shipping: ((session.total_details?.amount_shipping ?? 0) || 0) / 100,
+					total: (session.amount_total ?? 0) / 100,
+					currency: (session.currency || "nok").toUpperCase(),
+				},
+				items,
+				shippingMethod,
+				shippingProductId,
 			});
-
-			let receiptAttachment: { filename: string; content: Buffer } | undefined;
-			try {
-				const receipt = await generateDocument({ orderId: order.id, type: "RECEIPT", format: "buffer" });
-				receiptAttachment = { filename: receipt.fileName, content: receipt.data };
-			} catch (receiptError) {
-				// A failed PDF should never block order confirmation — the customer
-				// still gets the HTML email either way, just without the attachment.
-				console.error("Failed to generate receipt PDF for order confirmation email:", receiptError);
-			}
-
-			const isPickupOrder = typeof shippingMethod === "string" && /pickup|pick-up|store|collection/i.test(shippingMethod);
-
-			try {
-				await sendOrderConfirmationEmail({
-					to: session.customer_details?.email || session.customer_email || "",
-					customerName: session.customer_details?.name || "",
-					orderNumber,
-					items: pricedItems,
-					subtotal: order.subtotal,
-					shipping: order.shipping,
-					shippingMethod,
-					total: order.total,
-					currency: order.currency,
-					address: {
-						address: [session.customer_details?.address?.line1, session.customer_details?.address?.line2].filter(Boolean).join(", "),
-						city: session.customer_details?.address?.city || "",
-						postalCode: session.customer_details?.address?.postal_code || "",
-						country: session.customer_details?.address?.country || "",
-					},
-					isPickupOrder,
-					pickupAddress: isPickupOrder
-						? {
-								address: `${BUSINESS.seller.address.line1}, ${BUSINESS.seller.address.city}`,
-								city: BUSINESS.seller.address.city,
-								postalCode: BUSINESS.seller.address.postalCode,
-								country: BUSINESS.seller.address.country,
-							}
-						: undefined,
-					attachment: receiptAttachment,
-				});
-			} catch (emailError) {
-				console.error("Failed to send order confirmation email:", emailError);
-			}
 
 			return NextResponse.json({ received: true, orderId: order.id });
 		}

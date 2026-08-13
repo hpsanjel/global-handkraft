@@ -1,43 +1,53 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { resetCart } from "@/lib/cart";
 import { Loader2 } from "lucide-react";
 import { CheckoutSuccessSummary, type OrderSummary } from "@/components/checkout-success-summary";
 
-function CheckoutSuccessContent() {
+/**
+ * Vipps' WEB_REDIRECT flow sends the buyer back to a single returnUrl
+ * regardless of outcome (unlike Stripe's separate success_url/cancel_url),
+ * so this page determines outcome itself by asking /api/checkout/vipps/session
+ * whether the payment actually completed, and falls back to the existing
+ * /checkout/cancel page when it didn't.
+ */
+function CheckoutVippsReturnContent() {
+	const router = useRouter();
 	const searchParams = useSearchParams();
-	const sessionId = searchParams.get("session_id");
+	const reference = searchParams.get("reference");
 	const [order, setOrder] = useState<OrderSummary | null>(null);
-	const [isLoading, setIsLoading] = useState(Boolean(sessionId));
-	const [error, setError] = useState("");
+	const [isLoading, setIsLoading] = useState(Boolean(reference));
 
 	useEffect(() => {
-		resetCart();
-	}, []);
-
-	useEffect(() => {
-		if (!sessionId) {
+		if (!reference) {
+			router.replace("/checkout/cancel");
 			return;
 		}
 
 		let isDisposed = false;
 		(async () => {
 			try {
-				const response = await fetch(`/api/checkout/session?session_id=${encodeURIComponent(sessionId)}`);
+				const response = await fetch(`/api/checkout/vipps/session?reference=${encodeURIComponent(reference)}`);
 				const data = await response.json();
+
 				if (!response.ok) {
-					throw new Error(data.error || "Unable to load order details.");
+					if (!isDisposed) {
+						router.replace("/checkout/cancel");
+					}
+					return;
 				}
+
 				if (!isDisposed) {
+					resetCart();
 					setOrder(data);
 				}
-			} catch (err) {
+			} catch {
 				if (!isDisposed) {
-					setError(err instanceof Error ? err.message : "Unable to load order details.");
+					router.replace("/checkout/cancel");
 				}
 			} finally {
 				if (!isDisposed) {
@@ -49,16 +59,17 @@ function CheckoutSuccessContent() {
 		return () => {
 			isDisposed = true;
 		};
-	}, [sessionId]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [reference]);
 
 	return (
 		<main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-			<CheckoutSuccessSummary order={order} isLoading={isLoading} error={error} />
+			<CheckoutSuccessSummary order={order} isLoading={isLoading} error="" />
 		</main>
 	);
 }
 
-export default function CheckoutSuccessPage() {
+export default function CheckoutVippsReturnPage() {
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
 			<SiteHeader />
@@ -69,7 +80,7 @@ export default function CheckoutSuccessPage() {
 					</main>
 				}
 			>
-				<CheckoutSuccessContent />
+				<CheckoutVippsReturnContent />
 			</Suspense>
 			<SiteFooter />
 		</div>

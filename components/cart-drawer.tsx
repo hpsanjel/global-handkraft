@@ -23,6 +23,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
+	const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "VIPPS">("STRIPE");
 
 	// Coupon state
 	const [couponCode, setCouponCode] = useState("");
@@ -288,7 +289,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 
 			const savedAddress = (user?.user_metadata?.shipping_address as { postalCode?: string; country?: string } | undefined) || {};
 
-			const response = await fetch("/api/checkout", {
+			const response = await fetch(paymentMethod === "VIPPS" ? "/api/checkout/vipps" : "/api/checkout", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
@@ -588,8 +589,17 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							</div>
 						) : null}
 
-						<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
-							{isCheckingOut ? "Preparing checkout..." : appliedCoupon?.freeShipping ? "Proceed to Checkout" : "Checkout with Stripe"}
+						<div className="mt-4 grid grid-cols-2 gap-2">
+							<button type="button" onClick={() => setPaymentMethod("STRIPE")} className={`rounded-xl border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+								Card (Stripe)
+							</button>
+							<button type="button" onClick={() => setPaymentMethod("VIPPS")} className={`rounded-xl border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+								Vipps
+							</button>
+						</div>
+
+						<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-2 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
+							{isCheckingOut ? "Preparing checkout..." : appliedCoupon?.freeShipping ? "Proceed to Checkout" : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}
 						</button>
 						{checkoutError ? <p className="mt-2 text-center text-xs text-red-600">{checkoutError}</p> : null}
 						<Link href="/cart" onClick={onClose} className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">

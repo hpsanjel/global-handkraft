@@ -97,15 +97,22 @@ model Address {
   orders      Order[]
 }
 
+enum PaymentMethod {
+  STRIPE
+  VIPPS
+}
+
 model Order {
-  id                String      @id @default(cuid())
-  orderNumber       String      @unique
-  status            String      @default("PENDING")
+  id                String        @id @default(cuid())
+  orderNumber       String        @unique
+  status            String        @default("PENDING")
   subtotal          Float
-  vat               Float?      @default(0)
+  vat               Float?        @default(0)
   shipping          Float
   total             Float
-  currency          String      @default("NOK")
+  currency          String        @default("NOK")
+  paymentMethod     PaymentMethod @default(STRIPE)
+  /// Stripe: the payment_intent id. Vipps: the pspReference.
   paymentId         String?
   invoiceNumber     String?
   shippingCountry   String
@@ -116,6 +123,38 @@ model Order {
   items             OrderItem[]
   statusEvents      OrderStatusEvent[]
   createdAt         DateTime    @default(now())
+}
+
+/// Bridges "buyer redirected to Vipps to pay" and "Vipps webhook confirms
+/// payment" — holds the server-priced cart/shipping/address snapshot Vipps'
+/// thin webhook payload can't provide on its own (unlike Stripe, which lets
+/// us re-fetch full session details from session.metadata + expand).
+model PendingCheckout {
+  id                 String        @id @default(cuid())
+  /// == Vipps payment `reference` == the future Order.orderNumber
+  reference          String        @unique
+  provider           PaymentMethod @default(VIPPS)
+  /// PricedCheckoutItem[]-shaped snapshot: productId, variantId, quantity, unitPrice, zoneMarkup, addonNames
+  itemsJson          Json
+  customerEmail      String
+  customerName       String?
+  customerPhone      String?
+  shippingCountry    String
+  shippingAddress    String
+  shippingPostalCode String
+  shippingCity       String
+  shippingMethod     String?
+  shippingProductId  String?
+  subtotal           Float
+  shipping           Float
+  total              Float
+  currency           String    @default("NOK")
+  couponCode         String?
+  createdAt          DateTime  @default(now())
+  /// Set once an Order has been created from this row (webhook idempotency).
+  consumedAt         DateTime?
+
+  @@index([createdAt])
 }
 
 model OrderStatusEvent {

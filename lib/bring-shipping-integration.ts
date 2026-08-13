@@ -1,6 +1,6 @@
 import { getBringShippingOptions, type BringProduct, type BringPackage } from "@/lib/bring";
 import { buildPackagesFromLines } from "@/lib/shipping-client";
-import type { PricedCheckoutItem } from "@/app/api/checkout/route";
+import type { PricedCheckoutItem } from "@/lib/checkout-pricing";
 
 export type { BringProduct };
 
