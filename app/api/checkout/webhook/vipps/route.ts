@@ -14,12 +14,16 @@ type VippsWebhookEvent = {
 	userDetails?: { name?: string; email?: string; phoneNumber?: string };
 };
 
-// TODO(verify): once real Vipps merchant-portal access exists, confirm
-// whether this account's capture settings mean "authorized" or "captured"
-// is the right signal to fulfill on (see plan's Open Items). Defaulting to
-// captured.v1, i.e. money has definitively moved — mirrors the certainty
-// Stripe's checkout.session.completed gives us today.
-const FULFILLMENT_EVENT = "epayments.payment.captured.v1";
+// Webhook *payloads* use Vipps' short enum form for `name` (CREATED,
+// AUTHORIZED, CAPTURED, CANCELLED, REFUNDED, ABORTED, EXPIRED, TERMINATED) —
+// distinct from the long "epayments.payment.captured.v1" form used only when
+// *registering* the webhook subscription (see the registration call in
+// lib/vipps.ts's sibling docs / the one-time registration script/curl).
+// TODO(verify): once live traffic confirms this account's capture settings,
+// double check "CAPTURED" (money definitively moved) is the right signal to
+// fulfill on rather than "AUTHORIZED" — mirrors the certainty Stripe's
+// checkout.session.completed gives us today.
+const FULFILLMENT_EVENT = "CAPTURED";
 
 export async function POST(request: Request) {
 	try {
