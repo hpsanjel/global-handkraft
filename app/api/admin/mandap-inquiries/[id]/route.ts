@@ -3,6 +3,7 @@ import { hasAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { sendMandapInquiryStatusUpdateEmail } from "@/lib/email";
+import { broadcastCustomRequestCount } from "@/lib/realtime-broadcast";
 
 async function requireAdmin() {
 	const supabase = await createClient();
@@ -96,6 +97,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 				stripePaymentLink: body.stripePaymentLink,
 			}).catch((error) => {
 				console.error("Unable to send status update email:", error);
+			});
+
+			broadcastCustomRequestCount().catch((error) => {
+				console.error("Unable to broadcast custom request count:", error);
 			});
 		}
 

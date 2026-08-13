@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { sendCustomInquiryAdminNotification } from "@/lib/email";
+import { broadcastCustomRequestCount } from "@/lib/realtime-broadcast";
 
 const MANDAP_INQUIRY_BUCKET = "mandap-inquiries";
 const MAX_IMAGE_FILE_BYTES = 5 * 1024 * 1024;
@@ -160,6 +161,10 @@ export async function POST(request: Request) {
 			sampleImages: inquiry.sampleImages,
 		}).catch((error) => {
 			console.error("Unable to send custom inquiry admin notification email:", error);
+		});
+
+		broadcastCustomRequestCount().catch((error) => {
+			console.error("Unable to broadcast custom request count:", error);
 		});
 
 		return NextResponse.json({ success: true, id: inquiry.id });

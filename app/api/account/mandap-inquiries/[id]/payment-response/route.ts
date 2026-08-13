@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { sendMandapInquiryStatusUpdateEmail } from "@/lib/email";
+import { broadcastCustomRequestCount } from "@/lib/realtime-broadcast";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
 	try {
@@ -65,6 +66,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			// Note: In a real scenario, you might want to notify the admin about the customer's response
 			// For now, we'll just update the status
 		}
+
+		broadcastCustomRequestCount().catch((error) => {
+			console.error("Unable to broadcast custom request count:", error);
+		});
 
 		return NextResponse.json({
 			...updated,

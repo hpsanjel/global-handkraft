@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 import { RichTextarea } from "@/components/rich-textarea";
 import { FormattedText } from "@/components/formatted-text";
 
@@ -14,12 +16,15 @@ export type MandapInquiryThreadMessage = {
 };
 
 type Props = {
+	inquiryId: string;
 	messages: MandapInquiryThreadMessage[];
 	postUrl: string;
 	viewerRole: "ADMIN" | "CUSTOMER";
 };
 
 const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+const TYPING_BROADCAST_THROTTLE_MS = 1500;
+const TYPING_INDICATOR_TIMEOUT_MS = 3000;
 
 function formatTimestamp(value: string) {
 	return new Date(value).toLocaleString("en-GB", {
@@ -31,14 +36,79 @@ function formatTimestamp(value: string) {
 	});
 }
 
-export function MandapInquiryThread({ messages: initialMessages, postUrl, viewerRole }: Props) {
+export function MandapInquiryThread({ inquiryId, messages: initialMessages, postUrl, viewerRole }: Props) {
 	const [messages, setMessages] = useState(initialMessages);
 	const [draft, setDraft] = useState("");
 	const [attachment, setAttachment] = useState<File | null>(null);
 	const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
 	const [isSending, setIsSending] = useState(false);
 	const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+	const [otherOnline, setOtherOnline] = useState(false);
+	const [otherTyping, setOtherTyping] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const channelRef = useRef<RealtimeChannel | null>(null);
+	const lastTypingSentRef = useRef(0);
+	const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const otherLabel = viewerRole === "ADMIN" ? "Customer" : "Admin";
+
+	useEffect(() => {
+		const supabase = createClient();
+		const channel = supabase.channel(`inquiry:${inquiryId}`, { config: { private: true } });
+		channelRef.current = channel;
+
+		channel
+			.on("broadcast", { event: "message" }, ({ payload }) => {
+				const incoming = payload as MandapInquiryThreadMessage;
+				if (incoming.sender !== viewerRole) {
+					setMessages((current) => (current.some((msg) => msg.id === incoming.id) ? current : [...current, incoming]));
+				}
+			})
+			.on("broadcast", { event: "typing" }, ({ payload }) => {
+				const sender = (payload as { sender?: string })?.sender;
+				if (sender && sender !== viewerRole) {
+					setOtherTyping(true);
+					if (typingTimeoutRef.current) {
+						clearTimeout(typingTimeoutRef.current);
+					}
+					typingTimeoutRef.current = setTimeout(() => setOtherTyping(false), TYPING_INDICATOR_TIMEOUT_MS);
+				}
+			})
+			.on("presence", { event: "sync" }, () => {
+				const state = channel.presenceState<{ role: string }>();
+				const online = Object.values(state).some((presences) => presences.some((presence) => presence.role !== viewerRole));
+				setOtherOnline(online);
+			})
+			.subscribe(async (status) => {
+				if (status === "SUBSCRIBED") {
+					await channel.track({ role: viewerRole });
+				}
+			});
+
+		return () => {
+			if (typingTimeoutRef.current) {
+				clearTimeout(typingTimeoutRef.current);
+			}
+			channelRef.current = null;
+			setOtherOnline(false);
+			setOtherTyping(false);
+			void supabase.removeChannel(channel);
+		};
+	}, [inquiryId, viewerRole]);
+
+	const handleDraftChange = (value: string) => {
+		setDraft(value);
+
+		if (!value.trim()) {
+			return;
+		}
+
+		const now = Date.now();
+		if (now - lastTypingSentRef.current > TYPING_BROADCAST_THROTTLE_MS) {
+			lastTypingSentRef.current = now;
+			channelRef.current?.send({ type: "broadcast", event: "typing", payload: { sender: viewerRole } });
+		}
+	};
 
 	const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0] ?? null;
@@ -100,6 +170,7 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 			}
 
 			setMessages((current) => [...current, payload as MandapInquiryThreadMessage]);
+			channelRef.current?.send({ type: "broadcast", event: "message", payload });
 			setDraft("");
 			clearAttachment();
 		} catch (error) {
@@ -111,7 +182,15 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 
 	return (
 		<div className="mt-4 border-t border-slate-200 pt-4">
-			<p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Conversation</p>
+			<div className="flex items-center gap-2">
+				<p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Conversation</p>
+				{otherOnline ? (
+					<span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+						<span className="h-2 w-2 rounded-full bg-green-500" />
+						{otherLabel} online
+					</span>
+				) : null}
+			</div>
 
 			{messages.length > 0 ? (
 				<ol className="mt-3 space-y-3">
@@ -141,10 +220,12 @@ export function MandapInquiryThread({ messages: initialMessages, postUrl, viewer
 				<p className="mt-3 text-sm text-slate-500">No messages yet.</p>
 			)}
 
+			{otherTyping ? <p className="mt-2 text-xs italic text-slate-400">{otherLabel} is typing…</p> : null}
+
 			<div className="mt-4 space-y-2">
 				<RichTextarea
 					value={draft}
-					onChange={setDraft}
+					onChange={handleDraftChange}
 					disabled={isSending}
 					placeholder={viewerRole === "ADMIN" ? "Reply to this request..." : "Write a message..."}
 					minRows={2}

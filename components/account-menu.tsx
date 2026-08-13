@@ -99,7 +99,7 @@ export function AccountMenu() {
 			}
 		};
 
-		if (user?.email) {
+		if (user?.email && !isAdminUser(user)) {
 			fetchUnreadCount();
 		}
 
@@ -176,15 +176,17 @@ export function AccountMenu() {
 							<MapPin className="h-4 w-4" />
 							My Shipping Address
 						</Link>
-						<div className="relative">
-							<Link href="/account/custom-requests" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
-								<div className="relative">
-									<MessageSquare className="h-4 w-4" />
-									{unreadCount > 0 ? <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
-								</div>
-								Custom Requests
-							</Link>
-						</div>
+						{!isAdmin ? (
+							<div className="relative">
+								<Link href="/account/custom-requests" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
+									<div className="relative">
+										<MessageSquare className="h-4 w-4" />
+										{unreadCount > 0 ? <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
+									</div>
+									Custom Requests
+								</Link>
+							</div>
+						) : null}
 					</nav>
 					<button type="button" onClick={handleSignOut} className="flex w-full items-center gap-3 border-t border-stone-100 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50">
 						<LogOut className="h-4 w-4" />

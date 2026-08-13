@@ -185,7 +185,7 @@ export default function AccountCustomRequestsPage() {
 								</div>
 							)}
 
-							<MandapInquiryThread messages={inquiry.messages} postUrl={`/api/account/mandap-inquiries/${inquiry.id}/messages`} viewerRole="CUSTOMER" />
+							<MandapInquiryThread inquiryId={inquiry.id} messages={inquiry.messages} postUrl={`/api/account/mandap-inquiries/${inquiry.id}/messages`} viewerRole="CUSTOMER" />
 						</div>
 					))}
 				</div>

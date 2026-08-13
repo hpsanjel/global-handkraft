@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LayoutDashboard, Package, ShoppingCart, FileBarChart2, Tags, Ticket, Star, Quote, Settings, Menu, X, LogOut, Store, ChevronDown, Landmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { ADMIN_CUSTOM_REQUESTS_TOPIC } from "@/lib/realtime-topics";
 
 const NAV_ITEMS = [
 	{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -27,17 +28,55 @@ function getInitials(email: string) {
 	return email.slice(0, 2).toUpperCase();
 }
 
-function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function useCustomRequestCount() {
+	const [supabase] = useState(() => createClient());
+	const [count, setCount] = useState<{ total: number; pending: number } | null>(null);
+
+	useEffect(() => {
+		let active = true;
+
+		fetch("/api/admin/mandap-inquiries/count")
+			.then((response) => response.json())
+			.then((data: { total?: number; pending?: number }) => {
+				if (active && typeof data.total === "number" && typeof data.pending === "number") {
+					setCount({ total: data.total, pending: data.pending });
+				}
+			})
+			.catch(() => {
+				// Silently fail - the badge is optional
+			});
+
+		const channel = supabase
+			.channel(ADMIN_CUSTOM_REQUESTS_TOPIC, { config: { private: true } })
+			.on("broadcast", { event: "count" }, ({ payload }) => {
+				if (active && typeof payload?.total === "number" && typeof payload?.pending === "number") {
+					setCount({ total: payload.total, pending: payload.pending });
+				}
+			})
+			.subscribe();
+
+		return () => {
+			active = false;
+			supabase.removeChannel(channel);
+		};
+	}, [supabase]);
+
+	return count;
+}
+
+function SidebarNav({ pathname, onNavigate, customRequestCount }: { pathname: string; onNavigate?: () => void; customRequestCount: { total: number; pending: number } | null }) {
 	return (
 		<nav className="flex-1 space-y-1 px-3 py-4">
 			{NAV_ITEMS.map((item) => {
 				const active = isActive(pathname, item.href, "exact" in item ? item.exact : false);
 				const Icon = item.icon;
+				const showBadge = item.href === "/admin/custom-requests" && customRequestCount && customRequestCount.total > 0;
 				return (
 					<Link key={item.href} href={item.href} onClick={onNavigate} className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${active ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}>
 						<span className={`h-5 w-0.5 shrink-0 -ml-3 rounded-r-full transition ${active ? "bg-stone-500" : "bg-transparent"}`} aria-hidden="true" />
 						<Icon className={`h-4.5 w-4.5 shrink-0 ${active ? "text-stone-400" : "text-slate-400 group-hover:text-slate-200"}`} />
-						{item.label}
+						<span className="flex-1">{item.label}</span>
+						{showBadge ? <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white">{customRequestCount.pending}/{customRequestCount.total}</span> : null}
 					</Link>
 				);
 			})}
@@ -52,6 +91,7 @@ export function AdminShell({ userEmail, children }: { userEmail: string; childre
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
 	const userMenuRef = useRef<HTMLDivElement>(null);
 	const [supabase] = useState(() => createClient());
+	const customRequestCount = useCustomRequestCount();
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -85,7 +125,7 @@ export function AdminShell({ userEmail, children }: { userEmail: string; childre
 						<p className="text-xs font-medium uppercase tracking-[0.16em] text-stone-400">Admin</p>
 					</div>
 				</div>
-				<SidebarNav pathname={pathname} />
+				<SidebarNav pathname={pathname} customRequestCount={customRequestCount} />
 				<div className="border-t border-white/10 p-3">
 					<Link href="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white">
 						<Store className="h-4.5 w-4.5 text-slate-400" />
@@ -113,7 +153,7 @@ export function AdminShell({ userEmail, children }: { userEmail: string; childre
 								<X className="h-5 w-5" />
 							</button>
 						</div>
-						<SidebarNav pathname={pathname} onNavigate={() => setMobileNavOpen(false)} />
+						<SidebarNav pathname={pathname} onNavigate={() => setMobileNavOpen(false)} customRequestCount={customRequestCount} />
 						<div className="border-t border-white/10 p-3">
 							<Link href="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white" onClick={() => setMobileNavOpen(false)}>
 								<Store className="h-4.5 w-4.5 text-slate-400" />

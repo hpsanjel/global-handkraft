@@ -209,7 +209,7 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 								onUpdate={() => router.refresh()}
 							/>
 
-							<MandapInquiryThread messages={selected.messages} postUrl={`/api/admin/mandap-inquiries/${selected.id}/messages`} viewerRole="ADMIN" />
+							<MandapInquiryThread inquiryId={selected.id} messages={selected.messages} postUrl={`/api/admin/mandap-inquiries/${selected.id}/messages`} viewerRole="ADMIN" />
 						</div>
 					</aside>
 				</div>
