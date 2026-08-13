@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyVippsWebhookSignature } from "@/lib/vipps-webhook";
+import { capturePayment } from "@/lib/vipps";
 import { fulfillOrder, type FulfillOrderItemInput } from "@/lib/order-fulfillment";
 
 export const runtime = "nodejs";
@@ -57,6 +58,27 @@ export async function POST(request: Request) {
 		}
 
 		const event = JSON.parse(rawBody) as VippsWebhookEvent;
+
+		// WALLET payments only set money aside on AUTHORIZED — actually
+		// collecting it requires an explicit capture call, which we make here
+		// immediately (matching Stripe's instant-charge-at-checkout behavior)
+		// rather than deferring it to a shipment step. Fulfillment itself still
+		// only happens on the CAPTURED event below, once capture is confirmed.
+		if (event.name === "AUTHORIZED" && event.success) {
+			const pendingForCapture = await prisma.pendingCheckout.findUnique({ where: { reference: event.reference } });
+			if (pendingForCapture) {
+				try {
+					await capturePayment(event.reference, Math.round(pendingForCapture.total * 100));
+				} catch (captureError) {
+					// Don't fail the webhook response over this — Vipps will retry
+					// AUTHORIZED delivery, which would just retry the capture; a
+					// capture that keeps failing needs manual investigation, not an
+					// infinite webhook retry loop.
+					console.error("Failed to capture Vipps payment:", captureError);
+				}
+			}
+			return NextResponse.json({ received: true });
+		}
 
 		if (event.name !== FULFILLMENT_EVENT || !event.success) {
 			return NextResponse.json({ received: true });

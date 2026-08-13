@@ -126,6 +126,38 @@ export async function createVippsPayment(params: CreateVippsPaymentParams): Prom
 	return data;
 }
 
+/**
+ * Captures a previously AUTHORIZED ("reserved") payment — for WALLET-type
+ * ePayment payments, money is only actually collected once this is called;
+ * authorization alone just sets funds aside. Called immediately after
+ * authorization (matching Stripe's instant-charge behavior) rather than
+ * deferred to shipment.
+ */
+export async function capturePayment(reference: string, amountValueOre: number): Promise<void> {
+	assertVippsConfigured();
+
+	const response = await fetch(`${vippsBaseUrl()}/epayment/v1/payments/${encodeURIComponent(reference)}/capture`, {
+		method: "POST",
+		headers: await vippsHeaders(randomUUID()),
+		body: JSON.stringify({
+			modificationAmount: { value: amountValueOre, currency: "NOK" },
+		}),
+	});
+
+	if (response.ok) {
+		return;
+	}
+
+	// A capture retry (e.g. webhook redelivery) on an already-captured payment
+	// is expected, not an error — Vipps returns a conflict response for it.
+	if (response.status === 409) {
+		return;
+	}
+
+	const errorBody = await response.text().catch(() => "");
+	throw new Error(`Vipps payment capture failed with status ${response.status}. ${errorBody}`.trim());
+}
+
 export async function getVippsPayment(reference: string): Promise<VippsPaymentDetails> {
 	assertVippsConfigured();
 
