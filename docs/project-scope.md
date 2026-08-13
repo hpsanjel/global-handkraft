@@ -18,7 +18,7 @@ This section reflects what is actually built in the codebase today, as opposed t
 - Dynamic Open Graph image generation, `sitemap.xml`, `robots.txt`
 
 **Checkout & payments**
-- Stripe Checkout with webhook-driven order creation
+- Stripe Checkout and Vipps ePayment API, buyer's choice at checkout, both webhook-driven order creation (Vipps needs `VIPPS_*` credentials configured before it's selectable; see Getting Started in the README)
 - Live shipping rate quotes via Bring (Posten Norge) and PostNord, admin-configurable shipping zones and free-shipping thresholds
 - Per-country VAT rates
 - Coupon engine: percentage discount, free shipping, expiry, minimum cart-value requirement, global and per-customer usage caps
@@ -32,6 +32,7 @@ This section reflects what is actually built in the codebase today, as opposed t
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
 - Dedicated admin Custom Orders dashboard (`/admin/custom-requests`), segregated from the regular Orders view
 - Threaded messaging between customer and admin with unread indicators and rich-text formatting
+- Live chat layered on the thread: Supabase Realtime private channels deliver new messages instantly, plus online-presence and typing indicators (`components/mandap-inquiry-thread.tsx`), and a live new/pending count badge in the admin sidebar (`components/admin/admin-shell.tsx`, `lib/realtime-broadcast.ts`)
 - Admin quoting workflow: request status (Pending/Accepted/Declined/Paid), quoted price, and a manually-entered Stripe payment link — no in-app deposit/balance split or pro forma invoicing at this time
 
 **Accounts**
@@ -62,10 +63,15 @@ This section reflects what is actually built in the codebase today, as opposed t
 - Admin-managed homepage testimonials (`/admin/testimonials`): create/edit/delete, star rating, drag-to-reorder, show/hide toggle, and customer photo upload to Supabase Storage
 - Replaces the previously hardcoded testimonial array; the homepage now fetches active testimonials live
 
+**Security and data access**
+- Row Level Security enabled with a deny-all policy set on every Prisma-managed table (`supabase/migrations/20260813020000_enable_rls_all_tables.sql`), closing Supabase's auto-exposed PostgREST Data API to the `anon`/`authenticated` roles; the app itself is unaffected since Prisma connects with a `BYPASSRLS` role
+- Realtime Authorization policies (`supabase/migrations/20260813030000_realtime_authorization_mandap_inquiries.sql`) scope the live-chat private channels so only the inquiry's own customer (matched by email) or an admin can join an `inquiry:<id>` channel, and only admins can join the `admin:custom-requests` badge channel
+- Storage bucket policies audited and trimmed (`supabase/migrations/20260813040000_drop_products_bucket_open_policies.sql`) to remove unauthenticated list/upload access left on the `products` bucket; all uploads go through the service-role client, matching the other buckets
+
 ### Not yet implemented
 
 - Wishlist, product comparison, recently viewed, quick view, voice/advanced search, 360° image view
-- Additional payment methods: Vipps, Klarna, PayPal, Apple Pay, Google Pay
+- Additional payment methods: Klarna, PayPal, Apple Pay, Google Pay
 - Blog, searchable FAQ knowledge base (a static FAQ page is live; article search/categorization is not), CMS-managed homepage/content blocks (the `SiteSettings` model exists but is not yet wired into any admin UI or page)
 - Multilingual (EN/NO/NE/HI) support
 - Loyalty/rewards, referrals, gift cards, subscription kits, multi-vendor marketplace, 3D custom temple builder, AI recommendations
@@ -340,13 +346,13 @@ Checkout capabilities:
 Payment methods:
 
 - Stripe (Implemented — cards, Visa/Mastercard via Stripe Checkout)
+- Vipps (Implemented — Vipps ePayment API, webhook-driven order creation)
 
 Roadmap:
 
 - Apple Pay
 - Google Pay
 - PayPal
-- Vipps
 - Klarna
 
 ## 10. Shipping and Operations
@@ -436,7 +442,7 @@ Current stack in repository (Implemented):
 - Prisma ORM + PostgreSQL (Supabase-hosted)
 - Supabase Authentication for account flows and admin role gating
 - Supabase Storage for product image delivery
-- Stripe for checkout and webhook lifecycle
+- Stripe and Vipps for checkout and webhook lifecycle
 - Resend for transactional email (order confirmations, status updates, custom-inquiry and payment notifications)
 - Bring (Posten Norge) and PostNord for live shipping rates
 - `@react-pdf/renderer`, `bwip-js`, and `qrcode` for the order document system (invoices, receipts, packing lists, etc.)

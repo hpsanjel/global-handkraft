@@ -50,7 +50,11 @@ export async function POST(request: Request) {
 
 		return NextResponse.json(result);
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unable to fetch Bring shipping options.";
+		console.error("Bring API error:", error);
+
+		const rawMessage = error instanceof Error ? error.message : "";
+		const message = /postal ?code/i.test(rawMessage) ? "We couldn't calculate delivery costs. Please check your postal code and try again." : "Something went wrong while calculating delivery costs. Please try again.";
+
 		return NextResponse.json({ error: message }, { status: 500 });
 	}
 }

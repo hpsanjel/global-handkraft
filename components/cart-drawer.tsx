@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { X, ShoppingCart, Trash2, Truck, MapPin, Package, Loader2, Check } from "lucide-react";
@@ -11,6 +12,7 @@ import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type Brin
 import type { CartItem } from "@/types/store";
 import { PriceEstimate } from "@/components/price-estimate";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
+import { VisaMark, MastercardMark } from "@/components/payment-marks";
 
 type CartDrawerProps = {
 	isOpen: boolean;
@@ -30,6 +32,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPct: number; freeShipping: boolean; finalSubtotal: number } | null>(null);
 	const [couponError, setCouponError] = useState("");
 	const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+	const [showCouponForm, setShowCouponForm] = useState(false);
 
 	// Bring shipping state
 	const [showShippingForm, setShowShippingForm] = useState(false);
@@ -95,6 +98,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 		setSelectedShippingId(STORE_PICKUP_ID);
 		setBringError("");
 		setSavedAddressUsed(null);
+		setShowCouponForm(false);
 
 		let active = true;
 		const supabase = createClient();
@@ -249,6 +253,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 		setCouponCode("");
 		setAppliedCoupon(null);
 		setCouponError("");
+		setShowCouponForm(false);
 	};
 
 	const handleFetchBringOptions = () => {
@@ -365,102 +370,62 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 					</div>
 				</div>
 
-				{/* Cart items */}
-				<div className="flex-1 overflow-y-auto px-5 py-4">
-					{items.length === 0 ? (
-						<div className="flex h-full flex-col items-center justify-center text-center">
-							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
-								<ShoppingCart className="h-7 w-7 text-stone-400" />
-							</div>
-							<p className="mt-4 text-sm font-medium text-stone-900">Your cart is empty</p>
-							<p className="mt-1 text-xs text-stone-500">Add a piece from the shop to start building your collection.</p>
-							<Link href="/shop" onClick={onClose} className="mt-5 inline-flex rounded-full bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-700">
-								Browse products
-							</Link>
+				{/* Empty state */}
+				{items.length === 0 ? (
+					<div className="flex flex-1 flex-col items-center justify-center px-5 text-center">
+						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
+							<ShoppingCart className="h-7 w-7 text-stone-400" />
 						</div>
-					) : (
-						<div className="space-y-4">
-							{items.map((item) => (
-								<div key={`${item.productId}-${item.variantId}-${item.addonIds.join("-")}`} className="flex gap-3 rounded-2xl border border-stone-200 p-3">
-									<div className="h-16 w-16 shrink-0 rounded-xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${item.image}')` }} />
-									<div className="flex flex-1 flex-col">
-										<div className="flex items-start justify-between gap-2">
-											<div>
-												<p className="text-sm font-semibold leading-5 text-stone-900">{item.name}</p>
-												<p className="mt-0.5 text-xs text-stone-500">{item.variantName}</p>
-											</div>
-											<button type="button" onClick={() => handleRemoveItem(item)} className="text-stone-400 transition hover:text-red-600" aria-label={`Remove ${item.name}`}>
-												<X className="h-4 w-4" />
-											</button>
-										</div>
-										<div className="mt-auto flex items-center justify-between pt-2">
-											<div className="flex items-center rounded-full border border-stone-200 bg-white p-0.5">
-												<button type="button" onClick={() => handleQuantityChange(item, -1)} className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:bg-stone-100" aria-label="Decrease quantity">
-													-
+						<p className="mt-4 text-sm font-medium text-stone-900">Your cart is empty</p>
+						<p className="mt-1 text-xs text-stone-500">Add a piece from the shop to start building your collection.</p>
+						<Link href="/shop" onClick={onClose} className="mt-5 inline-flex rounded-full bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-700">
+							Browse products
+						</Link>
+					</div>
+				) : (
+					<>
+						{/* Cart items + secondary options: one scroll region, so the checkout bar below can never be pushed off-screen */}
+						<div className="flex-1 overflow-y-auto px-5 py-4">
+							<div className="space-y-4">
+								{items.map((item) => (
+									<div key={`${item.productId}-${item.variantId}-${item.addonIds.join("-")}`} className="flex gap-3 rounded-2xl border border-stone-200 p-3">
+										<div className="h-16 w-16 shrink-0 rounded-xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${item.image}')` }} />
+										<div className="flex flex-1 flex-col">
+											<div className="flex items-start justify-between gap-2">
+												<div>
+													<p className="text-sm font-semibold leading-5 text-stone-900">{item.name}</p>
+													<p className="mt-0.5 text-xs text-stone-500">{item.variantName}</p>
+												</div>
+												<button type="button" onClick={() => handleRemoveItem(item)} className="text-stone-400 transition hover:text-red-600" aria-label={`Remove ${item.name}`}>
+													<X className="h-4 w-4" />
 												</button>
-												<span className="min-w-7 text-center text-sm font-semibold text-stone-900">{item.quantity}</span>
-												<button type="button" onClick={() => handleQuantityChange(item, 1)} className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:bg-stone-100" aria-label="Increase quantity">
-													+
-												</button>
 											</div>
-											<div className="text-right">
-												<p className="text-sm font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
-												<PriceEstimate amountNok={item.price * item.quantity} className="text-xs text-stone-500" />
+											<div className="mt-auto flex items-center justify-between pt-2">
+												<div className="flex items-center rounded-full border border-stone-200 bg-white p-0.5">
+													<button type="button" onClick={() => handleQuantityChange(item, -1)} className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:bg-stone-100" aria-label="Decrease quantity">
+														-
+													</button>
+													<span className="min-w-7 text-center text-sm font-semibold text-stone-900">{item.quantity}</span>
+													<button type="button" onClick={() => handleQuantityChange(item, 1)} className="flex h-7 w-7 items-center justify-center rounded-full text-sm transition hover:bg-stone-100" aria-label="Increase quantity">
+														+
+													</button>
+												</div>
+												<div className="text-right">
+													<p className="text-sm font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
+													<PriceEstimate amountNok={item.price * item.quantity} className="text-xs text-stone-500" />
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
-							))}
-						</div>
-					)}
-				</div>
-
-				{/* Footer */}
-				{items.length > 0 ? (
-					<div className="max-h-[70vh] overflow-y-auto border-t border-stone-200 px-5 py-4">
-						<div className="flex items-center justify-between text-sm">
-							<span className="text-stone-600">Subtotal</span>
-							<span className="text-right text-lg font-semibold text-stone-900">
-								NOK {subtotal}
-								<PriceEstimate amountNok={subtotal} className="block text-xs font-normal text-stone-500" />
-							</span>
-						</div>
-
-						{selectedShippingOption ? (
-							<div className="mt-1 flex items-center justify-between text-sm">
-								<span className="text-stone-600">Shipping</span>
-								<span className="text-right font-medium text-stone-900">
-									{selectedShippingCost === 0 ? (
-										"Free"
-									) : (
-										<>
-											NOK {selectedShippingCost}
-											<PriceEstimate amountNok={selectedShippingCost} className="block text-xs font-normal text-stone-500" />
-										</>
-									)}
-								</span>
+								))}
 							</div>
-						) : (
-							<p className="mt-1 text-xs text-stone-500">Shipping calculated at checkout.</p>
-						)}
 
-						{selectedShippingOption ? (
-							<div className="mt-1 flex items-center justify-between text-sm font-semibold text-stone-900">
-								<span>Estimated total</span>
-								<span className="text-right">
-									NOK {estimatedTotal}
-									<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-500" />
-								</span>
-							</div>
-						) : null}
-
-						{/* Coupon section */}
-						{appliedCoupon ? (
-							<div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
-								<div className="flex items-center justify-between">
+							{/* Coupon */}
+							<div className="mt-4">
+								{appliedCoupon ? (
+								<div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
 									<div>
-										<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Coupon Applied</p>
-										<p className="mt-1 font-mono text-sm font-semibold text-emerald-900">{appliedCoupon.code}</p>
+										<p className="font-mono text-sm font-semibold text-emerald-900">{appliedCoupon.code}</p>
 										<p className="text-xs text-emerald-700">
 											{appliedCoupon.discountPct}% discount {appliedCoupon.freeShipping && "• Free shipping"}
 										</p>
@@ -469,144 +434,205 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 										Remove
 									</button>
 								</div>
-							</div>
-						) : (
-							<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3">
-								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Have a coupon?</p>
-								<div className="mt-2 flex gap-2">
-									<input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
-									<button type="button" onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
-										{isValidatingCoupon ? "Applying..." : "Apply"}
-									</button>
+							) : showCouponForm ? (
+								<div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+									<div className="flex gap-2">
+										<input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" autoFocus className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
+										<button type="button" onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
+											{isValidatingCoupon ? "Applying..." : "Apply"}
+										</button>
+									</div>
+									{couponError ? <p className="mt-2 text-xs text-red-600">{couponError}</p> : null}
 								</div>
-								{couponError ? <p className="mt-2 text-xs text-red-600">{couponError}</p> : null}
-							</div>
-						)}
-
-						{/* Bring shipping calculator */}
-						{!appliedCoupon?.freeShipping && (
-							<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3">
-								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery method</p>
-
-								<button type="button" onClick={() => setSelectedShippingId(STORE_PICKUP_ID)} className={`mt-2 w-full rounded-xl border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
-									<div className="flex items-start justify-between gap-3">
-										<div className="flex items-center gap-2">
-											<MapPin className="h-4 w-4" />
-											<div>
-												<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
-												<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
-											</div>
-										</div>
-										<p className="text-sm font-semibold text-stone-900">Free</p>
-									</div>
-									{selectedShippingId === STORE_PICKUP_ID ? (
-										<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-											<Check className="h-3.5 w-3.5" />
-											Selected
-										</div>
-									) : null}
+							) : (
+								<button type="button" onClick={() => setShowCouponForm(true)} className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700">
+									Have a coupon code?
 								</button>
-
-								{isLoadingBring && bringOptions.length === 0 ? (
-									<p className="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
-										<Loader2 className="h-3.5 w-3.5 animate-spin" />
-										Checking rates for your saved address...
-									</p>
-								) : null}
-
-								{!showShippingForm && !isLoadingBring && bringOptions.length === 0 ? (
-									<button type="button" onClick={() => setShowShippingForm(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium text-stone-700 transition hover:bg-stone-100">
-										<Truck className="h-3.5 w-3.5" />
-										Calculate delivery costs
-									</button>
-								) : null}
-
-								{bringOptions.length === 0 && showShippingForm ? (
-									<div className="mt-2 rounded-xl border border-stone-200 bg-white p-3">
-										<div className="grid grid-cols-2 gap-2">
-											<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900">
-												{SHIPPING_COUNTRIES.map((c) => (
-													<option key={c.code} value={c.code}>
-														{c.name}
-													</option>
-												))}
-											</select>
-											<input type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900" />
-										</div>
-										{bringError ? <p className="mt-2 text-xs text-red-600">{bringError}</p> : null}
-										<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
-											{isLoadingBring ? (
-												<>
-													<Loader2 className="h-3.5 w-3.5 animate-spin" />
-													Calculating...
-												</>
-											) : (
-												"Get shipping rates"
-											)}
-										</button>
-									</div>
-								) : null}
+							)}
 							</div>
-						)}
 
-						{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
-							<div className="mt-2 space-y-2">
-								{savedAddressUsed ? (
-									<p className="text-xs text-stone-500">
-										Using your saved address ({savedAddressUsed.city ? `${savedAddressUsed.city}, ` : ""}
-										{savedAddressUsed.postalCode}) ·{" "}
-										<button type="button" onClick={useDifferentAddress} className="font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
-											use a different address
-										</button>
-									</p>
-								) : null}
-								{bringOptions.map((option) => (
-									<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-xl border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+							{/* Bring shipping calculator */}
+							{!appliedCoupon?.freeShipping && (
+								<div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-3">
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery method</p>
+
+									<button type="button" onClick={() => setSelectedShippingId(STORE_PICKUP_ID)} className={`mt-2 w-full rounded-xl border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
 										<div className="flex items-start justify-between gap-3">
 											<div className="flex items-center gap-2">
-												{getDeliveryIcon(option.deliveryType)}
+												<MapPin className="h-4 w-4" />
 												<div>
-													<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
-													{option.expectedDelivery ? <p className="text-xs text-stone-500">{option.expectedDelivery}</p> : null}
+													<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
+													<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
 												</div>
 											</div>
-											<div className="text-right">
-												<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
-												{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-500" />}
-											</div>
+											<p className="text-sm font-semibold text-stone-900">Free</p>
 										</div>
-										{selectedShippingId === option.productId ? (
+										{selectedShippingId === STORE_PICKUP_ID ? (
 											<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
 												<Check className="h-3.5 w-3.5" />
 												Selected
 											</div>
 										) : null}
 									</button>
-								))}
-								<button type="button" onClick={useDifferentAddress} className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700">
-									Change location
-								</button>
-							</div>
-						) : null}
 
-						<div className="mt-4 grid grid-cols-2 gap-2">
-							<button type="button" onClick={() => setPaymentMethod("STRIPE")} className={`rounded-xl border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
-								Card (Stripe)
-							</button>
-							<button type="button" onClick={() => setPaymentMethod("VIPPS")} className={`rounded-xl border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
-								Vipps
-							</button>
+									{isLoadingBring && bringOptions.length === 0 ? (
+										<p className="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
+											<Loader2 className="h-3.5 w-3.5 animate-spin" />
+											Checking rates for your saved address...
+										</p>
+									) : null}
+
+									{!showShippingForm && !isLoadingBring && bringOptions.length === 0 ? (
+										<button type="button" onClick={() => setShowShippingForm(true)} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium text-stone-700 transition hover:bg-stone-100">
+											<Truck className="h-3.5 w-3.5" />
+											Calculate delivery costs
+										</button>
+									) : null}
+
+									{bringOptions.length === 0 && showShippingForm ? (
+										<div className="mt-2 rounded-xl border border-stone-200 bg-white p-3">
+											<div className="grid grid-cols-2 gap-2">
+												<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900">
+													{SHIPPING_COUNTRIES.map((c) => (
+														<option key={c.code} value={c.code}>
+															{c.name}
+														</option>
+													))}
+												</select>
+												<input type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900" />
+											</div>
+											{bringError ? <p className="mt-2 text-xs text-red-600">{bringError}</p> : null}
+											<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
+												{isLoadingBring ? (
+													<>
+														<Loader2 className="h-3.5 w-3.5 animate-spin" />
+														Calculating...
+													</>
+												) : (
+													"Get shipping rates"
+												)}
+											</button>
+										</div>
+									) : null}
+								</div>
+							)}
+
+							{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
+								<div className="mt-2 space-y-2">
+									{savedAddressUsed ? (
+										<p className="text-xs text-stone-500">
+											Using your saved address ({savedAddressUsed.city ? `${savedAddressUsed.city}, ` : ""}
+											{savedAddressUsed.postalCode}) ·{" "}
+											<button type="button" onClick={useDifferentAddress} className="font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
+												use a different address
+											</button>
+										</p>
+									) : null}
+									{bringOptions.map((option) => (
+										<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-xl border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+											<div className="flex items-start justify-between gap-3">
+												<div className="flex items-center gap-2">
+													{getDeliveryIcon(option.deliveryType)}
+													<div>
+														<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
+														{option.expectedDelivery ? <p className="text-xs text-stone-500">{option.expectedDelivery}</p> : null}
+													</div>
+												</div>
+												<div className="text-right">
+													<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
+													{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-500" />}
+												</div>
+											</div>
+											{selectedShippingId === option.productId ? (
+												<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+													<Check className="h-3.5 w-3.5" />
+													Selected
+												</div>
+											) : null}
+										</button>
+									))}
+									<button type="button" onClick={useDifferentAddress} className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700">
+										Change location
+									</button>
+								</div>
+							) : null}
+							<div className="h-4" />
 						</div>
 
-						<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-2 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
-							{isCheckingOut ? "Preparing checkout..." : appliedCoupon?.freeShipping ? "Proceed to Checkout" : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}
-						</button>
-						{checkoutError ? <p className="mt-2 text-center text-xs text-red-600">{checkoutError}</p> : null}
-						<Link href="/cart" onClick={onClose} className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">
-							View Cart
-						</Link>
-					</div>
-				) : null}
+						{/* Order total + payment + checkout: always visible, never scrolled out of view */}
+						<div className="shrink-0 border-t border-stone-200 px-5 py-4">
+							<div className="flex items-center justify-between text-sm">
+								<span className="text-stone-600">Subtotal</span>
+								<span className="font-medium text-stone-900">NOK {subtotal.toFixed(2)}</span>
+							</div>
+
+							{selectedShippingOption ? (
+								<div className="mt-1 flex items-center justify-between text-sm">
+									<span className="text-stone-600">Shipping</span>
+									<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost.toFixed(2)}`}</span>
+								</div>
+							) : (
+								<p className="mt-1 text-xs text-stone-500">Shipping calculated at checkout.</p>
+							)}
+
+							{selectedShippingOption ? (
+								<div className="mt-2 flex items-center justify-between border-t border-dashed border-stone-200 pt-2 text-base font-semibold text-stone-900">
+									<span>Total</span>
+									<span className="text-right">
+										NOK {estimatedTotal.toFixed(2)}
+										<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-500" />
+									</span>
+								</div>
+							) : null}
+
+							{/* Payment method — large, image-led cards so Stripe vs. Vipps is unmistakable */}
+							<div className="mt-4">
+								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Pay with</p>
+								<div className="mt-2 grid grid-cols-2 gap-3">
+									<button
+										type="button"
+										onClick={() => setPaymentMethod("STRIPE")}
+										aria-pressed={paymentMethod === "STRIPE"}
+										className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border p-3 py-4 transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}
+									>
+										{paymentMethod === "STRIPE" ? (
+											<span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+												<Check className="h-2.5 w-2.5" />
+											</span>
+										) : null}
+										<div className="flex items-center gap-1.5">
+											<VisaMark className="h-6 w-9" />
+											<MastercardMark className="h-6 w-9" />
+										</div>
+										<span className="text-xs font-semibold text-stone-900">Card</span>
+									</button>
+									<button
+										type="button"
+										onClick={() => setPaymentMethod("VIPPS")}
+										aria-pressed={paymentMethod === "VIPPS"}
+										className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border p-3 py-4 transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}
+									>
+										{paymentMethod === "VIPPS" ? (
+											<span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+												<Check className="h-2.5 w-2.5" />
+											</span>
+										) : null}
+										<Image src="/images/vipps-logo.webp" alt="Vipps" width={80} height={26} className="h-6.5 w-20 rounded object-contain" />
+										<span className="text-xs font-semibold text-stone-900">Vipps</span>
+									</button>
+								</div>
+							</div>
+
+							<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
+								{isCheckingOut ? "Preparing checkout..." : appliedCoupon?.freeShipping ? "Proceed to Checkout" : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}
+							</button>
+							{checkoutError ? <p className="mt-2 text-center text-xs text-red-600">{checkoutError}</p> : null}
+							<Link href="/cart" onClick={onClose} className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">
+								View Cart
+							</Link>
+						</div>
+					</>
+				)}
 			</div>
 		</div>
 	);

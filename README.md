@@ -33,6 +33,7 @@ The complete project scope, brand guidelines, product universe, and implementati
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
 - Dedicated admin Custom Orders dashboard, segregated from the regular Orders view
 - Threaded messaging between customer and admin with unread indicators, rich-text notes
+- Live chat on top of the message thread: instant delivery, online presence, and typing indicators via Supabase Realtime private channels, plus a live new/pending count badge in the admin sidebar
 - Admin quoting workflow: request status (Pending/Accepted/Declined/Paid), quoted price, and a manually-entered Stripe payment link
 
 **Accounts**
@@ -61,6 +62,11 @@ The complete project scope, brand guidelines, product universe, and implementati
 
 **Testimonials**
 - Admin CRUD for homepage testimonials (name, quote, star rating, photo, drag-to-reorder, show/hide) backed by the database and Supabase Storage, replacing the previous hardcoded array
+
+**Security & Data Access**
+- Row Level Security enabled (deny-all policy set) on every Prisma-managed table, closing off Supabase's auto-exposed PostgREST Data API to the `anon`/`authenticated` roles — the app itself is unaffected since it talks to Postgres exclusively through Prisma's `BYPASSRLS` role
+- Realtime Authorization policies scope the live-chat private channels so only the inquiry's customer (matched by email) or an admin can join a given custom-request channel, and only admins can join the admin count-badge channel
+- Storage bucket policies audited and trimmed to remove public/unauthenticated list and upload access left over on the `products` bucket; all uploads go through the service-role client
 
 ## Current Stack
 
