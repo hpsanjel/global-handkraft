@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { type CategorySummary } from "@/lib/category-utils";
@@ -114,8 +115,13 @@ export default function AdminProductsPage() {
 	const [isUploadingImages, setIsUploadingImages] = useState(false);
 	const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 	const imageInputRef = useRef<HTMLInputElement>(null);
+	const saveFeedbackRef = useRef<HTMLDivElement>(null);
 	// Tracks whether the admin has hand-edited the slug for the current product — once true, name edits stop overwriting it.
 	const slugEditedRef = useRef(false);
+
+	useEffect(() => {
+		if (saveFeedback) saveFeedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+	}, [saveFeedback]);
 
 	useEffect(() => {
 		const loadProducts = async () => {
@@ -514,19 +520,18 @@ export default function AdminProductsPage() {
 								</Button>
 							</div>
 
-							{saveFeedback && <div className={`rounded-xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{saveFeedback.message}</div>}
+							{saveFeedback && (
+								<div ref={saveFeedbackRef} className={`rounded-xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+									{saveFeedback.message}
+								</div>
+							)}
 
 							<div className="flex flex-wrap gap-1.5 border-b border-slate-200">
 								{EDITOR_TABS.map((tab) => {
 									const count = tab.id === "images" ? currentProduct.gallery.length : tab.id === "variants" ? currentProduct.variants.length : tab.id === "addons" ? currentProduct.addons.length : null;
 									const isActive = activeTab === tab.id;
 									return (
-										<button
-											key={tab.id}
-											type="button"
-											onClick={() => setActiveTab(tab.id)}
-											className={`-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${isActive ? "border-stone-600 text-stone-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}
-										>
+										<button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${isActive ? "border-stone-600 text-stone-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
 											{tab.label}
 											{count !== null ? <span className={`ml-1.5 text-xs font-normal ${isActive ? "text-stone-500" : "text-slate-400"}`}>({count})</span> : null}
 										</button>
@@ -566,7 +571,7 @@ export default function AdminProductsPage() {
 										</label>
 										<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
 											<input type="checkbox" checked={currentProduct.active} onChange={(e) => updateDraftField("active", e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-											<span>Active (visible on storefront). Turn off to archive — hides the product without deleting it or affecting past orders.</span>
+											<span>Show on storefront (Uncheck to hide the product without deleting it)</span>
 										</label>
 									</div>
 
@@ -757,6 +762,7 @@ export default function AdminProductsPage() {
 
 							<div className="flex justify-end border-t border-slate-100 pt-6">
 								<Button variant="primary" onClick={saveProduct} disabled={isLoadingCatalog || isSaving || isUploadingImages}>
+									{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 									{isSaving ? "Saving..." : "Save product"}
 								</Button>
 							</div>
