@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { type CategorySummary } from "@/lib/category-utils";
@@ -74,6 +75,7 @@ function createEmptyProduct(category: string): Product {
 			rating: 0,
 			reviewCount: 0,
 			featured: false,
+			active: true,
 			variants: [],
 			addons: [],
 			shippingInfo: DEFAULT_SHIPPING_INFO,
@@ -113,8 +115,13 @@ export default function AdminProductsPage() {
 	const [isUploadingImages, setIsUploadingImages] = useState(false);
 	const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 	const imageInputRef = useRef<HTMLInputElement>(null);
+	const saveFeedbackRef = useRef<HTMLDivElement>(null);
 	// Tracks whether the admin has hand-edited the slug for the current product — once true, name edits stop overwriting it.
 	const slugEditedRef = useRef(false);
+
+	useEffect(() => {
+		if (saveFeedback) saveFeedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+	}, [saveFeedback]);
 
 	useEffect(() => {
 		const loadProducts = async () => {
@@ -369,12 +376,40 @@ export default function AdminProductsPage() {
 		setActiveTab("details");
 	};
 
+	// Sets active:false on a product via the same PUT the editor uses — hides it from the
+	// storefront while leaving variants, addons, and order history completely untouched.
+	const archiveProduct = async (targetProduct: Product) => {
+		try {
+			setIsSaving(true);
+			const response = await fetch("/api/admin/products", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ ...targetProduct, active: false }),
+			});
+			const payload = (await response.json()) as Product[] | { error?: string };
+
+			if (!response.ok || !Array.isArray(payload)) {
+				throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Product could not be archived.");
+			}
+
+			setProductsState(payload);
+			const updated = payload.find((product) => product.id === targetProduct.id) ?? null;
+			if (selectedProductId === targetProduct.id) setDraftProduct(updated);
+			setSaveFeedback({ type: "success", message: `${targetProduct.name} has been archived and hidden from the storefront. Its order history is untouched.` });
+			await refreshProductsCatalog();
+		} catch (error) {
+			setSaveFeedback({ type: "error", message: error instanceof Error ? error.message : "Product could not be archived." });
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
 	const deleteProduct = async (productId: string) => {
 		setSaveFeedback(null);
 		const targetProduct = productsState.find((product) => product.id === productId);
 		if (!targetProduct) return;
 
-		if (!window.confirm(`Delete "${targetProduct.name}" from the catalog?`)) return;
+		if (!window.confirm(`Delete "${targetProduct.name}" from the catalog? This permanently removes it and cannot be undone.`)) return;
 
 		try {
 			setIsSaving(true);
@@ -382,7 +417,18 @@ export default function AdminProductsPage() {
 			const payload = (await response.json()) as Product[] | { error?: string };
 
 			if (!response.ok || !Array.isArray(payload)) {
-				throw new Error(!Array.isArray(payload) && payload.error ? payload.error : "Product could not be deleted.");
+				const message = !Array.isArray(payload) && payload.error ? payload.error : "Product could not be deleted.";
+
+				// Deletion is blocked because orders reference this product — offer archiving
+				// (active:false) as the safe alternative instead of just failing.
+				if (response.status === 409 && message.toLowerCase().includes("order history")) {
+					setIsSaving(false);
+					const shouldArchive = window.confirm(`${message}\n\nArchive it instead? This immediately hides "${targetProduct.name}" from the storefront while keeping all past orders and reports intact. You can reactivate it later from the Details tab.`);
+					if (shouldArchive) await archiveProduct(targetProduct);
+					return;
+				}
+
+				throw new Error(message);
 			}
 
 			setProductsState(payload);
@@ -443,7 +489,10 @@ export default function AdminProductsPage() {
 										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border text-[10px] ${isSelected ? "border-white/30 text-slate-300" : "border-dashed border-slate-200 text-slate-400"}`}>No image</div>
 									)}
 									<div className="min-w-0 flex-1">
-										<p className="truncate font-semibold">{product.name}</p>
+										<p className="flex items-center gap-1.5 truncate font-semibold">
+											<span className="truncate">{product.name}</span>
+											{!product.active && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${isSelected ? "bg-white/20 text-white" : "bg-amber-100 text-amber-700"}`}>Archived</span>}
+										</p>
 										<p className={`mt-0.5 truncate text-sm ${isSelected ? "text-slate-300" : "text-slate-500"}`}>{product.category}</p>
 									</div>
 									<div className={`shrink-0 text-right text-xs ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
@@ -471,19 +520,18 @@ export default function AdminProductsPage() {
 								</Button>
 							</div>
 
-							{saveFeedback && <div className={`rounded-xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{saveFeedback.message}</div>}
+							{saveFeedback && (
+								<div ref={saveFeedbackRef} className={`rounded-xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+									{saveFeedback.message}
+								</div>
+							)}
 
 							<div className="flex flex-wrap gap-1.5 border-b border-slate-200">
 								{EDITOR_TABS.map((tab) => {
 									const count = tab.id === "images" ? currentProduct.gallery.length : tab.id === "variants" ? currentProduct.variants.length : tab.id === "addons" ? currentProduct.addons.length : null;
 									const isActive = activeTab === tab.id;
 									return (
-										<button
-											key={tab.id}
-											type="button"
-											onClick={() => setActiveTab(tab.id)}
-											className={`-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${isActive ? "border-stone-600 text-stone-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}
-										>
+										<button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${isActive ? "border-stone-600 text-stone-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
 											{tab.label}
 											{count !== null ? <span className={`ml-1.5 text-xs font-normal ${isActive ? "text-stone-500" : "text-slate-400"}`}>({count})</span> : null}
 										</button>
@@ -520,6 +568,10 @@ export default function AdminProductsPage() {
 										<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
 											<input type="checkbox" checked={currentProduct.featured} onChange={(e) => updateDraftField("featured", e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
 											<span>Featured on storefront</span>
+										</label>
+										<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
+											<input type="checkbox" checked={currentProduct.active} onChange={(e) => updateDraftField("active", e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+											<span>Show on storefront (Uncheck to hide the product without deleting it)</span>
 										</label>
 									</div>
 
@@ -710,6 +762,7 @@ export default function AdminProductsPage() {
 
 							<div className="flex justify-end border-t border-slate-100 pt-6">
 								<Button variant="primary" onClick={saveProduct} disabled={isLoadingCatalog || isSaving || isUploadingImages}>
+									{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 									{isSaving ? "Saving..." : "Save product"}
 								</Button>
 							</div>

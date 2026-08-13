@@ -50,6 +50,7 @@ type DbProductRecord = {
 	gallery: string[];
 	galleryColors: string[];
 	featured: boolean;
+	active: boolean;
 	rating: number;
 	reviewCount: number;
 	dimensions: string | null;
@@ -109,6 +110,7 @@ export function toStoreProduct(record: DbProductRecord): Product {
 		rating: record.rating,
 		reviewCount: record.reviewCount,
 		featured: record.featured,
+		active: record.active,
 		dimensions: record.dimensions ?? undefined,
 		weight: record.weight ?? undefined,
 		variants: record.variants.map((variant) => ({

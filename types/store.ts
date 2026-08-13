@@ -46,6 +46,7 @@ export type Product = {
 	rating: number;
 	reviewCount: number;
 	featured: boolean;
+	active: boolean;
 	variants: ProductVariant[];
 	addons: ProductAddon[];
 	shippingInfo: string;
