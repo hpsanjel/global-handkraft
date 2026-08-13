@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -9,14 +9,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
+/** Only ever redirect within our own site — a `next` value like "https://evil.com" or "//evil.com" must never be followed. */
+function isSafeNextPath(path: string | null): path is string {
+	return typeof path === "string" && path.startsWith("/") && !path.startsWith("//");
+}
+
 function LoginPageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const supabase = createClient();
+	const nextParam = searchParams.get("next");
+	const nextPath = isSafeNextPath(nextParam) ? nextParam : "/account";
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [form, setForm] = useState({ email: "", password: "" });
+
+	// If the buyer followed an order-confirmation-email link while already
+	// signed in, skip the login form entirely and go straight there.
+	useEffect(() => {
+		let active = true;
+		supabase.auth.getUser().then(({ data }) => {
+			if (active && data.user) {
+				router.replace(nextPath);
+			}
+		});
+		return () => {
+			active = false;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	async function signInWithEmail(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -39,8 +61,7 @@ function LoginPageContent() {
 			return;
 		}
 
-		const nextPath = searchParams.get("next");
-		router.push(nextPath || "/account");
+		router.push(nextPath);
 		router.refresh();
 	}
 
@@ -49,7 +70,7 @@ function LoginPageContent() {
 		const { error: oauthError } = await supabase.auth.signInWithOAuth({
 			provider: "google",
 			options: {
-				redirectTo: `${location.origin}/auth/callback`,
+				redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
 			},
 		});
 		setLoading(false);

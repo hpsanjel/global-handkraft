@@ -4,6 +4,7 @@ import { ORDER_STATUS_META, type OrderStatus } from "@/lib/order-status";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const SENDER = "Global Handcrafts <contact@handcraftsglobal.com>";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.handcraftsglobal.com";
 
 function getAdminEmails(): string[] {
 	const raw = process.env.ADMIN_EMAILS ?? "";
@@ -70,6 +71,13 @@ export async function sendOrderConfirmationEmail(params: OrderConfirmationParams
 		return;
 	}
 
+	// Routed through /login?next=... so it works whether the buyer is already
+	// signed in, signed out, or has never created an account password (the
+	// login page itself offers Google sign-in too) — /account/orders matches
+	// orders to the signed-in user's email, not a stored user id.
+	const orderPagePath = `/account/orders?order=${params.orderNumber}`;
+	const orderLinkUrl = `${SITE_URL}/login?next=${encodeURIComponent(orderPagePath)}`;
+
 	const itemsHtml = params.items
 		.map(
 			(item) => `
@@ -113,7 +121,8 @@ export async function sendOrderConfirmationEmail(params: OrderConfirmationParams
 				${params.isPickupOrder && params.pickupAddress ? `${params.pickupAddress.address}<br/>${params.pickupAddress.postalCode} ${params.pickupAddress.city}<br/>${params.pickupAddress.country}` : `${params.address.address}<br/>${params.address.postalCode} ${params.address.city}<br/>${params.address.country}`}
 			</p>
 
-			<p style="margin-top:28px;">We'll email you again once your order ships. Thank you for supporting authentic handcrafted treasures!</p>
+			<p style="margin-top:28px;"><a href="${orderLinkUrl}" style="background:#1B365D; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; display:inline-block;">View Your Order</a></p>
+			<p style="margin-top:16px;">We'll email you again once your order ships. Thank you for supporting authentic handcrafted treasures!</p>
 			<p>Warm regards,<br/>Global Handcrafts Team</p>
 		</div>
 	`;

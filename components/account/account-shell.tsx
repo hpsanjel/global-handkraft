@@ -59,10 +59,18 @@ export default function AccountShell({ children }: { children: React.ReactNode }
 	useEffect(() => {
 		let active = true;
 
+		// window.location (not useSearchParams) so this stays a plain client
+		// effect — AccountShell renders directly from app/account/layout.tsx
+		// with no Suspense boundary, which useSearchParams would require.
+		const redirectToLogin = () => {
+			const destination = `${window.location.pathname}${window.location.search}`;
+			router.replace(`/login?next=${encodeURIComponent(destination)}`);
+		};
+
 		supabase.auth.getUser().then(({ data }) => {
 			if (!active) return;
 			if (!data.user) {
-				router.replace("/login");
+				redirectToLogin();
 				return;
 			}
 			setUser(data.user);
@@ -73,7 +81,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((_event, session) => {
 			if (!session?.user) {
-				router.replace("/login");
+				redirectToLogin();
 				return;
 			}
 			setUser(session.user);

@@ -3,9 +3,16 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getRoleForEmail, withRoleInMetadata } from "@/lib/admin-auth";
 
+/** Only ever redirect within our own site — a `next` value like "https://evil.com" or "//evil.com" must never be followed. */
+function isSafeNextPath(path: string | null): path is string {
+	return typeof path === "string" && path.startsWith("/") && !path.startsWith("//");
+}
+
 export async function GET(request: Request) {
 	const { searchParams, origin } = new URL(request.url);
 	const code = searchParams.get("code");
+	const nextParam = searchParams.get("next");
+	const nextPath = isSafeNextPath(nextParam) ? nextParam : "/account";
 
 	if (code) {
 		const cookieStore = await cookies();
@@ -37,10 +44,10 @@ export async function GET(request: Request) {
 					});
 				}
 
-				return NextResponse.redirect(`${origin}${role === "admin" ? "/admin" : "/account"}`);
+				return NextResponse.redirect(`${origin}${role === "admin" ? "/admin" : nextPath}`);
 			}
 		}
 	}
 
-	return NextResponse.redirect(`${origin}/account`);
+	return NextResponse.redirect(`${origin}${nextPath}`);
 }
