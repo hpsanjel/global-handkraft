@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MandapInquiryStatusBadge } from "@/components/mandap-inquiry-status-badge";
 import { RichTextarea } from "@/components/rich-textarea";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 type Inquiry = {
 	id: string;
@@ -65,7 +66,7 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 			<div className="mt-4 space-y-3">
 				<div>
 					<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Request Status</label>
-					<select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100">
+					<select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100">
 						<option value="PENDING">Pending</option>
 						<option value="ACCEPTED">Request Accepted</option>
 						<option value="DECLINED">Request Declined</option>
@@ -74,7 +75,7 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 
 				<div>
 					<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Quoted Price (NOK)</label>
-					<input type="number" step="0.01" value={quotedPrice} onChange={(e) => setQuotedPrice(e.target.value)} placeholder="Enter price" className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+					<input type="number" step="0.01" value={quotedPrice} onChange={(e) => setQuotedPrice(e.target.value)} placeholder="Enter price" className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 				</div>
 
 				<div>
@@ -87,11 +88,11 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 				{paymentStatus === "ACCEPTED" && (
 					<div>
 						<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Stripe Payment Link</label>
-						<input type="url" value={stripePaymentLink} onChange={(e) => setStripePaymentLink(e.target.value)} placeholder="https://checkout.stripe.com/..." className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+						<input type="url" value={stripePaymentLink} onChange={(e) => setStripePaymentLink(e.target.value)} placeholder="https://checkout.stripe.com/..." className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 					</div>
 				)}
 
-				{error && <p className="text-sm text-red-600">{error}</p>}
+				{error && <InlineAlert tone="error">{error}</InlineAlert>}
 
 				<button type="button" onClick={handleSubmit} disabled={isSubmitting} className="rounded-lg bg-[#1B365D] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#152a4a] disabled:opacity-50">
 					{isSubmitting ? "Saving..." : "Save Changes"}

@@ -6,6 +6,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { RichTextarea } from "@/components/rich-textarea";
 import { FormattedText } from "@/components/formatted-text";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 export type MandapInquiryThreadMessage = {
 	id: string;
@@ -183,23 +184,25 @@ export function MandapInquiryThread({ inquiryId, messages: initialMessages, post
 	return (
 		<div className="mt-4 border-t border-slate-200 pt-4">
 			<div className="flex items-center gap-2">
-				<p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Conversation</p>
-				{otherOnline ? (
-					<span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
-						<span className="h-2 w-2 rounded-full bg-green-500" />
-						{otherLabel} online
-					</span>
-				) : null}
+				<p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">Conversation</p>
+				<span role="status" aria-live="polite">
+					{otherOnline ? (
+						<span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+							<span className="h-2 w-2 rounded-full bg-green-500" />
+							{otherLabel} online
+						</span>
+					) : null}
+				</span>
 			</div>
 
 			{messages.length > 0 ? (
-				<ol className="mt-3 space-y-3">
+				<ol role="log" aria-live="polite" aria-relevant="additions" className="mt-3 space-y-3">
 					{messages.map((msg) => {
 						const isViewer = msg.sender === viewerRole;
 						const label = isViewer ? "You" : msg.sender === "ADMIN" ? "Admin" : "Customer";
 						return (
 							<li key={msg.id} className="relative pl-5">
-								<span className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${msg.sender === "ADMIN" ? "bg-[#1B365D]" : "bg-[#4CAF50]"}`} />
+								<span className={`absolute left-0 top-1.5 h-2 w-2 rounded-full ${msg.sender === "ADMIN" ? "bg-[#1B365D]" : "bg-brand-green"}`} />
 								<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
 								<FormattedText text={msg.message} className="mt-0.5 text-sm text-slate-700" />
 								{msg.attachments && msg.attachments.length > 0 ? (
@@ -211,7 +214,7 @@ export function MandapInquiryThread({ inquiryId, messages: initialMessages, post
 										))}
 									</div>
 								) : null}
-								<p className="mt-0.5 text-xs text-slate-400">{formatTimestamp(msg.createdAt)}</p>
+								<p className="mt-0.5 text-xs text-slate-600">{formatTimestamp(msg.createdAt)}</p>
 							</li>
 						);
 					})}
@@ -220,7 +223,9 @@ export function MandapInquiryThread({ inquiryId, messages: initialMessages, post
 				<p className="mt-3 text-sm text-slate-500">No messages yet.</p>
 			)}
 
-			{otherTyping ? <p className="mt-2 text-xs italic text-slate-400">{otherLabel} is typing…</p> : null}
+			<p role="status" aria-live="polite" className="mt-2 text-xs italic text-slate-600">
+				{otherTyping ? `${otherLabel} is typing…` : ""}
+			</p>
 
 			<div className="mt-4 space-y-2">
 				<RichTextarea
@@ -256,7 +261,11 @@ export function MandapInquiryThread({ inquiryId, messages: initialMessages, post
 						{attachment ? "Change image" : "Attach image (max 3MB)"}
 						<input ref={fileInputRef} type="file" accept="image/*" onChange={handleAttachmentChange} disabled={isSending} className="hidden" />
 					</label>
-					{feedback ? <p className={`text-xs ${feedback.type === "error" ? "text-red-600" : "text-green-600"}`}>{feedback.message}</p> : null}
+					{feedback ? (
+						<InlineAlert tone={feedback.type} className="text-xs">
+							{feedback.message}
+						</InlineAlert>
+					) : null}
 				</div>
 			</div>
 		</div>

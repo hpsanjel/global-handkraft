@@ -209,7 +209,7 @@ export function AdminShippingSettings() {
 						<div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
 							<label className="space-y-1 text-xs text-slate-500">
 								<span>Country</span>
-								<select value={newCountry} onChange={(event) => setNewCountry(event.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100">
+								<select value={newCountry} onChange={(event) => setNewCountry(event.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-sm outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100">
 									<option value="">Select a country</option>
 									{!hasDefaultZone ? <option value={DEFAULT_SHIPPING_ZONE_CODE}>Default (all other countries)</option> : null}
 									{availableCountryOptions.map((country) => (

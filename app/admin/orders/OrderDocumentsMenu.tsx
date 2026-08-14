@@ -44,7 +44,7 @@ export function OrderDocumentsMenu({ orderId, isPickup }: Props) {
 			aria-label="Open a document for this order"
 			value={value}
 			onChange={(event) => handleChange(event.target.value)}
-			className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-medium text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+			className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-medium text-slate-700 outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100"
 		>
 			<option value="">Documents…</option>
 			<option value="ALL">Download all (.zip)</option>

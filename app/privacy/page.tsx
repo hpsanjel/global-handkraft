@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { SkipLink } from "@/components/skip-link";
 
 export const metadata = {
 	title: "Privacy Policy | Global Handcrafts AS",
@@ -9,8 +10,9 @@ export const metadata = {
 export default function PrivacyPage() {
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
+			<SkipLink />
 			<SiteHeader />
-			<main className="max-w-4xl mx-auto px-6 py-12">
+			<main id="main-content" className="max-w-4xl mx-auto px-6 py-12">
 				<h1 className="text-4xl font-bold mb-6">Privacy Policy</h1>
 				<p className="text-sm text-gray-500 mb-8">Last updated: July 22, 2026</p>
 

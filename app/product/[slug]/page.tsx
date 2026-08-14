@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
+import { SkipLink } from "@/components/skip-link";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductClient } from "@/components/product-client";
 import { ProductReviews } from "@/components/product-reviews";
@@ -126,10 +127,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
+			<SkipLink />
 			<SiteHeader />
 			{/* JSON-LD structured data for the product */}
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
-			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+			<main id="main-content" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
 				<ProductClient product={product} priceZones={priceZones} />
 				<ProductReviews productSlug={product.slug} initialRating={product.rating} initialReviewCount={product.reviewCount} initialReviews={reviews} />
 			</main>

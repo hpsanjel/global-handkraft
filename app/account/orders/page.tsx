@@ -113,7 +113,7 @@ function AccountOrdersPageContent() {
 							<div className="flex flex-wrap items-start justify-between gap-3">
 								<div>
 									<p className="font-semibold text-slate-900">{order.orderNumber}</p>
-									<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
+									<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-600">
 										{new Date(order.createdAt).toLocaleDateString("en-GB", {
 											day: "numeric",
 											month: "short",
@@ -160,7 +160,7 @@ function AccountOrdersPageContent() {
 							</div>
 							{order.statusEvents.length > 0 ? (
 								<div className="mt-4 border-t border-slate-200 pt-4">
-									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Order timeline</p>
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">Order timeline</p>
 									<ol className="mt-3 space-y-3">
 										{order.statusEvents.map((event, index) => (
 											<li key={event.id} className="relative pl-5">

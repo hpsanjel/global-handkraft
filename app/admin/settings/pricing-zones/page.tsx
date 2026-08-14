@@ -65,31 +65,31 @@ export default async function PricingZonesPage() {
 			<AdminShell userEmail={userEmail}>
 				<div className="space-y-6">
 					<div>
-						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Settings</p>
+						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Settings</p>
 						<h1 className="mt-2 text-2xl font-semibold text-stone-900 sm:text-3xl">Pricing Zones</h1>
-						<p className="mt-2 text-sm text-stone-600">Manage country zones and fixed markup amounts added to base prices.</p>
+						<p className="mt-2 text-sm text-stone-700">Manage country zones and fixed markup amounts added to base prices.</p>
 					</div>
 
 					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 						<form action="/api/admin/pricing-zones" method="post" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 							<div>
-								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Zone name</label>
+								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Zone name</label>
 								<input name="name" required className="mt-2 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900" placeholder="e.g. Nordics" />
 							</div>
 							<div>
-								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Zone code</label>
+								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Zone code</label>
 								<input name="code" required className="mt-2 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900" placeholder="e.g. ZONE_1" />
 							</div>
 							<div>
-								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Markup (NOK)</label>
+								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Markup (NOK)</label>
 								<input name="markupNok" type="number" required min="0" step="1" className="mt-2 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900" placeholder="e.g. 280" />
 							</div>
 							<div>
-								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Priority</label>
+								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Priority</label>
 								<input name="priority" type="number" defaultValue="0" className="mt-2 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-900" />
 							</div>
 							<div className="sm:col-span-2 lg:col-span-4">
-								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Countries</label>
+								<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Countries</label>
 								<div className="mt-2 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
 									{Object.keys(COUNTRY_NAMES).map((code) => (
 										<label key={code} className="flex items-center gap-2 text-sm text-stone-700">
@@ -114,7 +114,7 @@ export default async function PricingZonesPage() {
 									<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 										<div>
 											<p className="text-sm font-semibold text-stone-900">{zone.name}</p>
-											<p className="text-xs text-stone-500">
+											<p className="text-xs text-stone-700">
 												{zone.code} • Priority {zone.priority}
 											</p>
 											<p className="text-sm font-semibold text-stone-900">+{zone.markupNok} NOK</p>
@@ -135,7 +135,7 @@ export default async function PricingZonesPage() {
 									</div>
 								</div>
 							))}
-							{zones.length === 0 ? <p className="text-sm text-stone-500">No pricing zones configured yet.</p> : null}
+							{zones.length === 0 ? <p className="text-sm text-stone-700">No pricing zones configured yet.</p> : null}
 						</div>
 					</div>
 				</div>

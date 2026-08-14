@@ -5,6 +5,16 @@ const nextConfig: NextConfig = {
 	images: {
 		// Enable automatic image optimization
 		unoptimized: false,
+		// Product/category/review photos are served from Supabase Storage's public
+		// object URLs, which next/image otherwise refuses to optimize as an
+		// unconfigured remote host.
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "*.supabase.co",
+				pathname: "/storage/v1/object/public/**",
+			},
+		],
 	},
 	// Enable compression for static assets
 	compress: true,

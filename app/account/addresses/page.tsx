@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { AccountPageHeader } from "@/components/account/account-page-header";
 import { createClient } from "@/lib/supabase/client";
 import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 type ShippingAddress = {
 	fullName: string;
@@ -85,7 +86,11 @@ export default function AccountAddressesPage() {
 		<div className="space-y-6">
 			<AccountPageHeader title="Shipping Address" description="This address will be used to pre-fill delivery details when you place an order." />
 
-			{feedback ? <div className={`rounded-2xl border px-4 py-3 text-sm ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{feedback.message}</div> : null}
+			{feedback ? (
+				<InlineAlert tone={feedback.type} className={`rounded-2xl border px-4 py-3 ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+					{feedback.message}
+				</InlineAlert>
+			) : null}
 
 			<form onSubmit={saveAddress} className="space-y-4">
 				<div className="grid gap-4 md:grid-cols-2">
@@ -103,7 +108,7 @@ export default function AccountAddressesPage() {
 					</label>
 					<label className="space-y-2 text-sm text-slate-600">
 						<span className="font-medium text-slate-700">Country</span>
-						<select value={form.country} onChange={(event) => updateField("country", event.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100">
+						<select value={form.country} onChange={(event) => updateField("country", event.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-sm outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100">
 							<option value="">Select a country</option>
 							{SHIPPING_COUNTRIES.map((country) => (
 								<option key={country.code} value={country.code}>

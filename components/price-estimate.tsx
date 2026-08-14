@@ -16,7 +16,7 @@ export function PriceEstimate({ amountNok, className }: { amountNok: number; cla
 	const converted = amountNok * rates.rates[currency];
 
 	return (
-		<span className={className ?? "text-stone-500"} title={`Estimated price — you'll be charged ${amountNok.toFixed(2)} NOK.`}>
+		<span className={className ?? "text-stone-700"} title={`Estimated price — you'll be charged ${amountNok.toFixed(2)} NOK.`}>
 			≈ {formatMoney(converted, currency)}
 		</span>
 	);

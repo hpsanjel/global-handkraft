@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { SkipLink } from "@/components/skip-link";
 
 export default function CheckoutCancelPage() {
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
+			<SkipLink />
 			<SiteHeader />
-			<main className="mx-auto flex min-h-[70vh] max-w-3xl items-center px-4 py-16 sm:px-6 lg:px-8">
+			<main id="main-content" className="mx-auto flex min-h-[70vh] max-w-3xl items-center px-4 py-16 sm:px-6 lg:px-8">
 				<div className="w-full rounded-[2rem] border border-stone-200 bg-white p-8 text-center shadow-sm">
-					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Payment cancelled</p>
+					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Payment cancelled</p>
 					<h1 className="mt-3 text-3xl font-semibold text-stone-900">Checkout was not completed</h1>
-					<p className="mt-4 text-lg leading-8 text-stone-600">Your order was not placed. You can try again anytime, and your cart will still be available for you to resume.</p>
+					<p className="mt-4 text-lg leading-8 text-stone-700">Your order was not placed. You can try again anytime, and your cart will still be available for you to resume.</p>
 					<div className="mt-8 flex flex-wrap justify-center gap-3">
 						<Link href="/cart" className="rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">
 							Return to cart

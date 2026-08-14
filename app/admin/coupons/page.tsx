@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { Dialog, DialogTitle, DialogClose } from "@/components/ui/dialog";
 
 type Coupon = {
 	id: string;
@@ -163,7 +165,7 @@ export default function AdminCouponsPage() {
 				}
 			/>
 
-			{error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+			{error && <InlineAlert tone="error" className="rounded-lg border border-red-200 bg-red-50 p-3">{error}</InlineAlert>}
 
 			<div>
 				{loading ? (
@@ -232,29 +234,27 @@ export default function AdminCouponsPage() {
 			</div>
 
 			{/* Modal */}
-			{showModal && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-					<div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold text-slate-900">{editingCoupon ? "Edit Coupon" : "Create Coupon"}</h2>
-							<button type="button" onClick={closeModal} className="text-slate-400 transition hover:text-slate-600">
-								<X className="h-5 w-5" />
-							</button>
-						</div>
+			<Dialog open={showModal} onClose={closeModal} className="w-full max-w-lg p-6">
+				<div className="flex items-center justify-between">
+					<DialogTitle className="text-xl font-semibold text-slate-900">{editingCoupon ? "Edit Coupon" : "Create Coupon"}</DialogTitle>
+					<DialogClose label="Close" className="text-slate-600 transition hover:text-slate-900">
+						<X className="h-5 w-5" />
+					</DialogClose>
+				</div>
 
-						<form onSubmit={handleSubmit} className="mt-4 space-y-4">
+				<form onSubmit={handleSubmit} className="mt-4 space-y-4">
 							<div>
 								<label htmlFor="code" className="block text-sm font-medium text-slate-700">
 									Code
 								</label>
-								<input type="text" id="code" required value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm uppercase outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" placeholder="SAVE20" />
+								<input type="text" id="code" required value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm uppercase outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" placeholder="SAVE20" />
 							</div>
 
 							<div>
 								<label htmlFor="discountPct" className="block text-sm font-medium text-slate-700">
 									Discount Percentage
 								</label>
-								<input type="number" id="discountPct" required min="0" max="100" value={formData.discountPct} onChange={(e) => setFormData({ ...formData, discountPct: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+								<input type="number" id="discountPct" required min="0" max="100" value={formData.discountPct} onChange={(e) => setFormData({ ...formData, discountPct: Number(e.target.value) })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 							</div>
 
 							<div>
@@ -268,7 +268,7 @@ export default function AdminCouponsPage() {
 									step="1"
 									value={formData.minPurchaseAmount}
 									onChange={(e) => setFormData({ ...formData, minPurchaseAmount: e.target.value })}
-									className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+									className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100"
 									placeholder="e.g. 1500"
 								/>
 								<p className="mt-1 text-xs text-slate-500">Cart subtotal must be at least this amount for the coupon to be redeemable. Leave empty for no minimum.</p>
@@ -292,24 +292,24 @@ export default function AdminCouponsPage() {
 								<label htmlFor="expiresAt" className="block text-sm font-medium text-slate-700">
 									Expiry Date (Optional)
 								</label>
-								<input type="date" id="expiresAt" value={formData.expiresAt} onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+								<input type="date" id="expiresAt" value={formData.expiresAt} onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 							</div>
 
 							<div>
 								<label htmlFor="maxUses" className="block text-sm font-medium text-slate-700">
 									Max Total Uses (Optional, leave empty for unlimited)
 								</label>
-								<input type="number" id="maxUses" min="1" value={formData.maxUses} onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+								<input type="number" id="maxUses" min="1" value={formData.maxUses} onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 							</div>
 
 							<div>
 								<label htmlFor="maxUsesPerCustomer" className="block text-sm font-medium text-slate-700">
 									Max Uses Per Customer (Optional, leave empty for unlimited)
 								</label>
-								<input type="number" id="maxUsesPerCustomer" min="1" value={formData.maxUsesPerCustomer} onChange={(e) => setFormData({ ...formData, maxUsesPerCustomer: e.target.value })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+								<input type="number" id="maxUsesPerCustomer" min="1" value={formData.maxUsesPerCustomer} onChange={(e) => setFormData({ ...formData, maxUsesPerCustomer: e.target.value })} className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 							</div>
 
-							{error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+							{error && <InlineAlert tone="error" className="rounded-lg border border-red-200 bg-red-50 p-3">{error}</InlineAlert>}
 
 							<div className="flex gap-3">
 								<Button type="submit" variant="primary" disabled={submitting} className="flex-1">
@@ -320,9 +320,7 @@ export default function AdminCouponsPage() {
 								</Button>
 							</div>
 						</form>
-					</div>
-				</div>
-			)}
+			</Dialog>
 		</div>
 	);
 }

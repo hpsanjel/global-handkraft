@@ -27,7 +27,7 @@ export function CountriesTable({ countries }: { countries: DashboardCountry[] })
 					<h3 className="text-base font-semibold text-slate-900">Top countries</h3>
 					<p className="mt-0.5 text-sm text-slate-500">Revenue breakdown</p>
 				</div>
-				<Link href="/admin/reports" className="flex shrink-0 items-center gap-1 text-sm font-medium text-stone-600 transition hover:text-stone-700">
+				<Link href="/admin/reports" className="flex shrink-0 items-center gap-1 text-sm font-medium text-stone-700 transition hover:text-stone-900">
 					Reports
 					<ArrowRight className="h-3.5 w-3.5" />
 				</Link>
@@ -37,9 +37,9 @@ export function CountriesTable({ countries }: { countries: DashboardCountry[] })
 				<table className="w-full text-sm">
 					<thead>
 						<tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-							<th className="px-6 py-3 font-semibold">Country</th>
-							<th className="px-6 py-3 text-right font-semibold">Orders</th>
-							<th className="px-6 py-3 text-right font-semibold">Revenue</th>
+							<th scope="col" className="px-6 py-3 font-semibold">Country</th>
+							<th scope="col" className="px-6 py-3 text-right font-semibold">Orders</th>
+							<th scope="col" className="px-6 py-3 text-right font-semibold">Revenue</th>
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-slate-100">

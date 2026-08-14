@@ -145,7 +145,7 @@ export default function AdminReviewsPage() {
 									<div className="flex flex-wrap items-center gap-3">
 										<StarRow rating={review.rating} />
 										<span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${review.approved ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{review.approved ? "Approved" : "Pending"}</span>
-										<Link href={`/product/${review.product.slug}`} target="_blank" className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900">
+										<Link href={`/product/${review.product.slug}`} target="_blank" className="text-sm font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
 											{review.product.name}
 										</Link>
 									</div>

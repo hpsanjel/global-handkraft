@@ -26,6 +26,12 @@
 	--color-navy-light: #274a7a;
 	--color-gold: #d4af37;
 	--color-gold-light: #f1d78c;
+	/* Centralized brand-accent fills, currently the same hex as the original
+	   scattered arbitrary values. These fail WCAG AA (≈2.1–2.8:1) under white
+	   text and need a design-approved replacement hex before they're AA-safe —
+	   tracked as a pending decision, not fixed by this token move alone. */
+	--color-brand-orange: #f7931e;
+	--color-brand-green: #4caf50;
 	--font-sans: "Inter", "Segoe UI", sans-serif;
 	--font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
 	--font-mono: var(--font-geist-mono);
@@ -61,6 +67,117 @@ body {
 	transition:
 		background-color 0.3s ease,
 		color 0.3s ease;
+}
+
+/* Radix Dialog open/close transitions, driven by data-state so they cover both
+   overlay and content variants without a Tailwind animation plugin. */
+.dialog-overlay {
+	animation: dialog-fade-out 150ms ease-in forwards;
+}
+.dialog-overlay[data-state="open"] {
+	animation: dialog-fade-in 150ms ease-out forwards;
+}
+.dialog-content-center {
+	/* Opacity-only fade — deliberately does not touch `transform`. This element
+	   also carries Tailwind's static `-translate-x-1/2 -translate-y-1/2`
+	   centering classes; animating `transform` here too (even to the same
+	   -50%/-50% endpoint) fights that static transform and throws the modal
+	   off-center in real browsers, even though the two don't conflict in an
+	   isolated repro. Keep transform out of this animation entirely. */
+	animation: dialog-fade-out 150ms ease-in forwards;
+}
+.dialog-content-center[data-state="open"] {
+	animation: dialog-fade-in 150ms ease-out forwards;
+}
+.dialog-content-sheet-right {
+	animation: dialog-slide-out-right 200ms ease-in forwards;
+}
+.dialog-content-sheet-right[data-state="open"] {
+	animation: dialog-slide-in-right 200ms ease-out forwards;
+}
+.dialog-content-sheet-bottom {
+	animation: dialog-slide-out-bottom 200ms ease-in forwards;
+}
+.dialog-content-sheet-bottom[data-state="open"] {
+	animation: dialog-slide-in-bottom 200ms ease-out forwards;
+}
+.dialog-content-drawer-left {
+	animation: dialog-slide-out-left 200ms ease-in forwards;
+}
+.dialog-content-drawer-left[data-state="open"] {
+	animation: dialog-slide-in-left 200ms ease-out forwards;
+}
+
+@keyframes dialog-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+@keyframes dialog-fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+@keyframes dialog-slide-in-right {
+	from {
+		transform: translateX(100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+@keyframes dialog-slide-out-right {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+@keyframes dialog-slide-in-bottom {
+	from {
+		transform: translateY(100%);
+	}
+	to {
+		transform: translateY(0);
+	}
+}
+@keyframes dialog-slide-out-bottom {
+	from {
+		transform: translateY(0);
+	}
+	to {
+		transform: translateY(100%);
+	}
+}
+@keyframes dialog-slide-in-left {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+@keyframes dialog-slide-out-left {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-100%);
+	}
+}
+
+.dropdown-menu-content {
+	animation: dialog-fade-out 100ms ease-in forwards;
+}
+.dropdown-menu-content[data-state="open"] {
+	animation: dialog-fade-in 100ms ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

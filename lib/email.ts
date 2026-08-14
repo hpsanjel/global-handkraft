@@ -244,6 +244,53 @@ export async function sendCustomInquiryAdminNotification(params: CustomInquiryNo
 	});
 }
 
+type ContactFormNotificationParams = {
+	name: string;
+	email: string;
+	phone: string;
+	message: string;
+};
+
+/**
+ * Notifies admins by email when a visitor submits the public contact form.
+ * Failures are the caller's responsibility to catch — a failed email should
+ * never fail the form submission itself.
+ */
+export async function sendContactFormNotification(params: ContactFormNotificationParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping contact form admin notification email.");
+		return;
+	}
+
+	const adminEmails = getAdminEmails();
+	if (adminEmails.length === 0) {
+		console.warn("ADMIN_EMAILS not configured; skipping contact form admin notification email.");
+		return;
+	}
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:#1B365D; margin-bottom:4px;">New contact form message</h2>
+
+			<table style="width:100%; margin-top:16px; border-collapse:collapse;">
+				<tr><td style="padding:4px 0; color:#57534e;">Name</td><td style="padding:4px 0; text-align:right;">${params.name}</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">Email</td><td style="padding:4px 0; text-align:right;">${params.email}</td></tr>
+				${params.phone ? `<tr><td style="padding:4px 0; color:#57534e;">Phone</td><td style="padding:4px 0; text-align:right;">${params.phone}</td></tr>` : ""}
+			</table>
+
+			<p style="margin-top:16px;"><strong>Message:</strong><br/>${params.message}</p>
+		</div>
+	`;
+
+	await resend.emails.send({
+		from: SENDER,
+		to: adminEmails,
+		replyTo: params.email,
+		subject: `New contact form message from ${params.name}`,
+		html,
+	});
+}
+
 type MandapInquiryReplyParams = {
 	to: string;
 	category: string;

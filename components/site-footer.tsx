@@ -27,7 +27,7 @@ export function SiteFooter() {
 				<div className="grid gap-6 sm:grid-cols-2">
 					<div>
 						<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-900">Navigate</p>
-						<ul className="mt-3 space-y-2 text-sm text-stone-600">
+						<ul className="mt-3 space-y-2 text-sm text-stone-700">
 							{mainNavLinks.map((item) => (
 								<li key={item.href}>
 									<Link href={item.href} className="transition hover:text-stone-950">
@@ -39,7 +39,7 @@ export function SiteFooter() {
 					</div>
 					<div>
 						<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-900">Contact</p>
-						<ul className="mt-3 space-y-2 text-sm text-stone-600">
+						<ul className="mt-3 space-y-2 text-sm text-stone-700">
 							<li>contact@handcraftsglobal.com</li>
 							<li>+47 91267612</li>
 							<li>Belsetveien 80, Rykkinn</li>
@@ -54,24 +54,24 @@ export function SiteFooter() {
 			</div>
 			<div className="border-t border-stone-200">
 				<div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-					<p className="text-xs text-stone-500 text-left sm:text-center mb-4">&copy; {new Date().getFullYear()} Global Handcrafts AS. All rights reserved.</p>
+					<p className="text-xs text-stone-700 text-left sm:text-center mb-4">&copy; {new Date().getFullYear()} Global Handcrafts AS. All rights reserved.</p>
 					<div className="flex flex-wrap items-center justify-start sm:justify-center gap-x-6 gap-y-2 mb-4">
 						{legalLinks.map((item) => (
-							<Link key={item.href} href={item.href} className="text-xs text-stone-600 transition hover:text-stone-950">
+							<Link key={item.href} href={item.href} className="text-xs text-stone-700 transition hover:text-stone-950">
 								{item.label}
 							</Link>
 						))}
 					</div>
 					<div className="flex flex-wrap items-center justify-start sm:justify-center gap-3">
-						<span className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">We accept</span>
+						<span className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">We accept</span>
 						<div className="flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 shadow-sm">
-							<Lock className="h-3.5 w-3.5 text-stone-500" />
+							<Lock className="h-3.5 w-3.5 text-stone-700" />
 							<CreditCard className="h-4 w-4 text-stone-700" />
 							<span className="text-xs font-medium text-stone-700">Secure payments via Stripe</span>
 						</div>
 						<div className="flex items-center gap-1.5">
 							{["Visa", "Mastercard", "Amex"].map((brand) => (
-								<span key={brand} className="rounded-md border border-stone-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+								<span key={brand} className="rounded-md border border-stone-200 bg-white px-2 py-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
 									{brand}
 								</span>
 							))}

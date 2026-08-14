@@ -86,9 +86,9 @@ export default function AccountOverviewPage() {
 
 			<div>
 				<div className="flex items-center justify-between gap-3">
-					<h3 className="text-base font-semibold text-slate-900">Recent orders</h3>
+					<h2 className="text-base font-semibold text-slate-900">Recent orders</h2>
 					{orders && orders.length > 0 ? (
-						<Link href="/account/orders" className="flex items-center gap-1 text-sm font-medium text-stone-600 transition hover:text-stone-700">
+						<Link href="/account/orders" className="flex items-center gap-1 text-sm font-medium text-stone-700 transition hover:text-stone-900">
 							View all
 							<ArrowRight className="h-3.5 w-3.5" />
 						</Link>
@@ -131,10 +131,10 @@ export default function AccountOverviewPage() {
 			</div>
 
 			<div>
-				<h3 className="text-base font-semibold text-slate-900">Quick actions</h3>
+				<h2 className="text-base font-semibold text-slate-900">Quick actions</h2>
 				<div className="mt-4 grid gap-3 sm:grid-cols-2">
 					<Link href="/account/addresses" className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50">
-						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
+						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-700">
 							<MapPin className="h-5 w-5" />
 						</span>
 						<span className="min-w-0">
@@ -143,7 +143,7 @@ export default function AccountOverviewPage() {
 						</span>
 					</Link>
 					<Link href="/account/profile" className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50">
-						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
+						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-700">
 							<UserRound className="h-5 w-5" />
 						</span>
 						<span className="min-w-0">
@@ -152,7 +152,7 @@ export default function AccountOverviewPage() {
 						</span>
 					</Link>
 					<Link href="/shop" className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50">
-						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
+						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-700">
 							<ShoppingBag className="h-5 w-5" />
 						</span>
 						<span className="min-w-0">
@@ -161,7 +161,7 @@ export default function AccountOverviewPage() {
 						</span>
 					</Link>
 					<Link href="/contact" className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50">
-						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
+						<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-700">
 							<MessageCircle className="h-5 w-5" />
 						</span>
 						<span className="min-w-0">

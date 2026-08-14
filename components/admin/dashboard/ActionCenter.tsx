@@ -26,7 +26,7 @@ export function ActionCenter({ actions }: { actions: DashboardActionItem[] }) {
 				<h3 className="text-base font-semibold text-slate-900">Action center</h3>
 				<div className="mt-4 rounded-xl border-2 border-dashed border-slate-200 p-8 text-center">
 					<p className="text-sm text-slate-500">All caught up!</p>
-					<p className="mt-1 text-xs text-slate-400">No pending actions</p>
+					<p className="mt-1 text-xs text-slate-600">No pending actions</p>
 				</div>
 			</div>
 		);

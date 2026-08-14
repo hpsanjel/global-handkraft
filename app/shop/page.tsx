@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ShopClient } from "@/components/shop-client";
+import { SkipLink } from "@/components/skip-link";
 import { prisma } from "@/lib/prisma";
 import { toStoreProduct } from "@/lib/product-transform";
 import { createClient } from "@/lib/supabase/server";
@@ -69,8 +70,9 @@ export default async function ShopPage() {
 
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
+			<SkipLink />
 			<SiteHeader />
-			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+			<main id="main-content" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
 				<ShopClient initialProducts={products} initialCategories={categories} />
 			</main>
 			<SiteFooter />

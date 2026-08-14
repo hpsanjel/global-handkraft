@@ -32,11 +32,11 @@ function FaqAccordionItem({ item, defaultOpen }: { item: FaqItem; defaultOpen?: 
 		<div className="border-b border-stone-200 last:border-b-0">
 			<button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center justify-between gap-4 py-5 text-left">
 				<span className="text-[15px] font-medium text-stone-900 sm:text-base">{item.question}</span>
-				<ChevronDown className={`h-5 w-5 shrink-0 text-stone-500 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+				<ChevronDown className={`h-5 w-5 shrink-0 text-stone-700 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
 			</button>
 			<div className={`grid transition-all duration-300 ease-in-out ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
 				<div className="overflow-hidden">
-					<p className="pb-5 text-sm leading-7 text-stone-600 sm:text-[15px]">{item.answer}</p>
+					<p className="pb-5 text-sm leading-7 text-stone-700 sm:text-[15px]">{item.answer}</p>
 				</div>
 			</div>
 		</div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState, useEffect, useRef } from "react";
 import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,9 @@ import { PriceEstimate } from "@/components/price-estimate";
 import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { useDetectedCountry } from "@/hooks/use-detected-country";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { Dialog, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { ProductImage } from "@/components/ui/product-image";
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -305,50 +309,50 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 		return (
 			<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
 				<div className="space-y-4">
-					<div className="aspect-[4/5] rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${product.image}')` }} />
+					<ProductImage src={product.image} alt={product.name} className="aspect-[4/5] rounded-[2rem] bg-stone-100" />
 				</div>
 
 				<div className="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
 					{showCustomTempleForm && !isMandapCategory ? (
-						<button type="button" onClick={() => setShowCustomTempleForm(false)} className="mb-4 text-sm font-medium text-stone-500 hover:text-stone-800">
+						<button type="button" onClick={() => setShowCustomTempleForm(false)} className="mb-4 text-sm font-medium text-stone-700 hover:text-stone-800">
 							&larr; Back to product
 						</button>
 					) : null}
-					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Custom Request</p>
+					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Custom Request</p>
 					<h1 className="mt-3 text-3xl font-semibold text-stone-900 sm:text-4xl">Request a custom {isTempleCategory ? "temple" : product.name}</h1>
-					<p className="mt-4 mb-6 text-sm leading-7 text-stone-600">{isTempleCategory ? "Want a temple in a different size, material, or design than what's shown? Share your preferred dimensions, material, budget, and references so our team can guide you with personalized options and next steps." : "We do not keep this product as a fixed ready-made option. Share your preferred size, material, budget, and references so our team can guide you with personalized options and next steps."}</p>
+					<p className="mt-4 mb-6 text-sm leading-7 text-stone-700">{isTempleCategory ? "Want a temple in a different size, material, or design than what's shown? Share your preferred dimensions, material, budget, and references so our team can guide you with personalized options and next steps." : "We do not keep this product as a fixed ready-made option. Share your preferred size, material, budget, and references so our team can guide you with personalized options and next steps."}</p>
 					<div className="grid gap-4 sm:grid-cols-3">
-						<label className="space-y-2 text-sm text-stone-600">
+						<label className="space-y-2 text-sm text-stone-700">
 							<span className="font-medium text-stone-700">Length *</span>
-							<input value={mandapLength} onChange={(event) => setMandapLength(event.target.value)} placeholder="e.g. 40 cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input required aria-required="true" value={mandapLength} onChange={(event) => setMandapLength(event.target.value)} placeholder="e.g. 40 cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
-						<label className="space-y-2 text-sm text-stone-600">
+						<label className="space-y-2 text-sm text-stone-700">
 							<span className="font-medium text-stone-700">Width *</span>
-							<input value={mandapWidth} onChange={(event) => setMandapWidth(event.target.value)} placeholder="e.g. 20cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input required aria-required="true" value={mandapWidth} onChange={(event) => setMandapWidth(event.target.value)} placeholder="e.g. 20cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
-						<label className="space-y-2 text-sm text-stone-600">
+						<label className="space-y-2 text-sm text-stone-700">
 							<span className="font-medium text-stone-700">Height *</span>
-							<input value={mandapHeight} onChange={(event) => setMandapHeight(event.target.value)} placeholder="e.g. 60 cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input required aria-required="true" value={mandapHeight} onChange={(event) => setMandapHeight(event.target.value)} placeholder="e.g. 60 cm" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 					</div>
 
 					<div className="mt-4 grid gap-4 sm:grid-cols-2">
-						<label className="space-y-2 text-sm text-stone-600">
+						<label className="space-y-2 text-sm text-stone-700">
 							<span className="font-medium text-stone-700">Material *</span>
-							<input value={mandapMaterial} onChange={(event) => setMandapMaterial(event.target.value)} placeholder="e.g. Teak + Fabric + Brass" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input required aria-required="true" value={mandapMaterial} onChange={(event) => setMandapMaterial(event.target.value)} placeholder="e.g. Teak + Fabric + Brass" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
-						<label className="space-y-2 text-sm text-stone-600">
+						<label className="space-y-2 text-sm text-stone-700">
 							<span className="font-medium text-stone-700">Expected Cost Range *</span>
-							<input value={mandapExpectedCostRange} onChange={(event) => setMandapExpectedCostRange(event.target.value)} placeholder="e.g. NOK 20,000 - 35,000" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<input required aria-required="true" value={mandapExpectedCostRange} onChange={(event) => setMandapExpectedCostRange(event.target.value)} placeholder="e.g. NOK 20,000 - 35,000" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 					</div>
 
-					<label className="mt-4 block space-y-2 text-sm text-stone-600">
+					<label className="mt-4 block space-y-2 text-sm text-stone-700">
 						<span className="font-medium text-stone-700">Project Description *</span>
-						<textarea value={mandapDescription} onChange={(event) => setMandapDescription(event.target.value)} rows={5} placeholder="Describe stage style, pillars, colors, canopy, backdrop, rituals, location setup, and any custom requirements." className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+						<textarea required aria-required="true" value={mandapDescription} onChange={(event) => setMandapDescription(event.target.value)} rows={5} placeholder="Describe stage style, pillars, colors, canopy, backdrop, rituals, location setup, and any custom requirements." className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 					</label>
 
-					<label className="mt-4 block space-y-2 text-sm text-stone-600">
+					<label className="mt-4 block space-y-2 text-sm text-stone-700">
 						<span className="font-medium text-stone-700">Sample Images (Max 3)</span>
 						<input type="file" accept="image/*" multiple onChange={handleMandapSampleImagesChange} className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700" />
 					</label>
@@ -356,26 +360,35 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 					{mandapSampleImages.length > 0 ? (
 						<div className="mt-3 grid gap-3 sm:grid-cols-3">
 							{mandapSampleImages.map((image, index) => (
-								<div key={`mandap-sample-${index}`} className="aspect-square rounded-2xl border border-stone-200 bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${image}')` }} />
+								// eslint-disable-next-line @next/next/no-img-element -- data: URL from local file upload, not a next/image-eligible remote source
+								<img key={`mandap-sample-${index}`} src={image} alt={`Sample reference ${index + 1}`} className="aspect-square w-full rounded-2xl border border-stone-200 bg-stone-100 object-cover" />
 							))}
 						</div>
 					) : null}
 
 					<div className="mt-4 grid gap-4 sm:grid-cols-2">
-						<label className="space-y-2 text-sm text-stone-600">
+						<label className="space-y-2 text-sm text-stone-700">
 							<span className="font-medium text-stone-700">WhatsApp Number</span>
 							<input value={mandapWhatsapp} onChange={(event) => setMandapWhatsapp(event.target.value)} placeholder="e.g. +47 00000000" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
-						<label className="space-y-2 text-sm text-stone-600">
+						<label className="space-y-2 text-sm text-stone-700">
 							<span className="font-medium text-stone-700">Email Address</span>
 							<input type="email" value={mandapEmail} onChange={(event) => setMandapEmail(event.target.value)} placeholder="e.g. name@email.com" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 					</div>
 
-					<p className="mt-2 text-xs text-stone-500">Provide WhatsApp and/or email so our admin team can contact you with design options and next steps.</p>
+					<p className="mt-2 text-xs text-stone-700">Provide WhatsApp and/or email so our admin team can contact you with design options and next steps.</p>
 
-					{mandapFormError ? <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{mandapFormError}</p> : null}
-					{mandapFormSuccess ? <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{mandapFormSuccess}</p> : null}
+					{mandapFormError ? (
+						<InlineAlert tone="error" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+							{mandapFormError}
+						</InlineAlert>
+					) : null}
+					{mandapFormSuccess ? (
+						<InlineAlert tone="success" className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+							{mandapFormSuccess}
+						</InlineAlert>
+					) : null}
 
 					<Button className="mt-6 w-full" onClick={handleCustomInquirySubmit} disabled={isSubmittingMandap}>
 						{isSubmittingMandap ? "Submitting..." : "Submit Request"}
@@ -389,18 +402,20 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 		<div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
 			<div className="hidden lg:flex lg:min-w-0 lg:gap-4">
 				<div className="flex shrink-0 flex-col gap-4">
-					{product.gallery.map((image) => (
-						<button key={image} type="button" onClick={() => setSelectedGalleryImage(image)} className={`aspect-square w-20 shrink-0 rounded-[1.25rem] border bg-stone-100 bg-cover bg-center transition ${selectedGalleryImage === image ? "border-stone-900 ring-2 ring-stone-900" : "border-stone-200 hover:border-stone-400"}`} style={{ backgroundImage: `url('${image}')` }} aria-label="View image" />
+					{product.gallery.map((image, index) => (
+						<button key={image} type="button" onClick={() => setSelectedGalleryImage(image)} className={`aspect-square w-20 shrink-0 overflow-hidden rounded-[1.25rem] border bg-stone-100 transition ${selectedGalleryImage === image ? "border-stone-900 ring-2 ring-stone-900" : "border-stone-200 hover:border-stone-400"}`} aria-label={`View image ${index + 1} of ${product.gallery.length}`}>
+							<ProductImage src={image} alt="" sizes="80px" className="h-full w-full" />
+						</button>
 					))}
 				</div>
-				<div className="aspect-[4/5] min-w-0 flex-1 rounded-[2rem] bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${selectedGalleryImage}')` }} />
+				<ProductImage src={selectedGalleryImage} alt={product.name} sizes="47vw" className="aspect-[4/5] min-w-0 flex-1 rounded-[2rem] bg-stone-100" />
 			</div>
 			<div className="min-w-0 pb-24 lg:pb-0">
-				<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">{product.category}</p>
+				<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">{product.category}</p>
 				<h1 className="mt-3 text-2xl font-semibold text-stone-900 sm:text-4xl">{product.name}</h1>
-				<p className="mt-3 text-base leading-7 text-stone-600 sm:text-lg sm:leading-8">{product.shortDescription}</p>
+				<p className="mt-3 text-base leading-7 text-stone-700 sm:text-lg sm:leading-8">{product.shortDescription}</p>
 				<div className="mt-4 flex gap-3 overflow-x-auto pb-1 lg:hidden">
-					{(product.gallery.length > 0 ? product.gallery : [product.image]).map((image) => (
+					{(product.gallery.length > 0 ? product.gallery : [product.image]).map((image, index, gallery) => (
 						<button
 							key={image}
 							type="button"
@@ -408,19 +423,20 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 								setActivePreviewImage(image);
 								setIsMobileImageViewerOpen(true);
 							}}
-							className="h-20 w-20 shrink-0 rounded-xl border border-stone-200 bg-stone-100 bg-cover bg-center shadow-sm transition active:scale-95"
-							style={{ backgroundImage: `url('${image}')` }}
-							aria-label="View image full screen"
-						/>
+							className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-100 shadow-sm transition active:scale-95"
+							aria-label={`View image ${index + 1} of ${gallery.length} full screen`}
+						>
+							<ProductImage src={image} alt="" sizes="80px" className="h-full w-full" />
+						</button>
 					))}
 				</div>
 				<div className="mt-5 rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-stone-500">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
+						<p className="text-sm font-medium text-stone-700">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
 						<div className="text-right">
 							<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
-							<PriceEstimate amountNok={totalPrice} className="text-sm text-stone-500" />
-							{countryUndetected ? <p className="mt-1 text-xs text-stone-400">Final price may include a regional adjustment, confirmed at checkout.</p> : null}
+							<PriceEstimate amountNok={totalPrice} className="text-sm text-stone-700" />
+							{countryUndetected ? <p className="mt-1 text-xs text-stone-700">Final price may include a regional adjustment, confirmed at checkout.</p> : null}
 						</div>
 					</div>
 					<div className="mt-6 space-y-4">
@@ -428,18 +444,18 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 							<div className="flex gap-3">
 								<p className="text-sm font-semibold text-stone-900">Size</p>
 								{isTempleCategory ? (
-									<button type="button" onClick={() => setShowCustomTempleForm(true)} className="cursor-pointer text-center text-sm font-medium text-stone-600 underline underline-offset-4 hover:text-stone-900">
+									<button type="button" onClick={() => setShowCustomTempleForm(true)} className="cursor-pointer text-center text-sm font-medium text-stone-700 underline underline-offset-4 hover:text-stone-900">
 										(Click here to order custom temple)
 									</button>
 								) : null}
 							</div>
 							{hasVariantColors ? (
 								sizeOptions.length > 1 ? (
-									<div className="mt-3 flex flex-wrap gap-3">
+									<div role="radiogroup" aria-label="Size" className="mt-3 flex flex-wrap gap-3">
 										{sizeOptions.map((name) => {
 											const isSelected = selectedVariant?.name === name;
 											return (
-												<button type="button" key={name} className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`} onClick={() => selectSize(name)}>
+												<button type="button" role="radio" aria-checked={isSelected} key={name} className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`} onClick={() => selectSize(name)}>
 													{name}
 												</button>
 											);
@@ -449,11 +465,13 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 									<p className="mt-3 text-sm font-medium text-stone-900">{selectedVariant?.name ?? "Standard"}</p>
 								)
 							) : hasMultipleVariants ? (
-								<div className="mt-3 flex flex-wrap gap-3">
+								<div role="radiogroup" aria-label="Size" className="mt-3 flex flex-wrap gap-3">
 									{product.variants.map((variant) => {
 										const isSelected = selectedVariant?.id === variant.id;
 										return (
 											<button
+										role="radio"
+										aria-checked={isSelected}
 												type="button"
 												key={variant.id}
 												className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}
@@ -472,7 +490,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 
 							{selectedVariant?.width || selectedVariant?.height || selectedVariant?.depth || selectedVariant?.weight ? (
 								<div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-4">
-									<p className="text-xs font-semibold uppercase tracking-[0.15em] text-stone-500">Dimensions & Weight</p>
+									<p className="text-xs font-semibold uppercase tracking-[0.15em] text-stone-700">Dimensions & Weight</p>
 
 									<div className="mt-3 grid gap-3 sm:grid-cols-2">
 										{(selectedVariant?.width || selectedVariant?.height || selectedVariant?.depth) && (
@@ -481,7 +499,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 													<Ruler className="h-4 w-4 text-[#1B365D]" />
 												</div>
 												<div>
-													<p className="text-[11px] uppercase tracking-[0.1em] text-stone-500">W × H × D</p>
+													<p className="text-xs uppercase tracking-[0.1em] text-stone-700">W × H × D</p>
 													<p className="mt-0.5 text-sm font-medium text-stone-900">{[selectedVariant?.width, selectedVariant?.height, selectedVariant?.depth].filter(Boolean).join(" × ")}</p>
 												</div>
 											</div>
@@ -493,7 +511,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 													<Weight className="h-4 w-4 text-[#1B365D]" />
 												</div>
 												<div>
-													<p className="text-[11px] uppercase tracking-[0.1em] text-stone-500">Weight</p>
+													<p className="text-xs uppercase tracking-[0.1em] text-stone-700">Weight</p>
 													<p className="mt-0.5 text-sm font-medium text-stone-900">{selectedVariant.weight}</p>
 												</div>
 											</div>
@@ -522,11 +540,11 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 							colorOptionsForSelectedSize.length > 0 ? (
 								<div>
 									<p className="text-sm font-semibold text-stone-900">Colour</p>
-									<div className="mt-3 flex flex-wrap gap-3">
+									<div role="radiogroup" aria-label="Colour" className="mt-3 flex flex-wrap gap-3">
 										{colorOptionsForSelectedSize.map((color) => {
 											const isSelected = selectedVariant?.color === color;
 											return (
-												<button type="button" key={color} onClick={() => selectColor(color)} className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}>
+												<button type="button" role="radio" aria-checked={isSelected} key={color} onClick={() => selectColor(color)} className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}>
 													{color}
 												</button>
 											);
@@ -537,11 +555,13 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 						) : availableColors.length > 0 ? (
 							<div>
 								<p className="text-sm font-semibold text-stone-900">Colour</p>
-								<div className="mt-3 flex flex-wrap gap-3">
+								<div role="radiogroup" aria-label="Colour" className="mt-3 flex flex-wrap gap-3">
 									{availableColors.map((entry) => {
 										const isSelected = selectedColor === entry.color;
 										return (
 											<button
+										role="radio"
+										aria-checked={isSelected}
 												type="button"
 												key={entry.color}
 												onClick={() => {
@@ -564,13 +584,13 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 									{product.addons.map((addon) => {
 										const isSelected = selectedAddonIds.includes(addon.id);
 										return (
-											<button type="button" key={addon.id} className={`flex w-full flex-col gap-2 rounded-2xl border px-4 py-3 text-left text-sm transition sm:flex-row sm:items-center sm:justify-between ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-700 hover:border-stone-400"}`} onClick={() => toggleAddon(addon.id)}>
+											<button type="button" aria-pressed={isSelected} key={addon.id} className={`flex w-full flex-col gap-2 rounded-2xl border px-4 py-3 text-left text-sm transition sm:flex-row sm:items-center sm:justify-between ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-700 hover:border-stone-400"}`} onClick={() => toggleAddon(addon.id)}>
 												<div>
 													<p className="font-medium">
 														{addon.name} {isSelected ? "✓" : "+NOK " + addon.price}
-														{!isSelected ? <PriceEstimate amountNok={addon.price} className="ml-1 text-xs text-stone-400" /> : null}
+														{!isSelected ? <PriceEstimate amountNok={addon.price} className="ml-1 text-xs text-stone-700" /> : null}
 													</p>
-													<p className={`text-xs ${isSelected ? "text-stone-200" : "text-stone-500"}`}>{addon.description}</p>
+													<p className={`text-xs ${isSelected ? "text-stone-200" : "text-stone-700"}`}>{addon.description}</p>
 												</div>
 											</button>
 										);
@@ -584,9 +604,9 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 						{isOutOfStock ? "Out of Stock" : "Add to Cart"}
 					</Button>
 				</div>
-				<p className="mt-5 text-sm leading-7 text-stone-600 sm:text-base p-4">{product.description}</p>
+				<p className="mt-5 text-sm leading-7 text-stone-700 sm:text-base p-4">{product.description}</p>
 				{isTempleCategory ? (
-					<p className="px-4 text-sm text-stone-600">
+					<p className="px-4 text-sm text-stone-700">
 						Need a different size or design?{" "}
 						<button type="button" onClick={() => setShowCustomTempleForm(true)} className="font-semibold text-stone-900 underline underline-offset-4 hover:text-stone-700">
 							Click here to order custom temple
@@ -596,7 +616,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				<div className="mt-2">
 					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 						<p className="text-sm font-semibold text-stone-900">Shipping</p>
-						<p className="mt-2 text-sm text-stone-600">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo}</p>
+						<p className="mt-2 text-sm text-stone-700">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo}</p>
 					</div>
 				</div>
 			</div>
@@ -604,22 +624,22 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 			<div ref={mobileCartBarRef} className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
 				<div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
 					<div>
-						<p className="text-xs text-stone-500">Total</p>
+						<p className="text-xs text-stone-700">Total</p>
 						<p className="text-lg font-semibold text-stone-900">NOK {totalPrice}</p>
-						<PriceEstimate amountNok={totalPrice} className="text-xs text-stone-500" />
-						{countryUndetected ? <p className="text-[11px] text-stone-400">Regional adjustment confirmed at checkout</p> : null}
+						<PriceEstimate amountNok={totalPrice} className="text-xs text-stone-700" />
+						{countryUndetected ? <p className="text-xs text-stone-700">Regional adjustment confirmed at checkout</p> : null}
 					</div>
 					<div className="flex flex-col items-end gap-2">
 						<Button className="rounded-full px-6 disabled:cursor-not-allowed disabled:opacity-50" onClick={handleAddToCart} disabled={!selectedVariant || isOutOfStock}>
 							{isOutOfStock ? "Out of Stock" : "Add to Cart"}
 						</Button>
 						{isTempleCategory ? (
-							<button type="button" onClick={() => setShowCustomTempleForm(true)} className="text-xs font-medium text-stone-600 underline underline-offset-4">
+							<button type="button" onClick={() => setShowCustomTempleForm(true)} className="text-xs font-medium text-stone-700 underline underline-offset-4">
 								Order custom temple
 							</button>
 						) : null}
 						{cartFeedback ? (
-							<div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-700">
+							<div role="status" aria-live="polite" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-700">
 								<p className="font-medium">Added to Cart</p>
 								<Link href="/cart" className="mt-1 inline-flex items-center font-semibold text-emerald-800 hover:underline">
 									View Basket
@@ -630,18 +650,19 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				</div>
 			</div>
 
-			{isMobileImageViewerOpen ? (
-				<div className="fixed inset-0 z-50 flex flex-col bg-black/90 lg:hidden" onClick={() => setIsMobileImageViewerOpen(false)}>
-					<div className="flex items-center justify-end p-4">
-						<button type="button" className="rounded-full border border-white/40 bg-white/10 px-3 py-1 text-sm font-semibold text-white" onClick={() => setIsMobileImageViewerOpen(false)}>
-							Close
-						</button>
-					</div>
-					<div className="flex-1 px-4 pb-6" onClick={(event) => event.stopPropagation()}>
-						<div className="h-full w-full rounded-2xl bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url('${activePreviewImage}')` }} />
-					</div>
+			<Dialog open={isMobileImageViewerOpen} onClose={() => setIsMobileImageViewerOpen(false)} className="left-0 top-0 flex h-full w-full max-w-none translate-x-0 translate-y-0 flex-col rounded-none bg-black/90 lg:hidden">
+				<DialogTitle className="sr-only">{product.name} image preview</DialogTitle>
+				<div className="flex items-center justify-end p-4">
+					<DialogClose label="Close" className="rounded-full border border-white/40 bg-white/10 px-3 py-1 text-sm font-semibold text-white">
+						Close
+					</DialogClose>
 				</div>
-			) : null}
+				<div className="flex-1 px-4 pb-6">
+					<div className="relative h-full w-full rounded-2xl">
+					<Image src={activePreviewImage} alt={product.name} fill sizes="100vw" className="object-contain" />
+				</div>
+				</div>
+			</Dialog>
 		</div>
 	);
 }

@@ -251,11 +251,11 @@ export default function AdminTestimonialsPage() {
 					<div className="mt-5 space-y-3">
 						<label className="space-y-2 text-sm text-slate-600">
 							<span className="font-medium text-slate-700">Customer name</span>
-							<input value={newTestimonial.name} onChange={(event) => setNewTestimonial((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Saroj Thapa, Oslo" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+							<input value={newTestimonial.name} onChange={(event) => setNewTestimonial((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Saroj Thapa, Oslo" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 						</label>
 						<label className="space-y-2 text-sm text-slate-600">
 							<span className="font-medium text-slate-700">Quote</span>
-							<textarea value={newTestimonial.quote} onChange={(event) => setNewTestimonial((current) => ({ ...current, quote: event.target.value }))} rows={3} placeholder="What did the customer say?" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+							<textarea value={newTestimonial.quote} onChange={(event) => setNewTestimonial((current) => ({ ...current, quote: event.target.value }))} rows={3} placeholder="What did the customer say?" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 						</label>
 						<div>
 							<span className="mb-2 block text-sm font-medium text-slate-700">Rating</span>
@@ -317,13 +317,13 @@ export default function AdminTestimonialsPage() {
 										<input
 											value={fields.name}
 											onChange={(event) => setEditingFields((current) => ({ ...current, [testimonial.id]: { ...fields, name: event.target.value } }))}
-											className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+											className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100"
 										/>
 										<textarea
 											value={fields.quote}
 											onChange={(event) => setEditingFields((current) => ({ ...current, [testimonial.id]: { ...fields, quote: event.target.value } }))}
 											rows={3}
-											className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+											className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100"
 										/>
 										<StarPicker value={fields.rating} onChange={(rating) => setEditingFields((current) => ({ ...current, [testimonial.id]: { ...fields, rating } }))} />
 										<label className="block space-y-2 text-sm text-slate-600">

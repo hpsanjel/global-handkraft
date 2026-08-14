@@ -4,6 +4,7 @@ import { AdminStatCard } from "@/components/admin/stat-card";
 import { getRecentOrders } from "@/lib/admin";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { OrderDocumentsMenu } from "./OrderDocumentsMenu";
+import { ProductImage } from "@/components/ui/product-image";
 
 function formatCurrency(amount: number, currency: string) {
 	return new Intl.NumberFormat("en-GB", {
@@ -45,11 +46,11 @@ export default async function AdminOrdersPage() {
 						<table className="w-full text-sm">
 							<thead>
 								<tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-									<th className="px-6 py-3 font-semibold">Order</th>
-									<th className="px-6 py-3 font-semibold">Item</th>
-									<th className="px-6 py-3 text-right font-semibold">Amount</th>
-									<th className="px-6 py-3 font-semibold">Status</th>
-									<th className="px-6 py-3 font-semibold">Delivery</th>
+									<th scope="col" className="px-6 py-3 font-semibold">Order</th>
+									<th scope="col" className="px-6 py-3 font-semibold">Item</th>
+									<th scope="col" className="px-6 py-3 text-right font-semibold">Amount</th>
+									<th scope="col" className="px-6 py-3 font-semibold">Status</th>
+									<th scope="col" className="px-6 py-3 font-semibold">Delivery</th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-slate-100">
@@ -59,14 +60,14 @@ export default async function AdminOrdersPage() {
 											<p className="font-semibold text-slate-900">{order.id}</p>
 											<p className="mt-1 text-slate-600">{order.customer}</p>
 											{order.email !== order.customer ? <p className="text-xs text-slate-500">{order.email}</p> : null}
-											<p className="mt-1 text-xs uppercase tracking-[0.15em] text-slate-400">{order.date}</p>
+											<p className="mt-1 text-xs uppercase tracking-[0.15em] text-slate-600">{order.date}</p>
 										</td>
 										<td className="px-6 py-4 text-slate-600">
 											<div className="flex items-center gap-3">
 												{order.itemImage ? (
-													<span className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-100 bg-cover bg-center" style={{ backgroundImage: `url('${order.itemImage}')` }} />
+													<ProductImage src={order.itemImage} alt="" sizes="40px" className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-100" />
 												) : (
-													<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-600">
+													<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-700">
 														<Package className="h-4.5 w-4.5" />
 													</span>
 												)}
@@ -84,7 +85,7 @@ export default async function AdminOrdersPage() {
 											<p className="max-w-56 truncate text-slate-600" title={order.address}>
 												{order.address}
 											</p>
-											<p className="mt-0.5 text-xs text-slate-400">Ship via: {order.shippingMethod}</p>
+											<p className="mt-0.5 text-xs text-slate-600">Ship via: {order.shippingMethod}</p>
 											<div className="mt-2">
 												<OrderDocumentsMenu orderId={order.orderId} isPickup={order.isPickup} />
 											</div>

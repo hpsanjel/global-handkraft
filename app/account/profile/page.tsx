@@ -6,6 +6,7 @@ import { Download, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AccountPageHeader } from "@/components/account/account-page-header";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import { updatePassword, updateProfile } from "@/app/actions/auth";
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -156,7 +157,11 @@ export default function AccountProfilePage() {
 			<div className="space-y-6">
 				<AccountPageHeader title="Profile" description="Keep your personal information up to date." />
 
-				{feedback ? <div className={`rounded-2xl border px-4 py-3 text-sm ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{feedback.message}</div> : null}
+				{feedback ? (
+					<InlineAlert tone={feedback.type} className={`rounded-2xl border px-4 py-3 ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+						{feedback.message}
+					</InlineAlert>
+				) : null}
 
 				<form onSubmit={saveProfile} className="space-y-4">
 					<label className="block space-y-2 text-sm text-slate-600">
@@ -181,7 +186,7 @@ export default function AccountProfilePage() {
 			</div>
 
 			<div className="space-y-6 border-t border-slate-100 pt-8">
-				<AccountPageHeader title="Security" description={hasPassword ? "Change your password to keep your account secure." : "You currently sign in with Google. Set a password to also sign in with your email."} />
+				<AccountPageHeader level="h2" title="Security" description={hasPassword ? "Change your password to keep your account secure." : "You currently sign in with Google. Set a password to also sign in with your email."} />
 
 				<div className="flex flex-wrap gap-2">
 					{providers.map((provider) => (
@@ -193,7 +198,11 @@ export default function AccountProfilePage() {
 
 				{hasGoogle && !hasPassword ? <p className="text-xs text-slate-500">Setting a password here only adds a second way to sign in — it does not change or affect your Google account.</p> : null}
 
-				{passwordFeedback ? <div className={`rounded-2xl border px-4 py-3 text-sm ${passwordFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>{passwordFeedback.message}</div> : null}
+				{passwordFeedback ? (
+					<InlineAlert tone={passwordFeedback.type} className={`rounded-2xl border px-4 py-3 ${passwordFeedback.type === "success" ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+						{passwordFeedback.message}
+					</InlineAlert>
+				) : null}
 
 				<form onSubmit={changePassword} className="space-y-4">
 					<div className="grid gap-4 md:grid-cols-2">
@@ -216,7 +225,7 @@ export default function AccountProfilePage() {
 			</div>
 
 			<div className="space-y-6 border-t border-slate-100 pt-8">
-				<AccountPageHeader title="Your data & privacy" description="Access or remove the personal data we hold about you." />
+				<AccountPageHeader level="h2" title="Your data & privacy" description="Access or remove the personal data we hold about you." />
 
 				<div className="rounded-2xl border border-slate-200 p-4">
 					<div className="flex items-start gap-3">

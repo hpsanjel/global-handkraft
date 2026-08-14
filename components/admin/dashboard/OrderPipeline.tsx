@@ -25,7 +25,7 @@ export function OrderPipeline({ pipeline }: { pipeline: DashboardOrderPipeline[]
 					<h3 className="text-base font-semibold text-slate-900">Order pipeline</h3>
 					<p className="mt-0.5 text-sm text-slate-500">{total} orders in last 30 days</p>
 				</div>
-				<Link href="/admin/orders" className="flex shrink-0 items-center gap-1 text-sm font-medium text-stone-600 transition hover:text-stone-700">
+				<Link href="/admin/orders" className="flex shrink-0 items-center gap-1 text-sm font-medium text-stone-700 transition hover:text-stone-900">
 					View all
 					<ArrowRight className="h-3.5 w-3.5" />
 				</Link>

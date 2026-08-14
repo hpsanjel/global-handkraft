@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { SkipLink } from "@/components/skip-link";
 import { FaqAccordion, type FaqCategory } from "@/components/faq-accordion";
 import { siteConfig } from "@/app/metadata";
 
@@ -201,13 +202,14 @@ export default function FaqPage() {
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+			<SkipLink />
 			<SiteHeader />
-			<main>
+			<main id="main-content">
 				<div className="border-b border-stone-200 bg-white">
 					<div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Help Center</p>
+						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Help Center</p>
 						<h1 className="mt-3 text-4xl font-semibold text-stone-900 sm:text-5xl">Frequently Asked Questions</h1>
-						<p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-stone-600">Everything you need to know about ordering, payment, shipping, custom mandap and temple builds, and returns.</p>
+						<p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-stone-700">Everything you need to know about ordering, payment, shipping, custom mandap and temple builds, and returns.</p>
 					</div>
 				</div>
 
@@ -228,7 +230,7 @@ export default function FaqPage() {
 				<div className="border-t border-stone-200 bg-white">
 					<div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6 lg:px-8">
 						<h2 className="text-2xl font-semibold text-stone-900 sm:text-3xl">Still have questions?</h2>
-						<p className="mt-3 text-stone-600">Our team is happy to help with anything not covered here.</p>
+						<p className="mt-3 text-stone-700">Our team is happy to help with anything not covered here.</p>
 						<div className="mt-6 flex flex-wrap items-center justify-center gap-3">
 							<Link href="/contact" className="inline-flex items-center justify-center rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">
 								Contact us

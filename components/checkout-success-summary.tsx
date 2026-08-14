@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Loader2, Mail, MapPin, Package, Tag } from "lucide-react";
+import { ProductImage } from "@/components/ui/product-image";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 export type OrderSummary = {
 	orderNumber: string;
@@ -30,28 +32,32 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 		<>
 			{/* Hero */}
 			<div className="flex flex-col items-center text-center">
-				<div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#4CAF50]/10 ring-8 ring-[#4CAF50]/5">
-					<CheckCircle2 className="h-9 w-9 text-[#4CAF50]" strokeWidth={1.75} />
+				<div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-green/10 ring-8 ring-brand-green/5">
+					<CheckCircle2 className="h-9 w-9 text-brand-green" strokeWidth={1.75} />
 				</div>
-				<p className="mt-5 text-xs font-semibold uppercase tracking-[0.35em] text-stone-500">Payment complete</p>
+				<p className="mt-5 text-xs font-semibold uppercase tracking-[0.35em] text-stone-700">Payment complete</p>
 				<h1 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Thank you for your order</h1>
 				{order ? (
-					<p className="mt-3 inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-sm font-medium text-stone-600 shadow-sm">
+					<p className="mt-3 inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-1.5 text-sm font-medium text-stone-700 shadow-sm">
 						Order <span className="font-mono font-semibold text-[#1B365D]">{order.orderNumber}</span>
 					</p>
 				) : (
-					<p className="mt-3 max-w-md text-base leading-7 text-stone-600">Your payment was successful. A confirmation email will be sent shortly with your order details.</p>
+					<p className="mt-3 max-w-md text-base leading-7 text-stone-700">Your payment was successful. A confirmation email will be sent shortly with your order details.</p>
 				)}
 			</div>
 
 			{isLoading ? (
-				<div className="mt-10 flex items-center justify-center gap-2 text-sm text-stone-500">
-					<Loader2 className="h-4 w-4 animate-spin" />
+				<div role="status" className="mt-10 flex items-center justify-center gap-2 text-sm text-stone-700">
+					<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
 					Loading your order summary...
 				</div>
 			) : null}
 
-			{error ? <p className="mt-6 text-center text-sm text-red-600">{error}</p> : null}
+			{error ? (
+				<InlineAlert tone="error" className="mt-6 justify-center text-center">
+					{error}
+				</InlineAlert>
+			) : null}
 
 			{order ? (
 				<div className="mt-10 grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start">
@@ -59,7 +65,7 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 					<div className="space-y-6">
 						<div className="overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm">
 							<div className="flex items-center justify-between border-b border-stone-100 px-6 py-4">
-								<h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">
+								<h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-stone-700">
 									<Package className="h-4 w-4" />
 									Items ({order.items.reduce((sum, item) => sum + item.quantity, 0)})
 								</h2>
@@ -68,7 +74,7 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 								{order.items.map((item, index) => (
 									<div key={index} className="flex items-center gap-4 px-6 py-4">
 										{item.image ? (
-											<div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-stone-100 bg-stone-50 bg-cover bg-center shadow-sm" style={{ backgroundImage: `url('${item.image}')` }} />
+											<ProductImage src={item.image} alt={item.name} sizes="80px" className="h-20 w-20 shrink-0 rounded-2xl border border-stone-100 bg-stone-50 shadow-sm" />
 										) : (
 											<div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-stone-100 bg-stone-50">
 												<Package className="h-6 w-6 text-stone-300" />
@@ -76,7 +82,7 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 										)}
 										<div className="min-w-0 flex-1">
 											<p className="truncate text-sm font-semibold text-stone-900 sm:text-base">{item.name}</p>
-											<div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-500">
+											<div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-700">
 												<span className="inline-flex items-center rounded-full bg-stone-100 px-2.5 py-1 font-semibold text-stone-700">Qty {item.quantity}</span>
 												<span>Rate: {formatMoney(item.amount / item.quantity, order.currency)}</span>
 											</div>
@@ -90,7 +96,7 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 						</div>
 
 						<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-							<h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">
+							<h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-stone-700">
 								<MapPin className="h-4 w-4" />
 								Delivery to
 							</h2>
@@ -113,14 +119,14 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 					{/* Right column: summary */}
 					<div className="lg:sticky lg:top-8 space-y-6">
 						<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-							<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">Order summary</h2>
+							<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-700">Order summary</h2>
 							<div className="mt-4 space-y-3 text-sm">
-								<div className="flex items-center justify-between text-stone-600">
+								<div className="flex items-center justify-between text-stone-700">
 									<span>Subtotal</span>
 									<span className="font-medium text-stone-900">{formatMoney(order.subtotal, order.currency)}</span>
 								</div>
 								{order.couponCode ? (
-									<div className="flex items-center justify-between text-stone-600">
+									<div className="flex items-center justify-between text-stone-700">
 										<span className="inline-flex items-center gap-1.5">
 											<Tag className="h-3.5 w-3.5" />
 											Coupon
@@ -129,7 +135,7 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 										<span className="font-medium text-emerald-700">Applied</span>
 									</div>
 								) : null}
-								<div className="flex items-center justify-between text-stone-600">
+								<div className="flex items-center justify-between text-stone-700">
 									<span>Shipping{order.shippingMethod ? ` (${order.shippingMethod})` : ""}</span>
 									<span className="font-medium text-stone-900">{order.shipping === 0 ? "Free" : formatMoney(order.shipping, order.currency)}</span>
 								</div>
@@ -141,8 +147,8 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 						</div>
 
 						<div className="flex items-start gap-3 rounded-[1.75rem] border border-stone-200 bg-stone-50 p-5">
-							<Mail className="mt-0.5 h-4 w-4 shrink-0 text-stone-500" />
-							<p className="text-xs leading-5 text-stone-600">
+							<Mail className="mt-0.5 h-4 w-4 shrink-0 text-stone-700" />
+							<p className="text-xs leading-5 text-stone-700">
 								A confirmation email with these details has been sent to <span className="font-medium text-stone-900">{order.customerEmail}</span>.
 							</p>
 						</div>

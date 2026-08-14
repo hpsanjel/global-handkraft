@@ -13,6 +13,9 @@ import type { CartItem } from "@/types/store";
 import { PriceEstimate } from "@/components/price-estimate";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { VisaMark, MastercardMark } from "@/components/payment-marks";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import { ProductImage } from "@/components/ui/product-image";
 
 type CartDrawerProps = {
 	isOpen: boolean;
@@ -148,31 +151,6 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 			window.removeEventListener("storage", syncItems);
 		};
 	}, []);
-
-	// Lock body scroll when drawer is open
-	useEffect(() => {
-		if (isOpen) {
-			document.body.style.overflow = "hidden";
-		} else {
-			document.body.style.overflow = "";
-		}
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [isOpen]);
-
-	// Close on Escape key
-	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				onClose();
-			}
-		};
-		if (isOpen) {
-			window.addEventListener("keydown", handleKeyDown);
-		}
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [isOpen, onClose]);
 
 	const subtotal = useMemo(() => {
 		return items.reduce((sum, item) => {
@@ -335,49 +313,40 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 		}
 	};
 
-	if (!isOpen) {
-		return null;
-	}
-
 	return (
-		<div className="fixed inset-0 z-50">
-			{/* Backdrop */}
-			<div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-
-			{/* Drawer panel - slides from right on desktop, full-screen on mobile */}
-			<div className="fixed inset-y-0 right-0 flex w-full flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:max-w-md">
-				{/* Header */}
-				<div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
-					<div className="flex items-center gap-2">
-						<ShoppingCart className="h-5 w-5 text-stone-700" />
-						<h2 className="text-lg font-semibold text-stone-900">
-							Your Cart{" "}
-							<span className="text-sm font-normal text-stone-500">
-								({totalItems} item{totalItems === 1 ? "" : "s"})
-							</span>
-						</h2>
-					</div>
-					<div className="flex items-center gap-2">
-						{items.length > 0 ? (
-							<button type="button" onClick={handleClearCart} className="inline-flex items-center gap-1 text-xs font-medium text-stone-500 transition hover:text-red-600">
-								<Trash2 className="h-3.5 w-3.5" />
-								Clear
-							</button>
-						) : null}
-						<button type="button" onClick={onClose} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 text-stone-600 transition hover:bg-stone-100 hover:text-stone-900" aria-label="Close cart">
-							<X className="h-4 w-4" />
-						</button>
-					</div>
+		<Dialog open={isOpen} onClose={onClose} variant="sheet-right">
+			{/* Header */}
+			<div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+				<div className="flex items-center gap-2">
+					<ShoppingCart className="h-5 w-5 text-stone-700" />
+					<DialogTitle className="text-lg font-semibold text-stone-900">
+						Your Cart{" "}
+						<span className="text-sm font-normal text-stone-700">
+							({totalItems} item{totalItems === 1 ? "" : "s"})
+						</span>
+					</DialogTitle>
 				</div>
+				<div className="flex items-center gap-2">
+					{items.length > 0 ? (
+						<button type="button" onClick={handleClearCart} className="inline-flex items-center gap-1 text-xs font-medium text-stone-700 transition hover:text-red-600">
+							<Trash2 className="h-3.5 w-3.5" />
+							Clear
+						</button>
+					) : null}
+					<button type="button" onClick={onClose} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 text-stone-700 transition hover:bg-stone-100 hover:text-stone-900" aria-label="Close cart">
+						<X className="h-4 w-4" />
+					</button>
+				</div>
+			</div>
 
 				{/* Empty state */}
 				{items.length === 0 ? (
 					<div className="flex flex-1 flex-col items-center justify-center px-5 text-center">
 						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
-							<ShoppingCart className="h-7 w-7 text-stone-400" />
+							<ShoppingCart className="h-7 w-7 text-stone-700" />
 						</div>
 						<p className="mt-4 text-sm font-medium text-stone-900">Your cart is empty</p>
-						<p className="mt-1 text-xs text-stone-500">Add a piece from the shop to start building your collection.</p>
+						<p className="mt-1 text-xs text-stone-700">Add a piece from the shop to start building your collection.</p>
 						<Link href="/shop" onClick={onClose} className="mt-5 inline-flex rounded-full bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-700">
 							Browse products
 						</Link>
@@ -389,14 +358,14 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							<div className="space-y-4">
 								{items.map((item) => (
 									<div key={`${item.productId}-${item.variantId}-${item.addonIds.join("-")}`} className="flex gap-3 rounded-2xl border border-stone-200 p-3">
-										<div className="h-16 w-16 shrink-0 rounded-xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${item.image}')` }} />
+										<ProductImage src={item.image} alt={item.name} sizes="64px" className="h-16 w-16 shrink-0 rounded-xl bg-stone-100" />
 										<div className="flex flex-1 flex-col">
 											<div className="flex items-start justify-between gap-2">
 												<div>
 													<p className="text-sm font-semibold leading-5 text-stone-900">{item.name}</p>
-													<p className="mt-0.5 text-xs text-stone-500">{item.variantName}</p>
+													<p className="mt-0.5 text-xs text-stone-700">{item.variantName}</p>
 												</div>
-												<button type="button" onClick={() => handleRemoveItem(item)} className="text-stone-400 transition hover:text-red-600" aria-label={`Remove ${item.name}`}>
+												<button type="button" onClick={() => handleRemoveItem(item)} className="text-stone-700 transition hover:text-red-600" aria-label={`Remove ${item.name}`}>
 													<X className="h-4 w-4" />
 												</button>
 											</div>
@@ -412,7 +381,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 												</div>
 												<div className="text-right">
 													<p className="text-sm font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
-													<PriceEstimate amountNok={item.price * item.quantity} className="text-xs text-stone-500" />
+													<PriceEstimate amountNok={item.price * item.quantity} className="text-xs text-stone-700" />
 												</div>
 											</div>
 										</div>
@@ -436,16 +405,23 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 								</div>
 							) : showCouponForm ? (
 								<div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+									<label htmlFor="cart-drawer-coupon-code" className="sr-only">
+										Coupon code
+									</label>
 									<div className="flex gap-2">
-										<input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" autoFocus className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
+										<input id="cart-drawer-coupon-code" type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" autoFocus className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
 										<button type="button" onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
 											{isValidatingCoupon ? "Applying..." : "Apply"}
 										</button>
 									</div>
-									{couponError ? <p className="mt-2 text-xs text-red-600">{couponError}</p> : null}
+									{couponError ? (
+										<InlineAlert tone="error" className="mt-2">
+											{couponError}
+										</InlineAlert>
+									) : null}
 								</div>
 							) : (
-								<button type="button" onClick={() => setShowCouponForm(true)} className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700">
+								<button type="button" onClick={() => setShowCouponForm(true)} className="text-xs font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
 									Have a coupon code?
 								</button>
 							)}
@@ -454,7 +430,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							{/* Bring shipping calculator */}
 							{!appliedCoupon?.freeShipping && (
 								<div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-3">
-									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery method</p>
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Delivery method</p>
 
 									<button type="button" onClick={() => setSelectedShippingId(STORE_PICKUP_ID)} className={`mt-2 w-full rounded-xl border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
 										<div className="flex items-start justify-between gap-3">
@@ -462,7 +438,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 												<MapPin className="h-4 w-4" />
 												<div>
 													<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
-													<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
+													<p className="text-xs text-stone-700">{STORE_PICKUP_OPTION.expectedDelivery}</p>
 												</div>
 											</div>
 											<p className="text-sm font-semibold text-stone-900">Free</p>
@@ -476,7 +452,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 									</button>
 
 									{isLoadingBring && bringOptions.length === 0 ? (
-										<p className="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
+										<p className="mt-2 flex items-center gap-1.5 text-xs text-stone-700">
 											<Loader2 className="h-3.5 w-3.5 animate-spin" />
 											Checking rates for your saved address...
 										</p>
@@ -492,16 +468,30 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 									{bringOptions.length === 0 && showShippingForm ? (
 										<div className="mt-2 rounded-xl border border-stone-200 bg-white p-3">
 											<div className="grid grid-cols-2 gap-2">
-												<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900">
-													{SHIPPING_COUNTRIES.map((c) => (
-														<option key={c.code} value={c.code}>
-															{c.name}
-														</option>
-													))}
-												</select>
-												<input type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900" />
+												<div>
+													<label htmlFor="cart-drawer-shipping-country" className="sr-only">
+														Country
+													</label>
+													<select id="cart-drawer-shipping-country" value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900">
+														{SHIPPING_COUNTRIES.map((c) => (
+															<option key={c.code} value={c.code}>
+																{c.name}
+															</option>
+														))}
+													</select>
+												</div>
+												<div>
+													<label htmlFor="cart-drawer-shipping-postal-code" className="sr-only">
+														Postal code
+													</label>
+													<input id="cart-drawer-shipping-postal-code" type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-lg border border-stone-200 p-2 text-xs text-stone-900" />
+												</div>
 											</div>
-											{bringError ? <p className="mt-2 text-xs text-red-600">{bringError}</p> : null}
+											{bringError ? (
+												<InlineAlert tone="error" className="mt-2">
+													{bringError}
+												</InlineAlert>
+											) : null}
 											<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
 												{isLoadingBring ? (
 													<>
@@ -520,7 +510,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
 								<div className="mt-2 space-y-2">
 									{savedAddressUsed ? (
-										<p className="text-xs text-stone-500">
+										<p className="text-xs text-stone-700">
 											Using your saved address ({savedAddressUsed.city ? `${savedAddressUsed.city}, ` : ""}
 											{savedAddressUsed.postalCode}) ·{" "}
 											<button type="button" onClick={useDifferentAddress} className="font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
@@ -535,12 +525,12 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 													{getDeliveryIcon(option.deliveryType)}
 													<div>
 														<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
-														{option.expectedDelivery ? <p className="text-xs text-stone-500">{option.expectedDelivery}</p> : null}
+														{option.expectedDelivery ? <p className="text-xs text-stone-700">{option.expectedDelivery}</p> : null}
 													</div>
 												</div>
 												<div className="text-right">
 													<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
-													{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-500" />}
+													{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-700" />}
 												</div>
 											</div>
 											{selectedShippingId === option.productId ? (
@@ -551,7 +541,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 											) : null}
 										</button>
 									))}
-									<button type="button" onClick={useDifferentAddress} className="text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700">
+									<button type="button" onClick={useDifferentAddress} className="text-xs font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
 										Change location
 									</button>
 								</div>
@@ -562,17 +552,17 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 						{/* Order total + payment + checkout: always visible, never scrolled out of view */}
 						<div className="shrink-0 border-t border-stone-200 px-5 py-4">
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-stone-600">Subtotal</span>
+								<span className="text-stone-700">Subtotal</span>
 								<span className="font-medium text-stone-900">NOK {subtotal.toFixed(2)}</span>
 							</div>
 
 							{selectedShippingOption ? (
 								<div className="mt-1 flex items-center justify-between text-sm">
-									<span className="text-stone-600">Shipping</span>
+									<span className="text-stone-700">Shipping</span>
 									<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost.toFixed(2)}`}</span>
 								</div>
 							) : (
-								<p className="mt-1 text-xs text-stone-500">Shipping calculated at checkout.</p>
+								<p className="mt-1 text-xs text-stone-700">Shipping calculated at checkout.</p>
 							)}
 
 							{selectedShippingOption ? (
@@ -580,14 +570,14 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 									<span>Total</span>
 									<span className="text-right">
 										NOK {estimatedTotal.toFixed(2)}
-										<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-500" />
+										<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-700" />
 									</span>
 								</div>
 							) : null}
 
 							{/* Payment method — large, image-led cards so Stripe vs. Vipps is unmistakable */}
 							<div className="mt-4">
-								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Pay with</p>
+								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Pay with</p>
 								<div className="mt-2 grid grid-cols-2 gap-3">
 									<button
 										type="button"
@@ -626,14 +616,17 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
 								{isCheckingOut ? "Preparing checkout..." : appliedCoupon?.freeShipping ? "Proceed to Checkout" : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}
 							</button>
-							{checkoutError ? <p className="mt-2 text-center text-xs text-red-600">{checkoutError}</p> : null}
+							{checkoutError ? (
+								<InlineAlert tone="error" className="mt-2 justify-center text-center">
+									{checkoutError}
+								</InlineAlert>
+							) : null}
 							<Link href="/cart" onClick={onClose} className="mt-2 inline-flex w-full items-center justify-center rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">
 								View Cart
 							</Link>
 						</div>
 					</>
 				)}
-			</div>
-		</div>
+		</Dialog>
 	);
 }

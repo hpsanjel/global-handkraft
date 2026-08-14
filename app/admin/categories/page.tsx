@@ -299,7 +299,7 @@ export default function AdminCategoriesPage() {
 					<div className="mt-5 grid gap-3 sm:grid-cols-2">
 						<label className="space-y-2 text-sm text-slate-600">
 							<span className="font-medium text-slate-700">Category name</span>
-							<input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} placeholder="e.g. Handcrafted Wooden Temples" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+							<input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} placeholder="e.g. Handcrafted Wooden Temples" className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 						</label>
 						<label className="space-y-2 text-sm text-slate-600">
 							<span className="font-medium text-slate-700">Category image (optional)</span>
@@ -327,10 +327,10 @@ export default function AdminCategoriesPage() {
 							<thead>
 								<tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
 									<th className="w-10 px-3 py-3" aria-hidden="true" />
-									<th className="px-3 py-3 font-semibold">Image</th>
-									<th className="px-6 py-3 font-semibold">Category</th>
-									<th className="px-6 py-3 font-semibold">Products</th>
-									<th className="px-6 py-3 text-right font-semibold">Actions</th>
+									<th scope="col" className="px-3 py-3 font-semibold">Image</th>
+									<th scope="col" className="px-6 py-3 font-semibold">Category</th>
+									<th scope="col" className="px-6 py-3 font-semibold">Products</th>
+									<th scope="col" className="px-6 py-3 text-right font-semibold">Actions</th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-slate-100">
@@ -361,7 +361,7 @@ export default function AdminCategoriesPage() {
 												{category.imageUrl ? (
 													<Image src={category.imageUrl} alt={`${category.name} preview`} width={48} height={48} className="h-12 w-12 rounded-lg border border-slate-200 object-cover" unoptimized />
 												) : (
-													<div className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-slate-200 text-[10px] text-slate-400">No image</div>
+													<div className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-slate-200 text-xs text-slate-600">No image</div>
 												)}
 												{isEditing ? (
 													<input
@@ -388,7 +388,7 @@ export default function AdminCategoriesPage() {
 																[category.id]: event.target.value,
 															}))
 														}
-														className="w-full min-w-45 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+														className="w-full min-w-45 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100"
 													/>
 												) : (
 													<p className="font-medium text-slate-900">{category.name}</p>

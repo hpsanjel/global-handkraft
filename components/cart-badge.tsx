@@ -38,7 +38,7 @@ export function CartBadge() {
 	return (
 		<button type="button" onClick={handleOpenCart} className="relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-stone-200 bg-white text-stone-700 transition hover:text-stone-950 sm:h-10 sm:w-10" aria-label="Open cart">
 			<ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
-			{count > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-stone-900 px-1 text-[10px] font-semibold text-white sm:h-5 sm:min-w-5 sm:text-[11px]">{count}</span> : null}
+			{count > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-stone-900 px-1 text-xs font-semibold text-white sm:h-5 sm:min-w-5 sm:text-xs">{count}</span> : null}
 		</button>
 	);
 }

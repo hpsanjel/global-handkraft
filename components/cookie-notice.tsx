@@ -29,10 +29,10 @@ export function CookieNotice() {
 		<div className="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 p-4 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur sm:p-5">
 			<div className="mx-auto flex max-w-5xl flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-start gap-3">
-					<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stone-100 text-stone-600">
+					<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stone-100 text-stone-700">
 						<Cookie className="h-4.5 w-4.5" />
 					</span>
-					<p className="text-sm text-stone-600">
+					<p className="text-sm text-stone-700">
 						We use only strictly necessary cookies to run this site — sign-in sessions and your shopping cart. We don&apos;t use tracking or marketing cookies. Read our{" "}
 						<Link href="/privacy" className="font-medium text-stone-900 underline underline-offset-2">
 							Privacy Policy

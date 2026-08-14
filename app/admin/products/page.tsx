@@ -9,10 +9,11 @@ import { type CategorySummary } from "@/lib/category-utils";
 import { refreshProductsCatalog } from "@/lib/products-catalog";
 import { DEFAULT_SHIPPING_INFO, DEFAULT_RETURN_POLICY, variantLabel } from "@/lib/product-transform";
 import type { Product, ProductAddon, ProductVariant } from "@/types/store";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 // Shared Tailwind fragments — avoids repeating the same class string across the form.
-const FIELD_INPUT = "w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100";
-const SUBFIELD_INPUT = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100";
+const FIELD_INPUT = "w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100";
+const SUBFIELD_INPUT = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100";
 const FIELD_LABEL = "space-y-2 text-sm text-slate-600";
 
 // All categories currently share the same defaults — no per-category config needed.
@@ -470,10 +471,13 @@ export default function AdminProductsPage() {
 					<div>
 						<h2 className="text-base font-semibold text-slate-900">Products</h2>
 						<p className="mt-1 text-sm text-slate-500">{productsState.length} products in the catalog</p>
-						<p className="mt-1 text-xs text-slate-400">Categories available: {categories.length}</p>
+						<p className="mt-1 text-xs text-slate-600">Categories available: {categories.length}</p>
 					</div>
 
-					<input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products by name..." className="mt-4 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100" />
+					<label htmlFor="admin-product-search" className="sr-only">
+						Search products by name
+					</label>
+					<input id="admin-product-search" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products by name..." className="mt-4 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100" />
 
 					<div className="mt-4 max-h-[70vh] space-y-2.5 overflow-y-auto pr-0.5">
 						{isLoadingCatalog && <p className="text-sm text-slate-500">Loading products...</p>}
@@ -486,16 +490,16 @@ export default function AdminProductsPage() {
 										// eslint-disable-next-line @next/next/no-img-element
 										<img src={product.image} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover" />
 									) : (
-										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border text-[10px] ${isSelected ? "border-white/30 text-slate-300" : "border-dashed border-slate-200 text-slate-400"}`}>No image</div>
+										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border text-xs ${isSelected ? "border-white/30 text-slate-300" : "border-dashed border-slate-200 text-slate-600"}`}>No image</div>
 									)}
 									<div className="min-w-0 flex-1">
 										<p className="flex items-center gap-1.5 truncate font-semibold">
 											<span className="truncate">{product.name}</span>
-											{!product.active && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${isSelected ? "bg-white/20 text-white" : "bg-amber-100 text-amber-700"}`}>Archived</span>}
+											{!product.active && <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-xs font-semibold ${isSelected ? "bg-white/20 text-white" : "bg-amber-100 text-amber-700"}`}>Archived</span>}
 										</p>
 										<p className={`mt-0.5 truncate text-sm ${isSelected ? "text-slate-300" : "text-slate-500"}`}>{product.category}</p>
 									</div>
-									<div className={`shrink-0 text-right text-xs ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+									<div className={`shrink-0 text-right text-xs ${isSelected ? "text-slate-300" : "text-slate-600"}`}>
 										<p>{product.variants.length} sizes</p>
 										<p>{product.addons.length} add-ons</p>
 									</div>
@@ -521,8 +525,10 @@ export default function AdminProductsPage() {
 							</div>
 
 							{saveFeedback && (
-								<div ref={saveFeedbackRef} className={`rounded-xl border px-4 py-3 text-sm ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"}`}>
-									{saveFeedback.message}
+								<div ref={saveFeedbackRef}>
+									<InlineAlert tone={saveFeedback.type} className={`rounded-xl border px-4 py-3 ${saveFeedback.type === "success" ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+										{saveFeedback.message}
+									</InlineAlert>
 								</div>
 							)}
 
@@ -533,7 +539,7 @@ export default function AdminProductsPage() {
 									return (
 										<button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${isActive ? "border-stone-600 text-stone-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
 											{tab.label}
-											{count !== null ? <span className={`ml-1.5 text-xs font-normal ${isActive ? "text-stone-500" : "text-slate-400"}`}>({count})</span> : null}
+											{count !== null ? <span className={`ml-1.5 text-xs font-normal ${isActive ? "text-stone-700" : "text-slate-600"}`}>({count})</span> : null}
 										</button>
 									);
 								})}
@@ -613,15 +619,15 @@ export default function AdminProductsPage() {
 											<div key={url} className="space-y-1.5">
 												<div className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
 													{/* eslint-disable-next-line @next/next/no-img-element */}
-													<img src={url} alt="" className="h-full w-full object-cover" />
-													{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] font-semibold text-white">Cover</span>}
+													<img src={url} alt={`Product image ${index + 1} of ${currentProduct.gallery.length}${currentProduct.image === url ? " (cover)" : ""}`} className="h-full w-full object-cover" />
+													{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-xs font-semibold text-white">Cover</span>}
 													<div className="absolute inset-0 flex items-end justify-between gap-1 bg-linear-to-t from-black/50 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
 														{currentProduct.image !== url && (
-															<button type="button" onClick={() => setCoverImage(url)} className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-slate-700">
+															<button type="button" onClick={() => setCoverImage(url)} className="rounded-full bg-white/90 px-2 py-1 text-xs font-semibold text-slate-700">
 																Set cover
 															</button>
 														)}
-														<button type="button" onClick={() => void removeGalleryImage(url)} className="ml-auto rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold text-red-600">
+														<button type="button" onClick={() => void removeGalleryImage(url)} className="ml-auto rounded-full bg-white/90 px-2 py-1 text-xs font-semibold text-red-600">
 															Remove
 														</button>
 													</div>
@@ -650,7 +656,7 @@ export default function AdminProductsPage() {
 										}}
 									/>
 
-									{imageUploadError && <p className="text-xs font-medium text-red-600">{imageUploadError}</p>}
+									{imageUploadError && <InlineAlert tone="error">{imageUploadError}</InlineAlert>}
 								</div>
 							) : null}
 

@@ -52,7 +52,7 @@ export function ActivityFeed({ activities }: { activities: DashboardActivity[] }
 								<p className="truncate text-sm font-medium text-slate-900">{activity.title}</p>
 								<p className="mt-0.5 truncate text-xs text-slate-600">{activity.description}</p>
 							</div>
-							<span className="shrink-0 whitespace-nowrap text-xs text-slate-400">{formatRelativeTime(activity.timestamp)}</span>
+							<span className="shrink-0 whitespace-nowrap text-xs text-slate-600">{formatRelativeTime(activity.timestamp)}</span>
 						</Link>
 					);
 				})}

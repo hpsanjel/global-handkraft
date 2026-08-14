@@ -12,6 +12,8 @@ import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zone
 import { Package, MapPin, Truck, Loader2, Check } from "lucide-react";
 import type { CartItem } from "@/types/store";
 import { PriceEstimate } from "@/components/price-estimate";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { ProductImage } from "@/components/ui/product-image";
 
 export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[] }) {
 	const products = useProductsCatalog();
@@ -367,13 +369,13 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 		<div className="rounded-[2rem] border border-stone-200 bg-white p-5 shadow-sm sm:p-8">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 				<div>
-					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Cart</p>
+					<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Cart</p>
 					<h1 className="mt-2 text-2xl font-semibold text-stone-900 sm:text-3xl">Your curated selections</h1>
 				</div>
 				<div className="flex flex-wrap items-center gap-3">
-					<p className="text-sm text-stone-600">{isMounted ? `${totalItems} item${totalItems === 1 ? "" : "s"}` : "Loading..."}</p>
+					<p className="text-sm text-stone-700">{isMounted ? `${totalItems} item${totalItems === 1 ? "" : "s"}` : "Loading..."}</p>
 					{items.length > 0 ? (
-						<button type="button" onClick={handleClearCart} className="text-sm font-medium text-stone-600 transition hover:text-stone-900">
+						<button type="button" onClick={handleClearCart} className="text-sm font-medium text-stone-700 transition hover:text-stone-900">
 							Clear all
 						</button>
 					) : null}
@@ -383,7 +385,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 			{items.length === 0 ? (
 				<div className="mt-8 rounded-[1.5rem] border border-dashed border-stone-300 p-6 text-center sm:p-10">
 					<p className="text-lg font-semibold text-stone-900">Your cart is empty.</p>
-					<p className="mt-2 text-sm text-stone-600">Add a piece from the shop to start building your collection.</p>
+					<p className="mt-2 text-sm text-stone-700">Add a piece from the shop to start building your collection.</p>
 					<Link href="/shop" className="mt-6 inline-flex rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">
 						Browse products
 					</Link>
@@ -405,32 +407,27 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 								return (
 									<div key={`${item.productId}-${item.variantId}-${item.addonIds.join("-")}`} className="flex flex-col gap-4 rounded-[1.5rem] border border-stone-200 p-4 sm:flex-row sm:items-center sm:justify-between">
 										<div className="flex items-center gap-4">
-											<div
-												className="h-16 w-16 rounded-[1rem] bg-stone-100 bg-cover bg-center sm:h-20 sm:w-20"
-												style={{
-													backgroundImage: `url('${item.image}')`,
-												}}
-											/>
+											<ProductImage src={item.image} alt={item.name} sizes="80px" className="h-16 w-16 rounded-[1rem] bg-stone-100 sm:h-20 sm:w-20" />
 											<div>
 												<p className="font-semibold text-stone-900">{item.name}</p>
-												<p className="mt-1 text-sm text-stone-600">{item.variantName}</p>
+												<p className="mt-1 text-sm text-stone-700">{item.variantName}</p>
 											</div>
 										</div>
-										<div className="flex flex-row items-center justify-between gap-3 text-sm text-stone-600 sm:flex-col sm:items-end">
+										<div className="flex flex-row items-center justify-between gap-3 text-sm text-stone-700 sm:flex-col sm:items-end">
 											<div className="flex items-center rounded-full border border-stone-200 bg-white p-1">
-												<button type="button" onClick={() => handleQuantityChange(item, -1)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
+												<button type="button" onClick={() => handleQuantityChange(item, -1)} aria-label={`Decrease quantity of ${item.name}`} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
 													-
 												</button>
 												<span className="min-w-8 text-center font-semibold text-stone-900">{item.quantity}</span>
-												<button type="button" onClick={() => handleQuantityChange(item, 1)} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
+												<button type="button" onClick={() => handleQuantityChange(item, 1)} aria-label={`Increase quantity of ${item.name}`} className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-stone-100">
 													+
 												</button>
 											</div>
 											<div className="text-right">
 												<p className="font-semibold text-stone-900">NOK {itemTotalBase}</p>
-												<PriceEstimate amountNok={itemTotalBase} className="text-xs text-stone-500" />
+												<PriceEstimate amountNok={itemTotalBase} className="text-xs text-stone-700" />
 											</div>
-											<button type="button" onClick={() => handleRemoveItem(item)} className="text-sm font-medium text-stone-500 transition hover:text-stone-900">
+											<button type="button" onClick={() => handleRemoveItem(item)} className="text-sm font-medium text-stone-700 transition hover:text-stone-900">
 												Remove
 											</button>
 										</div>
@@ -440,31 +437,31 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 						</div>
 						<div className="space-y-6">
 							<div className="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-6">
-								<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">Summary</p>
+								<p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-700">Summary</p>
 								<div className="mt-4 space-y-3">
-									<div className="flex items-center justify-between text-sm text-stone-600">
+									<div className="flex items-center justify-between text-sm text-stone-700">
 										<span>Subtotal</span>
 										<span className="text-right">
 											NOK {displaySubtotal}
-											<PriceEstimate amountNok={displaySubtotal} className="block text-xs text-stone-500" />
+											<PriceEstimate amountNok={displaySubtotal} className="block text-xs text-stone-700" />
 										</span>
 									</div>
 									{selectedShippingId && !appliedCoupon?.freeShipping ? (
 										<div className="flex items-center justify-between text-sm">
-											<span className="text-stone-600">Shipping</span>
+											<span className="text-stone-700">Shipping</span>
 											<span className="text-right font-medium text-stone-900">
 												{selectedShippingCost === 0 ? (
 													"Free"
 												) : (
 													<>
 														NOK {selectedShippingCost}
-														<PriceEstimate amountNok={selectedShippingCost} className="block text-xs font-normal text-stone-500" />
+														<PriceEstimate amountNok={selectedShippingCost} className="block text-xs font-normal text-stone-700" />
 													</>
 												)}
 											</span>
 										</div>
 									) : (
-										<div className="flex items-center justify-between text-sm text-stone-500">
+										<div className="flex items-center justify-between text-sm text-stone-700">
 											<span>Shipping</span>
 											<span>Calculated at checkout</span>
 										</div>
@@ -474,7 +471,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 											<span>Estimated total</span>
 											<span className="text-right">
 												NOK {estimatedTotal}
-												<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-500" />
+												<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-700" />
 											</span>
 										</div>
 									</div>
@@ -497,14 +494,20 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 									</div>
 								) : (
 									<div className="mt-4 rounded-2xl border border-stone-200 bg-white p-3">
-										<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Have a coupon?</p>
+										<label htmlFor="cart-coupon-code" className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">
+											Have a coupon?
+										</label>
 										<div className="mt-2 flex gap-2">
-											<input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
+											<input id="cart-coupon-code" type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
 											<button type="button" onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
 												{isValidatingCoupon ? "Applying..." : "Apply"}
 											</button>
 										</div>
-										{couponError ? <p className="mt-2 text-xs text-red-600">{couponError}</p> : null}
+										{couponError ? (
+											<InlineAlert tone="error" className="mt-2">
+												{couponError}
+											</InlineAlert>
+										) : null}
 									</div>
 								)}
 
@@ -515,7 +518,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 												<MapPin className="h-4 w-4" />
 												<div>
 													<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
-													<p className="text-xs text-stone-500">{STORE_PICKUP_OPTION.expectedDelivery}</p>
+													<p className="text-xs text-stone-700">{STORE_PICKUP_OPTION.expectedDelivery}</p>
 												</div>
 											</div>
 											<p className="text-sm font-semibold text-stone-900">Free</p>
@@ -530,7 +533,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 								)}
 
 								{isLoadingBring && bringOptions.length === 0 ? (
-									<p className="mt-4 flex items-center gap-1.5 text-xs text-stone-500">
+									<p className="mt-4 flex items-center gap-1.5 text-xs text-stone-700">
 										<Loader2 className="h-3.5 w-3.5 animate-spin" />
 										Checking rates for your saved address...
 									</p>
@@ -545,10 +548,13 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 
 								{!appliedCoupon?.freeShipping && bringOptions.length === 0 && showShippingForm ? (
 									<div className="mt-4 rounded-[1rem] border border-stone-200 bg-white p-4">
-										<label className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Delivery location</label>
+										<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Delivery location</p>
 										<div className="mt-2 grid grid-cols-2 gap-2">
 											<div>
-												<select value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-[0.75rem] border border-stone-200 p-2.5 text-sm text-stone-900">
+												<label htmlFor="cart-shipping-country" className="sr-only">
+													Country
+												</label>
+												<select id="cart-shipping-country" value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-[0.75rem] border border-stone-200 p-2.5 text-sm text-stone-900">
 													{SHIPPING_COUNTRIES.map((c) => (
 														<option key={c.code} value={c.code}>
 															{c.name}
@@ -557,10 +563,17 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 												</select>
 											</div>
 											<div>
-												<input type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-[0.75rem] border border-stone-200 p-2.5 text-sm text-stone-900" />
+												<label htmlFor="cart-shipping-postal-code" className="sr-only">
+													Postal code
+												</label>
+												<input id="cart-shipping-postal-code" type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-[0.75rem] border border-stone-200 p-2.5 text-sm text-stone-900" />
 											</div>
 										</div>
-										{bringError && <p className="mt-2 text-xs text-red-600">{bringError}</p>}
+										{bringError ? (
+											<InlineAlert tone="error" className="mt-2">
+												{bringError}
+											</InlineAlert>
+										) : null}
 										<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
 											{isLoadingBring ? (
 												<>
@@ -577,9 +590,9 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 								{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
 									<div className="mt-4 space-y-2">
 										<div className="flex flex-wrap items-center justify-between gap-2">
-											<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Select shipping method</p>
+											<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Select shipping method</p>
 											{savedAddressUsed ? (
-												<p className="text-xs text-stone-500">
+												<p className="text-xs text-stone-700">
 													Using saved address ({savedAddressUsed.city ? `${savedAddressUsed.city}, ` : ""}
 													{savedAddressUsed.postalCode})
 												</p>
@@ -592,13 +605,13 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 														{getDeliveryIcon(option.deliveryType)}
 														<div>
 															<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
-															<p className="text-xs text-stone-500">{getDeliveryTypeLabel(option.deliveryType)}</p>
+															<p className="text-xs text-stone-700">{getDeliveryTypeLabel(option.deliveryType)}</p>
 														</div>
 													</div>
 													<div className="text-right">
 														<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
-														{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-500" />}
-														{option.expectedDelivery && <p className="text-xs text-stone-500">{option.expectedDelivery}</p>}
+														{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-700" />}
+														{option.expectedDelivery && <p className="text-xs text-stone-700">{option.expectedDelivery}</p>}
 													</div>
 												</div>
 												{selectedShippingId === option.productId && (
@@ -610,17 +623,17 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 											</button>
 										))}
 
-										<button type="button" onClick={useDifferentAddress} className="mt-1 text-xs font-medium text-stone-500 underline underline-offset-2 hover:text-stone-700">
+										<button type="button" onClick={useDifferentAddress} className="mt-1 text-xs font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
 											Change location
 										</button>
 									</div>
 								) : null}
 
 								<div className="mt-6 grid grid-cols-2 gap-2">
-									<button type="button" onClick={() => setPaymentMethod("STRIPE")} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
+									<button type="button" onClick={() => setPaymentMethod("STRIPE")} aria-pressed={paymentMethod === "STRIPE"} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
 										Card (Stripe)
 									</button>
-									<button type="button" onClick={() => setPaymentMethod("VIPPS")} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
+									<button type="button" onClick={() => setPaymentMethod("VIPPS")} aria-pressed={paymentMethod === "VIPPS"} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
 										Vipps
 									</button>
 								</div>
@@ -631,8 +644,12 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 								<Link href="/shop" className="mt-3 inline-flex w-full items-center justify-center text-sm font-semibold text-[#1B365D] underline-offset-4 transition hover:text-[#152d4c] hover:underline">
 									Continue shopping
 								</Link>
-								{checkoutError ? <p className="mt-3 text-sm text-red-600">{checkoutError}</p> : null}
-								<p className="mt-4 text-center text-xs leading-5 text-stone-500">
+								{checkoutError ? (
+									<InlineAlert tone="error" className="mt-3 text-sm">
+										{checkoutError}
+									</InlineAlert>
+								) : null}
+								<p className="mt-4 text-center text-xs leading-5 text-stone-700">
 									By proceeding, I accept the{" "}
 									<Link href="/terms" className="font-medium text-[#1B365D] underline underline-offset-2 transition hover:text-[#152d4c]">
 										terms & conditions
@@ -647,7 +664,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 						<section className="rounded-[1.5rem] border border-stone-200 bg-stone-50/50 p-4 sm:p-6">
 							<div className="flex items-end justify-between gap-4">
 								<div>
-									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Recommended for you</p>
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Recommended for you</p>
 									<h2 className="mt-1 text-lg font-semibold text-stone-900 sm:text-xl">You may also like</h2>
 								</div>
 								<Link href="/shop" className="text-sm font-semibold text-[#1B365D] hover:text-[#152d4c]">
@@ -657,16 +674,11 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 							<div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
 								{recommendedProducts.map((product) => (
 									<Link key={product.id} href={`/product/${product.slug}`} className="group overflow-hidden rounded-[1.25rem] border border-stone-200 bg-white shadow-sm transition md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-md">
-										<div
-											className="aspect-5/6 w-full bg-stone-100 bg-cover bg-center"
-											style={{
-												backgroundImage: `url('${product.image}')`,
-											}}
-										/>
+										<ProductImage src={product.image} alt={product.name} sizes="(min-width: 768px) 25vw, 50vw" className="aspect-5/6 w-full bg-stone-100" />
 										<div className="p-3 sm:p-4">
 											<p className="line-clamp-2 text-sm font-semibold text-stone-900">{product.name}</p>
 											<p className="mt-2 text-sm font-semibold text-[#1B365D]">NOK {product.variants[0]?.price ?? 0}</p>
-											<PriceEstimate amountNok={product.variants[0]?.price ?? 0} className="text-xs text-stone-500" />
+											<PriceEstimate amountNok={product.variants[0]?.price ?? 0} className="text-xs text-stone-700" />
 										</div>
 									</Link>
 								))}

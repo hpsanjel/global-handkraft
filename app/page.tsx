@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
+import { SkipLink } from "@/components/skip-link";
 import { SiteFooter } from "@/components/site-footer";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { HomeCategoryProductsSection } from "@/components/home-category-products-section";
@@ -12,6 +14,8 @@ import { useTestimonialsCatalog, type PublicTestimonial } from "@/lib/testimonia
 import { useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { HeroSection } from "@/components/hero-section";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { ProductImage } from "@/components/ui/product-image";
 
 function TestimonialCard({ item }: { item: PublicTestimonial }) {
 	return (
@@ -21,9 +25,9 @@ function TestimonialCard({ item }: { item: PublicTestimonial }) {
 					{Array.from({ length: 5 }).map((_, i) => (
 						<Star key={i} className={`h-4 w-4 ${i < item.rating ? "fill-yellow-400 text-yellow-400" : "fill-transparent text-stone-300"}`} />
 					))}
-					<span className="ml-1.5 text-xs font-medium text-stone-600">{item.rating.toFixed(1)}</span>
+					<span className="ml-1.5 text-xs font-medium text-stone-700">{item.rating.toFixed(1)}</span>
 				</div>
-				<span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 flex items-center gap-1">
+				<span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 flex items-center gap-1">
 					<svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
 						<path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
 					</svg>
@@ -32,10 +36,10 @@ function TestimonialCard({ item }: { item: PublicTestimonial }) {
 			</div>
 			<p className="mt-4 flex-1 text-sm leading-7 text-stone-700">“{item.quote}”</p>
 			<div className="mt-5 flex items-center gap-3 border-t border-stone-200 pt-4">
-				{item.image ? <img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" /> : <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-500 ring-2 ring-stone-100">{item.name.charAt(0).toUpperCase()}</div>}
+				{item.image ? <img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" /> : <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-700 ring-2 ring-stone-100">{item.name.charAt(0).toUpperCase()}</div>}
 				<div className="flex-1 min-w-0">
 					<p className="font-semibold text-stone-900 text-sm">{item.name}</p>
-					<p className="text-xs text-stone-500 flex items-center gap-1">
+					<p className="text-xs text-stone-700 flex items-center gap-1">
 						<svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -87,6 +91,7 @@ export default function HomePage() {
 	const [email, setEmail] = useState("");
 	const [subscribing, setSubscribing] = useState(false);
 	const [buying, setBuying] = useState(false);
+	const [newsletterMessage, setNewsletterMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
 
 	const perPage = 2;
 	const pageCount = Math.ceil(testimonials.length / perPage);
@@ -98,11 +103,12 @@ export default function HomePage() {
 
 	const handleSubscribers = async () => {
 		if (!email.trim()) {
-			alert("Please enter your email.");
+			setNewsletterMessage({ tone: "error", text: "Please enter your email." });
 			return;
 		}
 
 		setSubscribing(true);
+		setNewsletterMessage(null);
 		const res = await fetch("/api/subscribe", {
 			method: "POST",
 			headers: {
@@ -114,10 +120,10 @@ export default function HomePage() {
 		const data = await res.json();
 
 		if (res.ok) {
-			alert("Thank you for subscribing!");
+			setNewsletterMessage({ tone: "success", text: "Thank you for subscribing!" });
 			setEmail("");
 		} else {
-			alert(data.error);
+			setNewsletterMessage({ tone: "error", text: data.error || "Something went wrong. Please try again." });
 		}
 		setSubscribing(false);
 	};
@@ -125,15 +131,16 @@ export default function HomePage() {
 	return (
 		<div className="flex min-h-screen flex-col bg-saffron text-stone-800">
 			<CouponPopup />
+			<SkipLink />
 			<SiteHeader />
-			<main className="flex-1">
+			<main id="main-content" className="flex-1">
 				<HeroSection secondaryCtaHref={secondaryCtaHref} secondaryCtaLabel={secondaryCtaLabel} rating={4.9} />
 
 				{highlightedCategories.length > 0 ? (
 					<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 						<div className="flex items-end justify-between gap-4">
 							<div>
-								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Featured Categories</p>
+								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Featured Categories</p>
 								<h2 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Collections curated for culture, prayer, and gifting</h2>
 							</div>
 							<Link href="/shop" className="hidden sm:block text-sm font-semibold text-[#1B365D] hover:text-[#152d4c]">
@@ -147,11 +154,11 @@ export default function HomePage() {
 								<Link key={category.slug} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="group flex w-40 shrink-0 snap-start flex-col overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-sm transition sm:w-48 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
 									<div className="relative aspect-square w-full overflow-hidden bg-stone-100">
 										<div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-xl" style={{ backgroundImage: `url('${category.previewImage}')` }} aria-hidden="true" />
-										<div className="absolute inset-0 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url('${category.previewImage}')` }} />
+										<Image src={category.previewImage} alt={category.label} fill sizes="192px" className="object-contain" />
 									</div>
 									<div className="px-3 py-3 text-center md:align-middle">
 										<p className="text-sm font-semibold text-stone-900 group-hover:text-[#1B365D]">{category.label}</p>
-										<p className="mt-1 text-xs text-stone-600">{category.count} products</p>
+										<p className="mt-1 text-xs text-stone-700">{category.count} products</p>
 									</div>
 								</Link>
 							))}
@@ -166,10 +173,10 @@ export default function HomePage() {
 								<div className="mt-8 hidden lg:grid lg:grid-cols-5 lg:gap-6">
 									<Link href={`/shop?category=${encodeURIComponent(heroCategory.slug)}`} className={`group relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-[2rem] border border-stone-200 shadow-sm transition duration-300 hover:shadow-xl ${restCategories.length > 0 ? "lg:col-span-3" : "lg:col-span-5"}`}>
 										<div className="absolute inset-0 scale-110 bg-stone-200 bg-cover bg-center opacity-70 blur-2xl" style={{ backgroundImage: `url('${heroCategory.previewImage}')` }} aria-hidden="true" />
-										<div className="absolute inset-0 bg-contain bg-center bg-no-repeat transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url('${heroCategory.previewImage}')` }} />
+										<Image src={heroCategory.previewImage} alt={heroCategory.label} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-contain transition duration-500 group-hover:scale-105" />
 										<div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
 										<div className="relative z-10 p-8">
-											<span className="inline-flex items-center rounded-full bg-[#F7931E] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-sm">{isTemple(heroCategory) ? "Signature Collection" : "Most Popular"}</span>
+											<span className="inline-flex items-center rounded-full bg-brand-orange px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] text-white shadow-sm">{isTemple(heroCategory) ? "Signature Collection" : "Most Popular"}</span>
 											<h3 className="mt-4 text-3xl font-semibold text-white">{heroCategory.label}</h3>
 											<p className="mt-1.5 text-sm text-white/80">{heroCategory.count} products</p>
 											<span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-[#1B365D] transition group-hover:gap-2.5">
@@ -185,11 +192,11 @@ export default function HomePage() {
 												<Link key={category.slug} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="group relative flex flex-1 items-center gap-4 overflow-hidden rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-lg">
 													<div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-stone-100">
 														<div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-lg" style={{ backgroundImage: `url('${category.previewImage}')` }} aria-hidden="true" />
-														<div className="absolute inset-0 bg-contain bg-center bg-no-repeat transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url('${category.previewImage}')` }} />
+														<Image src={category.previewImage} alt={category.label} fill sizes="80px" className="object-contain transition duration-500 group-hover:scale-105" />
 													</div>
 													<div className="min-w-0 flex-1">
 														<p className="font-semibold text-stone-900 group-hover:text-[#1B365D]">{category.label}</p>
-														<p className="mt-1 text-xs text-stone-600">{category.count} products</p>
+														<p className="mt-1 text-xs text-stone-700">{category.count} products</p>
 													</div>
 													<ArrowRight className="h-4 w-4 shrink-0 text-stone-300 transition group-hover:translate-x-1 group-hover:text-[#1B365D]" />
 												</Link>
@@ -205,7 +212,7 @@ export default function HomePage() {
 				<section className="mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
 					<div className="flex items-end justify-between gap-4">
 						<div>
-							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Featured Products</p>
+							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Featured Products</p>
 							<h2 className="mt-2 text-3xl font-semibold text-stone-900 sm:text-4xl">Best sellers and premium new arrivals</h2>
 						</div>
 						<Link href="/shop" className="hidden sm:block text-sm font-semibold text-[#1B365D] hover:text-[#152d4c]">
@@ -222,9 +229,10 @@ export default function HomePage() {
 								<div key={product.id} className="flex h-full w-[72vw] max-w-70 shrink-0 snap-start flex-col overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm transition md:w-70 md:duration-300 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
 									<div className="group relative block">
 										<Link href={`/product/${product.slug}`} className="block">
-											<div className="relative w-full aspect-5/6 bg-stone-100 bg-cover" style={{ backgroundImage: `url('${product.image}')` }}>
-												{product.featured && <span className="absolute left-3 top-3 rounded-full bg-[#F7931E] px-3 py-1 text-[11px] font-bold text-white shadow-sm">⭐ Best Seller</span>}
-												{discount > 0 && <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-[11px] font-bold text-white shadow-sm">-{discount}%</span>}
+											<div className="relative w-full aspect-5/6 overflow-hidden bg-stone-100">
+												<Image src={product.image} alt={product.name} fill sizes="(min-width: 768px) 25vw, 72vw" className="object-cover" />
+												{product.featured && <span className="absolute left-3 top-3 rounded-full bg-brand-orange px-3 py-1 text-xs font-bold text-white shadow-sm">⭐ Best Seller</span>}
+												{discount > 0 && <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-sm">-{discount}%</span>}
 												<div className="absolute inset-x-0 bottom-0 hidden items-center justify-center bg-gradient-to-t from-black/50 to-transparent p-4 group-hover:flex">
 													<span className="text-xs text-white font-medium">View Details</span>
 												</div>
@@ -239,7 +247,7 @@ export default function HomePage() {
 															<Star key={i} className={`h-3.5 w-3.5 ${i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "fill-stone-200 text-stone-200"}`} />
 														))}
 													</div>
-													<span className="text-xs text-stone-500">({product.reviewCount})</span>
+													<span className="text-xs text-stone-700">({product.reviewCount})</span>
 												</div>
 											</div>
 										</Link>
@@ -247,9 +255,9 @@ export default function HomePage() {
 									<div className="mt-auto flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-5 sm:pb-5">
 										<div className="flex flex-col">
 											<p className="text-sm font-semibold text-[#1B365D] sm:text-base">NOK {displayPrice}</p>
-											{discount > 0 && <p className="text-xs text-stone-400 line-through">NOK {originalPrice.toFixed(2)}</p>}
+											{discount > 0 && <p className="text-xs text-stone-700 line-through">NOK {originalPrice.toFixed(2)}</p>}
 										</div>
-										<Button asChild className={`${buying ? "opacity-50 cursor-not-allowed" : ""} rounded-full bg-[#F7931E] px-4 py-2 text-xs text-white hover:bg-[#d87810] sm:text-sm`} disabled={buying}>
+										<Button asChild className={`${buying ? "opacity-50 cursor-not-allowed" : ""} rounded-full bg-brand-orange px-4 py-2 text-xs text-white hover:bg-[#d87810] sm:text-sm`} disabled={buying}>
 											<Link href={`/product/${product.slug}`}>Buy</Link>
 										</Button>
 									</div>
@@ -270,21 +278,21 @@ export default function HomePage() {
 									<span className="pointer-events-none absolute -left-3 -top-8 -z-10 select-none text-[8rem] font-black leading-none text-stone-100 transition group-hover:text-stone-100/80">0{index + 1}</span>
 
 									<div className="relative w-2/5 shrink-0 overflow-hidden">
-										<div className="absolute inset-0 bg-stone-100 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url('${product.image}')` }} />
+										<Image src={product.image} alt={product.name} fill sizes="(min-width: 1024px) 20vw, 40vw" className="bg-stone-100 object-cover transition duration-500 group-hover:scale-105" />
 										<div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
 										<div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-											{product.featured && <span className="rounded-full bg-[#F7931E] px-3 py-1 text-[11px] font-bold text-white shadow-sm">⭐ Best Seller</span>}
-											{discount > 0 && <span className="rounded-full bg-red-500 px-3 py-1 text-[11px] font-bold text-white shadow-sm">-{discount}%</span>}
+											{product.featured && <span className="rounded-full bg-brand-orange px-3 py-1 text-xs font-bold text-white shadow-sm">⭐ Best Seller</span>}
+											{discount > 0 && <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-sm">-{discount}%</span>}
 										</div>
 									</div>
 
 									<div className="flex min-w-0 flex-1 flex-col justify-between p-7">
 										<div className="min-w-0">
-											<p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F7931E]">{product.category}</p>
+											<p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-orange">{product.category}</p>
 											<h3 className="mt-2 truncate text-2xl font-semibold text-stone-900" title={product.name}>
 												{product.name}
 											</h3>
-											<p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{product.shortDescription}</p>
+											<p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-700">{product.shortDescription}</p>
 
 											<div className="mt-3 flex items-center gap-1.5">
 												<div className="flex items-center">
@@ -292,13 +300,13 @@ export default function HomePage() {
 														<Star key={i} className={`h-3.5 w-3.5 ${i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "fill-stone-200 text-stone-200"}`} />
 													))}
 												</div>
-												<span className="text-xs text-stone-500">({product.reviewCount} reviews)</span>
+												<span className="text-xs text-stone-700">({product.reviewCount} reviews)</span>
 											</div>
 
 											{tags.length > 0 && (
 												<div className="mt-4 flex flex-wrap gap-2">
 													{tags.map((tag) => (
-														<span key={tag} className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[11px] font-medium text-stone-700">
+														<span key={tag} className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
 															{tag}
 														</span>
 													))}
@@ -308,9 +316,9 @@ export default function HomePage() {
 
 										<div className="mt-6 flex items-end justify-between gap-3 border-t border-stone-100 pt-5">
 											<div className="flex flex-col">
-												<span className="text-[11px] font-medium uppercase tracking-[0.15em] text-stone-400">Price</span>
+												<span className="text-xs font-medium uppercase tracking-[0.15em] text-stone-700">Price</span>
 												<p className="text-xl font-bold text-[#1B365D]">NOK {displayPrice}</p>
-												{discount > 0 && <p className="text-xs text-stone-400 line-through">NOK {originalPrice.toFixed(2)}</p>}
+												{discount > 0 && <p className="text-xs text-stone-700 line-through">NOK {originalPrice.toFixed(2)}</p>}
 											</div>
 											<span className="inline-flex items-center gap-1.5 rounded-full bg-[#1B365D] px-5 py-2.5 text-xs font-semibold text-white transition group-hover:gap-2.5 group-hover:bg-[#152d4c]">
 												Shop Now
@@ -330,14 +338,14 @@ export default function HomePage() {
 
 				{mandapCategory ? (
 					<section className="py-14 sm:py-20 md:py-24">
-						<div className="relative overflow-hidden border-y-4 border-[#F7931E] shadow-xl">
-							<div className="absolute inset-0 bg-stone-900">
+						<div className="relative overflow-hidden border-y-4 border-brand-orange shadow-xl">
+							<div className="absolute inset-0 bg-stone-900" aria-hidden="true">
 								<div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url('${mandapCategory.imageUrl ?? mandapProducts[0]?.image ?? "/images/temple-2.jpg"}')` }} />
 								<div className="absolute inset-0 bg-gradient-to-r from-[#1B365D]/95 via-[#1B365D]/85 to-[#1B365D]/55" />
 							</div>
 							<div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-10 px-4 py-16 sm:gap-12 sm:px-6 sm:py-20 md:py-24 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-28">
 								<div className="max-w-2xl">
-									<span className="inline-flex items-center gap-2 rounded-full bg-[#F7931E] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-white shadow-sm">
+									<span className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-white shadow-sm">
 										<span className="h-2 w-2 animate-pulse rounded-full bg-white" />
 										Made To Order
 									</span>
@@ -345,21 +353,21 @@ export default function HomePage() {
 									<p className="mt-4 max-w-xl text-base leading-7 text-white/85 sm:text-lg">Every celebration deserves a mandap that fits its space and story. Share your size, style, material, and preferences — our artisans design and craft it to order, for indoor or outdoor events.</p>
 									<ul className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm font-medium text-white/80">
 										<li className="flex items-center gap-2">
-											<span className="h-1.5 w-1.5 rounded-full bg-[#F7931E]" />
+											<span className="h-1.5 w-1.5 rounded-full bg-brand-orange" />
 											Tell us your dimensions &amp; style
 										</li>
 										<li className="flex items-center gap-2">
-											<span className="h-1.5 w-1.5 rounded-full bg-[#F7931E]" />
+											<span className="h-1.5 w-1.5 rounded-full bg-brand-orange" />
 											Personalized quote within 24 hours
 										</li>
 										<li className="flex items-center gap-2">
-											<span className="h-1.5 w-1.5 rounded-full bg-[#F7931E]" />
+											<span className="h-1.5 w-1.5 rounded-full bg-brand-orange" />
 											Handcrafted for indoor &amp; outdoor events
 										</li>
 									</ul>
 								</div>
 								<div className="flex shrink-0 flex-col items-start gap-3 lg:items-end">
-									<Button asChild className="rounded-full bg-[#F7931E] px-6 sm:px-8 py-4 sm:py-6 text-base font-semibold text-white shadow-lg shadow-[#F7931E]/30 transition hover:scale-105 hover:bg-[#d87810]">
+									<Button asChild className="rounded-full bg-brand-orange px-6 sm:px-8 py-4 sm:py-6 text-base font-semibold text-white shadow-lg shadow-[#F7931E]/30 transition hover:scale-105 hover:bg-[#d87810]">
 										<Link href={mandapCtaHref} className="inline-flex items-center gap-2">
 											Request a Custom Mandap
 											<ArrowRight className="h-5 w-5" />
@@ -377,7 +385,7 @@ export default function HomePage() {
 						{stats.map((item) => (
 							<div key={item.label} className="rounded-[1.5rem] border border-stone-200 bg-white p-6 text-center shadow-sm">
 								<p className="text-3xl font-semibold text-[#1B365D]">{item.value}</p>
-								<p className="mt-2 text-sm text-stone-600">{item.label}</p>
+								<p className="mt-2 text-sm text-stone-700">{item.label}</p>
 							</div>
 						))}
 					</div>
@@ -388,9 +396,9 @@ export default function HomePage() {
 						<div className="rounded-[1.75rem] border border-stone-200 bg-white p-8 shadow-sm sm:p-10">
 							<div className="flex flex-col items-start justify-between gap-8">
 								<div className="max-w-xl">
-									<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Shop With Confidence</p>
+									<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Shop With Confidence</p>
 									<h2 className="mt-3 text-3xl font-semibold text-stone-900">Handmade quality, delivered across Europe</h2>
-									<p className="mt-3 text-sm leading-7 text-stone-600">Not sure what size or piece fits your space? Our team is happy to guide you before you buy.</p>
+									<p className="mt-3 text-sm leading-7 text-stone-700">Not sure what size or piece fits your space? Our team is happy to guide you before you buy.</p>
 								</div>
 
 								<div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -404,15 +412,15 @@ export default function HomePage() {
 							</div>
 						</div>
 						<div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Shop by Intent</p>
+							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Shop by Intent</p>
 							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Find the right collection faster</h2>
 							<div className="mt-5 space-y-3 grid grid-cols-1 md:grid-cols-2 gap-3">
 								{categoryHighlights.map((item) => (
 									<Link key={item.slug} href={`/shop?category=${encodeURIComponent(item.slug)}`} className="group flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-3 transition hover:border-stone-300 hover:bg-white">
-										<div className="h-14 w-14 shrink-0 rounded-xl bg-stone-100 bg-cover bg-center" style={{ backgroundImage: `url('${item.previewImage}')` }} />
+										<ProductImage src={item.previewImage} alt={item.label} sizes="56px" className="h-14 w-14 shrink-0 rounded-xl bg-stone-100" />
 										<div className="min-w-0">
 											<p className="text-sm font-semibold text-stone-900 group-hover:text-[#1B365D]">{item.label}</p>
-											<p className="mt-1 text-xs text-stone-600">{item.count > 0 ? `${item.count} products available` : "No products yet"}</p>
+											<p className="mt-1 text-xs text-stone-700">{item.count > 0 ? `${item.count} products available` : "No products yet"}</p>
 										</div>
 									</Link>
 								))}
@@ -426,7 +434,7 @@ export default function HomePage() {
 						{/* Decorative shared background: dot pattern + soft glow blobs, desktop only */}
 						<div className="pointer-events-none absolute inset-0 hidden lg:block">
 							<div className="absolute inset-0 opacity-40 [background-image:radial-gradient(rgba(27,54,93,0.14)_1.5px,transparent_1.5px)] [background-size:22px_22px]" />
-							<div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#F7931E]/15 blur-3xl" />
+							<div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-orange/15 blur-3xl" />
 							<div className="absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-[#1B365D]/10 blur-3xl" />
 						</div>
 
@@ -434,14 +442,14 @@ export default function HomePage() {
 							<div className="grid min-w-0 items-stretch gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
 								{/* Left: intro card */}
 								<div className="flex h-full min-w-0 flex-col">
-									<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Customer Voice</p>
+									<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Customer Voice</p>
 									<h2 className="mt-3 text-3xl font-semibold text-stone-900">Proof that your order is in safe hands</h2>
 
 									<div className="mt-6 flex flex-wrap gap-x-8 gap-y-4">
 										{reviewFacts.map((fact) => (
 											<div key={fact.label}>
 												<p className="text-2xl font-semibold text-[#1B365D]">{fact.value}</p>
-												<p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-stone-500">{fact.label}</p>
+												<p className="mt-1 text-xs uppercase tracking-[0.12em] text-stone-700">{fact.label}</p>
 											</div>
 										))}
 									</div>
@@ -486,7 +494,7 @@ export default function HomePage() {
 									{showSlider && (
 										<div className="mt-4 hidden justify-center gap-1.5 md:flex">
 											{Array.from({ length: pageCount }).map((_, p) => (
-												<button key={p} onClick={() => setPage(p)} aria-label={`Go to page ${p + 1}`} className={`h-1.5 rounded-full transition-all ${p === page ? "w-6 bg-[#1B365D]" : "w-1.5 bg-stone-300"}`} />
+												<button key={p} onClick={() => setPage(p)} aria-label={`Go to page ${p + 1}`} aria-current={p === page ? "true" : undefined} className={`h-1.5 rounded-full transition-all ${p === page ? "w-6 bg-[#1B365D]" : "w-1.5 bg-stone-300"}`} />
 											))}
 										</div>
 									)}
@@ -509,16 +517,26 @@ export default function HomePage() {
 					<div className="rounded-[1.75rem] border border-stone-200 bg-white p-7 shadow-sm">
 						<div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
 							<div>
-								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Newsletter</p>
+								<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Newsletter</p>
 								<h2 className="mt-2 text-3xl font-semibold text-stone-900">Get festival drops and artisan stories first</h2>
-								<p className="mt-2 text-sm text-stone-600">Receive product launches, temple care guides, and exclusive seasonal offers.</p>
+								<p className="mt-2 text-sm text-stone-700">Receive product launches, temple care guides, and exclusive seasonal offers.</p>
 							</div>
-							<div className="flex flex-col gap-3 sm:flex-row">
-								<input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-full border border-stone-300 bg-stone-50 px-5 py-3 text-sm text-stone-900 outline-none sm:w-80" />
+							<div>
+								<div className="flex flex-col gap-3 sm:flex-row">
+									<label htmlFor="newsletter-email" className="sr-only">
+										Email address
+									</label>
+									<input id="newsletter-email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-full border border-stone-300 bg-stone-50 px-5 py-3 text-sm text-stone-900 outline-none sm:w-80" />
 
-								<Button onClick={handleSubscribers} className={`${subscribing ? "opacity-50 cursor-not-allowed" : ""} rounded-full cursor-pointer bg-[#F7931E] px-6 text-white hover:bg-[#d87810]`} disabled={subscribing}>
-									{subscribing ? "Subscribing..." : "Subscribe"}
-								</Button>
+									<Button onClick={handleSubscribers} className={`${subscribing ? "opacity-50 cursor-not-allowed" : ""} rounded-full cursor-pointer bg-brand-orange px-6 text-white hover:bg-[#d87810]`} disabled={subscribing}>
+										{subscribing ? "Subscribing..." : "Subscribe"}
+									</Button>
+								</div>
+								{newsletterMessage ? (
+									<InlineAlert tone={newsletterMessage.tone} className="mt-2">
+										{newsletterMessage.text}
+									</InlineAlert>
+								) : null}
 							</div>
 						</div>
 					</div>

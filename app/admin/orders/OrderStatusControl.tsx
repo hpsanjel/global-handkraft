@@ -49,7 +49,7 @@ export function OrderStatusControl({ orderId, currentStatus }: Props) {
 				value={status}
 				disabled={isSaving}
 				onChange={(event) => void handleChange(event.target.value)}
-				className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-medium text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100 disabled:opacity-60"
+				className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-medium text-slate-700 outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100 disabled:opacity-60"
 			>
 				{ORDER_STATUSES.map((value) => (
 					<option key={value} value={value}>

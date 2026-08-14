@@ -61,7 +61,7 @@ export function HeroSection({ secondaryCtaHref = "/shop", secondaryCtaLabel = "E
 				<div className="absolute inset-0 bg-[linear-gradient(180deg,#1b365d0d_0%,transparent_55%)]" />
 				<div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-navy/10 blur-3xl motion-safe:animate-[hero-drift_14s_ease-in-out_infinite]" />
 				<div className="absolute -right-20 top-10 h-96 w-96 rounded-full bg-gold/20 blur-3xl motion-safe:animate-[hero-drift_18s_ease-in-out_infinite_1.5s]" />
-				<div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-[#4CAF50]/10 blur-3xl motion-safe:animate-[hero-drift_16s_ease-in-out_infinite_0.8s]" />
+				<div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-brand-green/10 blur-3xl motion-safe:animate-[hero-drift_16s_ease-in-out_infinite_0.8s]" />
 				<div className="absolute inset-0 opacity-[0.35] [background-image:radial-gradient(#1b365d1a_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,black_10%,transparent_70%)]" style={{}} />
 				<motion.svg className="absolute -right-16 -top-16 h-64 w-64 text-gold/25 sm:h-80 sm:w-80" viewBox="0 0 200 200" fill="none" animate={shouldReduceMotion ? undefined : { rotate: 360 }} transition={{ duration: 70, repeat: Infinity, ease: "linear" }}>
 					<circle cx="100" cy="100" r="92" stroke="currentColor" strokeWidth="1" strokeDasharray="2 8" />
@@ -84,7 +84,7 @@ export function HeroSection({ secondaryCtaHref = "/shop", secondaryCtaLabel = "E
 						))}
 					</h1>
 
-					<motion.p custom={1} initial="hidden" animate="show" variants={fadeUp} className="mt-6 max-w-xl text-lg leading-8 text-stone-600">
+					<motion.p custom={1} initial="hidden" animate="show" variants={fadeUp} className="mt-6 max-w-xl text-lg leading-8 text-stone-700">
 						Premium handcrafted temples, pooja items, traditional clothing, and cultural products sourced directly from skilled artisans across Nepal and South Asia.
 					</motion.p>
 
@@ -129,7 +129,7 @@ export function HeroSection({ secondaryCtaHref = "/shop", secondaryCtaLabel = "E
 							</div>
 							<div className="border-l border-stone-200 pl-3">
 								<p className="text-sm font-semibold text-stone-900">{rating.toFixed(1)} Average Rating</p>
-								<p className="text-xs text-stone-500">From verified customers</p>
+								<p className="text-xs text-stone-700">From verified customers</p>
 							</div>
 						</motion.div>
 
@@ -142,7 +142,7 @@ export function HeroSection({ secondaryCtaHref = "/shop", secondaryCtaLabel = "E
 
 			<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.3 }} className="relative hidden justify-center pb-8 lg:flex">
 				<motion.div animate={shouldReduceMotion ? undefined : { y: [0, 6, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} className="flex flex-col items-center gap-1 text-navy/50">
-					<span className="text-[11px] font-medium uppercase tracking-[0.2em]">Scroll to explore</span>
+					<span className="text-xs font-medium uppercase tracking-[0.2em]">Scroll to explore</span>
 					<ChevronDown className="h-4 w-4" />
 				</motion.div>
 			</motion.div>

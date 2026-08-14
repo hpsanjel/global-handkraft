@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AccountPageHeader } from "@/components/account/account-page-header";
 import { MandapInquiryThread, type MandapInquiryThreadMessage } from "@/components/mandap-inquiry-thread";
 import { FormattedText } from "@/components/formatted-text";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 type AccountMandapInquiry = {
 	id: string;
@@ -117,7 +118,11 @@ export default function AccountCustomRequestsPage() {
 		<div className="space-y-6">
 			<AccountPageHeader title="Custom Requests" description="Track and reply to your custom Mandap & Temple order requests." />
 
-			{error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+			{error ? (
+				<InlineAlert tone="error" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+					{error}
+				</InlineAlert>
+			) : null}
 
 			{!inquiries && !error ? <p className="text-sm text-slate-500">Loading your requests...</p> : null}
 
@@ -147,7 +152,7 @@ export default function AccountCustomRequestsPage() {
 								</div>
 								<div className="text-right">
 									{getPaymentStatusBadge(inquiry.paymentStatus)}
-									<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
+									<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-600">
 										{new Date(inquiry.createdAt).toLocaleDateString("en-GB", {
 											day: "numeric",
 											month: "short",

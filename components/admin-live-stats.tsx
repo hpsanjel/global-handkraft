@@ -73,7 +73,7 @@ export function AdminLiveStats() {
 							<Link key={`${item.productId}-${item.variantName}`} href={`/admin/products?product=${encodeURIComponent(item.productId)}`} className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-2.5 text-sm shadow-sm transition hover:bg-slate-50">
 								<span className="min-w-0 truncate text-slate-700">
 									<span className="font-medium text-slate-900">{item.productName}</span>
-									<span className="text-slate-400"> · {item.variantName}</span>
+									<span className="text-slate-600"> · {item.variantName}</span>
 								</span>
 								<span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${item.stock === 0 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>{item.stock === 0 ? "Out of stock" : `${item.stock} left`}</span>
 							</Link>

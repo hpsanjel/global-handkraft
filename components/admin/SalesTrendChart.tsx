@@ -51,7 +51,7 @@ export function SalesTrendChart({ trend, currency }: Props) {
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	if (trend.length === 0) {
-		return <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400">No revenue in this period.</div>;
+		return <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-600">No revenue in this period.</div>;
 	}
 
 	const plotWidth = trend.length * BAND_WIDTH;

@@ -8,6 +8,7 @@ import { MandapInquiryStatusBadge } from "@/components/mandap-inquiry-status-bad
 import { MandapInquiryPaymentControl } from "@/components/admin/MandapInquiryPaymentControl";
 import { MandapInquiryThread } from "@/components/mandap-inquiry-thread";
 import { FormattedText } from "@/components/formatted-text";
+import { ProductImage } from "@/components/ui/product-image";
 
 function formatDate(value: string) {
 	return new Date(value).toLocaleString("en-GB", {
@@ -95,9 +96,9 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 									<td className="px-6 py-3.5">
 										<div className="flex items-center gap-3">
 											{inquiry.sampleImages[0] ? (
-												<span className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-100 bg-cover bg-center" style={{ backgroundImage: `url('${inquiry.sampleImages[0]}')` }} />
+												<ProductImage src={inquiry.sampleImages[0]} alt="" sizes="40px" className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-100" />
 											) : (
-												<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-600">
+												<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-700">
 													<Landmark className="h-4.5 w-4.5" />
 												</span>
 											)}
@@ -116,11 +117,11 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 									</td>
 									<td className="whitespace-nowrap px-6 py-3.5 text-slate-600">
 										<span className="inline-flex items-center gap-1.5">
-											<MessageSquare className="h-3.5 w-3.5 text-slate-400" />
+											<MessageSquare className="h-3.5 w-3.5 text-slate-600" />
 											{inquiry.messages.length}
 										</span>
 									</td>
-									<td className="whitespace-nowrap px-6 py-3.5 text-xs uppercase tracking-[0.15em] text-slate-400">{formatDate(inquiry.createdAt)}</td>
+									<td className="whitespace-nowrap px-6 py-3.5 text-xs uppercase tracking-[0.15em] text-slate-600">{formatDate(inquiry.createdAt)}</td>
 									<td className="whitespace-nowrap px-3 py-3.5 text-right">
 										<ChevronRight className="ml-auto h-4 w-4 text-slate-300" />
 									</td>
@@ -141,9 +142,9 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 									<h2 className="truncate text-lg font-semibold text-slate-900">{selected.productName}</h2>
 									<span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-slate-600">{selected.category}</span>
 								</div>
-								<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">Submitted {formatDate(selected.createdAt)}</p>
+								<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-600">Submitted {formatDate(selected.createdAt)}</p>
 							</div>
-							<button type="button" onClick={() => setSelectedId(null)} className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
+							<button type="button" onClick={() => setSelectedId(null)} className="shrink-0 rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
 								<X className="h-5 w-5" />
 							</button>
 						</div>
@@ -156,28 +157,28 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 
 							<dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
 								<div>
-									<dt className="text-xs uppercase tracking-wide text-slate-400">Dimensions</dt>
+									<dt className="text-xs uppercase tracking-wide text-slate-600">Dimensions</dt>
 									<dd className="mt-0.5 text-slate-700">
 										{selected.length} x {selected.width} x {selected.height}
 									</dd>
 								</div>
 								<div>
-									<dt className="text-xs uppercase tracking-wide text-slate-400">Material</dt>
+									<dt className="text-xs uppercase tracking-wide text-slate-600">Material</dt>
 									<dd className="mt-0.5 text-slate-700">{selected.material}</dd>
 								</div>
 								<div>
-									<dt className="text-xs uppercase tracking-wide text-slate-400">Budget</dt>
+									<dt className="text-xs uppercase tracking-wide text-slate-600">Budget</dt>
 									<dd className="mt-0.5 text-slate-700">{selected.expectedCostRange}</dd>
 								</div>
 								{selected.whatsapp ? (
 									<div>
-										<dt className="text-xs uppercase tracking-wide text-slate-400">WhatsApp</dt>
+										<dt className="text-xs uppercase tracking-wide text-slate-600">WhatsApp</dt>
 										<dd className="mt-0.5 text-slate-700">{selected.whatsapp}</dd>
 									</div>
 								) : null}
 								{selected.email ? (
 									<div>
-										<dt className="text-xs uppercase tracking-wide text-slate-400">Email</dt>
+										<dt className="text-xs uppercase tracking-wide text-slate-600">Email</dt>
 										<dd className="mt-0.5 truncate text-slate-700">
 											<a href={`mailto:${selected.email}`} className="hover:underline">
 												{selected.email}
@@ -191,8 +192,10 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 
 							{selected.sampleImages.length > 0 ? (
 								<div className="mt-4 grid grid-cols-4 gap-3">
-									{selected.sampleImages.map((imageUrl) => (
-										<a key={imageUrl} href={imageUrl} target="_blank" rel="noreferrer" className="aspect-square rounded-xl border border-slate-200 bg-slate-100 bg-cover bg-center" style={{ backgroundImage: `url('${imageUrl}')` }} />
+									{selected.sampleImages.map((imageUrl, index) => (
+										<a key={imageUrl} href={imageUrl} target="_blank" rel="noreferrer" aria-label={`Open reference image ${index + 1} of ${selected.sampleImages.length}`} className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+											<ProductImage src={imageUrl} alt="" sizes="150px" className="h-full w-full" />
+										</a>
 									))}
 								</div>
 							) : null}

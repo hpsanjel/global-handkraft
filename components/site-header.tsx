@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/cart-badge";
 import { AccountMenu } from "@/components/account-menu";
@@ -12,7 +13,16 @@ import { siteConfig } from "@/app/metadata";
 
 export function SiteHeader() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+	const pathname = usePathname();
+	const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
 	const categories = useCategoriesCatalog();
+
+	useEffect(() => {
+		// Plain window.location read (not useSearchParams) so this component never
+		// needs a Suspense boundary — SiteHeader renders on every page, including
+		// server components with no Suspense wrapper.
+		setActiveCategorySlug(pathname === "/shop" ? new URLSearchParams(window.location.search).get("category") : null);
+	}, [pathname]);
 	const navItems = useMemo(
 		() =>
 			categories
@@ -20,6 +30,7 @@ export function SiteHeader() {
 				.map((category) => ({
 					href: `/shop?category=${encodeURIComponent(category.slug)}`,
 					label: category.name,
+					slug: category.slug,
 				})),
 		[categories],
 	);
@@ -66,7 +77,7 @@ export function SiteHeader() {
 				<div className="hidden flex-1 md:block">
 					<nav className="flex items-center justify-center gap-8 text-sm font-medium text-stone-700">
 						{navItems.map((item) => (
-							<Link key={item.href} href={item.href} className="shrink-0 transition hover:text-stone-950">
+							<Link key={item.href} href={item.href} aria-current={item.slug === activeCategorySlug ? "page" : undefined} className="shrink-0 transition hover:text-stone-950">
 								{item.label}
 							</Link>
 						))}
@@ -89,7 +100,7 @@ export function SiteHeader() {
 				<div className="border-t border-stone-200 bg-white px-4 py-4 md:hidden">
 					<nav className="flex flex-col gap-2">
 						{navItems.map((item) => (
-							<Link key={item.href} href={item.href} className="rounded-xl px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100 hover:text-stone-900" onClick={() => setMobileMenuOpen(false)}>
+							<Link key={item.href} href={item.href} aria-current={item.slug === activeCategorySlug ? "page" : undefined} className="rounded-xl px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100 hover:text-stone-900" onClick={() => setMobileMenuOpen(false)}>
 								{item.label}
 							</Link>
 						))}

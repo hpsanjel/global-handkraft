@@ -53,7 +53,7 @@ export function KPICards({ kpis }: { kpis: DashboardKPIs }) {
 				hint={
 					<span className="mt-2 flex items-center gap-2">
 						<TrendBadge trend={revenueTrend} />
-						<span className="text-xs text-slate-400">vs prev 30d</span>
+						<span className="text-xs text-slate-600">vs prev 30d</span>
 					</span>
 				}
 			/>
@@ -66,7 +66,7 @@ export function KPICards({ kpis }: { kpis: DashboardKPIs }) {
 				hint={
 					<span className="mt-2 flex items-center gap-2">
 						<TrendBadge trend={ordersTrend} />
-						<span className="text-xs text-slate-400">vs prev 30d</span>
+						<span className="text-xs text-slate-600">vs prev 30d</span>
 					</span>
 				}
 			/>
@@ -79,7 +79,7 @@ export function KPICards({ kpis }: { kpis: DashboardKPIs }) {
 				hint={
 					<span className="mt-2 flex items-center gap-2">
 						<TrendBadge trend={aovTrend} />
-						<span className="text-xs text-slate-400">vs prev 30d</span>
+						<span className="text-xs text-slate-600">vs prev 30d</span>
 					</span>
 				}
 			/>

@@ -6,6 +6,7 @@ import { AdminPageHeader } from "@/components/admin/page-header";
 import { AdminStatCard } from "@/components/admin/stat-card";
 import { SalesTrendChart } from "@/components/admin/SalesTrendChart";
 import type { SalesReport } from "@/lib/reports/sales-report.service";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 function rollingDays(days: number) {
 	const to = new Date();
@@ -83,7 +84,11 @@ function ReportResults({ from, to }: { from: Date; to: Date }) {
 	const summary = report?.summary;
 
 	if (error) {
-		return <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>;
+		return (
+			<InlineAlert tone="error" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+				{error}
+			</InlineAlert>
+		);
 	}
 
 	return (
@@ -110,10 +115,10 @@ function ReportResults({ from, to }: { from: Date; to: Date }) {
 				<div className="mt-4 overflow-x-auto">
 					<table className="w-full text-left text-sm">
 						<thead>
-							<tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
-								<th className="pb-2 font-medium">Country</th>
-								<th className="pb-2 font-medium">Orders</th>
-								<th className="pb-2 text-right font-medium">Revenue</th>
+							<tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
+								<th scope="col" className="pb-2 font-medium">Country</th>
+								<th scope="col" className="pb-2 font-medium">Orders</th>
+								<th scope="col" className="pb-2 text-right font-medium">Revenue</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -127,7 +132,7 @@ function ReportResults({ from, to }: { from: Date; to: Date }) {
 								))
 							) : (
 								<tr>
-									<td colSpan={3} className="py-6 text-center text-slate-400">
+									<td colSpan={3} className="py-6 text-center text-slate-600">
 										No revenue in this period.
 									</td>
 								</tr>
@@ -177,7 +182,11 @@ export default function AdminReportsPage() {
 				</div>
 				<div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
 					<span>Custom range:</span>
+					<label htmlFor="reports-range-from" className="sr-only">
+						Start date
+					</label>
 					<input
+						id="reports-range-from"
 						type="date"
 						value={toDateInputValue(range.from)}
 						onChange={(event) => {
@@ -185,10 +194,14 @@ export default function AdminReportsPage() {
 							setActivePreset("Custom");
 							setRange((prev) => ({ ...prev, from: new Date(event.target.value) }));
 						}}
-						className="rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-700 outline-none focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+						className="rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-700 outline-none focus:border-stone-700 focus:ring-2 focus:ring-stone-100"
 					/>
 					<span>to</span>
+					<label htmlFor="reports-range-to" className="sr-only">
+						End date
+					</label>
 					<input
+						id="reports-range-to"
 						type="date"
 						value={toDateInputValue(range.to)}
 						onChange={(event) => {
@@ -198,7 +211,7 @@ export default function AdminReportsPage() {
 							setActivePreset("Custom");
 							setRange((prev) => ({ ...prev, to }));
 						}}
-						className="rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-700 outline-none focus:border-stone-500 focus:ring-2 focus:ring-stone-100"
+						className="rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-700 outline-none focus:border-stone-700 focus:ring-2 focus:ring-stone-100"
 					/>
 				</div>
 			</div>

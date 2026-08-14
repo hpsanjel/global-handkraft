@@ -90,7 +90,7 @@ export function RichTextarea({ value, onChange, placeholder, minRows = 3, disabl
 				placeholder={placeholder}
 				disabled={disabled}
 				rows={minRows}
-				className={`block w-full resize-none overflow-hidden border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-100 disabled:opacity-60 ${showToolbar ? "rounded-b-lg" : "rounded-lg"} ${className}`}
+				className={`block w-full resize-none overflow-hidden border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-stone-700 focus:ring-2 focus:ring-stone-100 disabled:opacity-60 ${showToolbar ? "rounded-b-lg" : "rounded-lg"} ${className}`}
 			/>
 		</div>
 	);

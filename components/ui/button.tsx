@@ -28,7 +28,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, as
 		ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-lg",
 	};
 
-	return <Comp className={cn("inline-flex items-center justify-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60", sizeClasses[size], variantClasses[variant], className)} ref={ref} {...props} />;
+	return <Comp className={cn("inline-flex items-center justify-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60", sizeClasses[size], variantClasses[variant], className)} ref={ref} {...props} />;
 });
 Button.displayName = "Button";
 

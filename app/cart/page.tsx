@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CartClient } from "@/components/cart-client";
+import { SkipLink } from "@/components/skip-link";
 import { getPriceZones } from "@/lib/price-zones";
 import { siteConfig } from "@/app/metadata";
 
@@ -36,8 +37,9 @@ export default async function CartPage() {
 
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
+			<SkipLink />
 			<SiteHeader />
-			<main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+			<main id="main-content" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
 				<CartClient priceZones={priceZones} />
 			</main>
 			<SiteFooter />

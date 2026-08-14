@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Hammer, Globe2, Handshake, ShieldCheck, Truck } from "lucide-react";
+import { SkipLink } from "@/components/skip-link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { siteConfig } from "@/app/metadata";
@@ -77,13 +78,14 @@ const offerings = [
 export default function AboutPage() {
 	return (
 		<div className="min-h-screen bg-stone-50 text-stone-800">
+			<SkipLink />
 			<SiteHeader />
-			<main>
+			<main id="main-content">
 				<section className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8">
 					<div>
-						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">About Us</p>
+						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">About Us</p>
 						<h1 className="mt-3 text-4xl font-semibold leading-tight text-stone-900 sm:text-5xl">Bringing authentic craftsmanship from Nepal and South Asia to your home.</h1>
-						<p className="mt-6 text-lg leading-8 text-stone-600">Global Handcrafts AS is a Norway-based company sourcing handcrafted temples, pooja items, and traditional cultural products directly from skilled artisans, and delivering them to families across Norway and Europe.</p>
+						<p className="mt-6 text-lg leading-8 text-stone-700">Global Handcrafts AS is a Norway-based company sourcing handcrafted temples, pooja items, and traditional cultural products directly from skilled artisans, and delivering them to families across Norway and Europe.</p>
 						<div className="mt-8 flex flex-wrap gap-3">
 							<Link href="/shop" className="inline-flex items-center justify-center rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">
 								Explore the shop
@@ -98,9 +100,9 @@ export default function AboutPage() {
 
 				<section className="border-y border-stone-200 bg-white">
 					<div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">Our story</p>
+						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">Our story</p>
 						<h2 className="mt-3 text-3xl font-semibold text-stone-900">Handcrafted, not mass-produced.</h2>
-						<div className="mt-6 space-y-5 text-lg leading-8 text-stone-600">
+						<div className="mt-6 space-y-5 text-lg leading-8 text-stone-700">
 							<p>We started Global Handcrafts because we saw how hard it can be to find genuinely handcrafted temples, pooja items, and traditional pieces once you&apos;ve settled far from home. Mass-produced imitations are easy to find; authentic, artisan-made pieces are not.</p>
 							<p>So we built direct relationships with artisans and workshops across Nepal and South Asia, and a storefront that makes it simple to bring their work into homes and places of worship across Norway and Europe, whether that&apos;s a small brass diya for a family altar or a fully custom mandap for a wedding.</p>
 						</div>
@@ -109,7 +111,7 @@ export default function AboutPage() {
 
 				<section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
 					<div className="text-center">
-						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">What we stand for</p>
+						<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">What we stand for</p>
 						<h2 className="mt-3 text-3xl font-semibold text-stone-900">Our values</h2>
 					</div>
 					<div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -119,7 +121,7 @@ export default function AboutPage() {
 									<value.icon className="h-5 w-5" />
 								</div>
 								<h3 className="mt-4 text-lg font-semibold text-stone-900">{value.title}</h3>
-								<p className="mt-2 text-sm leading-7 text-stone-600">{value.description}</p>
+								<p className="mt-2 text-sm leading-7 text-stone-700">{value.description}</p>
 							</div>
 						))}
 					</div>
@@ -128,7 +130,7 @@ export default function AboutPage() {
 				<section className="border-t border-stone-200 bg-white">
 					<div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
 						<div className="text-center">
-							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-500">What we offer</p>
+							<p className="text-sm font-semibold uppercase tracking-[0.3em] text-stone-700">What we offer</p>
 							<h2 className="mt-3 text-3xl font-semibold text-stone-900">Across our collections</h2>
 						</div>
 						<div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -137,7 +139,7 @@ export default function AboutPage() {
 									<Image src={item.image} alt={item.title} width={400} height={280} className="h-48 w-full object-cover" />
 									<div className="p-5">
 										<h3 className="text-base font-semibold text-stone-900">{item.title}</h3>
-										<p className="mt-2 text-sm leading-6 text-stone-600">{item.description}</p>
+										<p className="mt-2 text-sm leading-6 text-stone-700">{item.description}</p>
 									</div>
 								</div>
 							))}
@@ -152,7 +154,7 @@ export default function AboutPage() {
 
 				<section className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
 					<h2 className="text-2xl font-semibold text-stone-900 sm:text-3xl">Questions before you order?</h2>
-					<p className="mt-3 text-stone-600">Check our FAQ, or reach out to our team directly.</p>
+					<p className="mt-3 text-stone-700">Check our FAQ, or reach out to our team directly.</p>
 					<div className="mt-6 flex flex-wrap items-center justify-center gap-3">
 						<Link href="/faq" className="inline-flex items-center justify-center rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">
 							Visit our FAQ

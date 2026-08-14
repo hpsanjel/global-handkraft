@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { LayoutDashboard, LogOut, MapPin, Package, User as UserIcon, MessageSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 function parseAdminEmails(): Set<string> {
 	const raw = process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
@@ -56,9 +57,7 @@ export function AccountMenu() {
 	const router = useRouter();
 	const [user, setUser] = useState<User | null>(null);
 	const [isReady, setIsReady] = useState(false);
-	const [menuOpen, setMenuOpen] = useState(false);
 	const [unreadCount, setUnreadCount] = useState(0);
-	const menuRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		let active = true;
@@ -108,19 +107,7 @@ export function AccountMenu() {
 		};
 	}, [user?.email]);
 
-	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
-			if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-				setMenuOpen(false);
-			}
-		}
-
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
-
 	const handleSignOut = async () => {
-		setMenuOpen(false);
 		await fetch("/api/auth/signout", { method: "POST" });
 		router.push("/");
 		router.refresh();
@@ -143,57 +130,64 @@ export function AccountMenu() {
 	const isAdmin = isAdminUser(user);
 
 	return (
-		<div className="relative" ref={menuRef}>
-			<button type="button" onClick={() => setMenuOpen((open) => !open)} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-linear-to-br from-[#1B365D] to-[#4CAF50] text-xs font-semibold text-white transition hover:ring-2 hover:ring-stone-300 hover:ring-offset-2 sm:h-10 sm:w-10 sm:text-sm" aria-haspopup="true" aria-expanded={menuOpen} aria-label="Open account menu">
-				{avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : getInitials(user)}
-			</button>
-
-			{menuOpen ? (
-				<div className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-lg">
-					<div className="border-b border-stone-100 px-4 py-3">
-						<div className="flex items-center gap-2">
-							<p className="truncate text-sm font-semibold text-stone-900">{displayName}</p>
-							{isAdmin ? <span className="rounded-full bg-[#1B365D] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">Admin</span> : null}
-						</div>
-						<p className="truncate text-xs text-stone-500">{user.email}</p>
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<button type="button" className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-linear-to-br from-[#1B365D] to-brand-green text-xs font-semibold text-white transition hover:ring-2 hover:ring-stone-300 hover:ring-offset-2 sm:h-10 sm:w-10 sm:text-sm" aria-label="Open account menu">
+					{avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : getInitials(user)}
+				</button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent className="w-64">
+				<div className="border-b border-stone-100 px-4 py-3">
+					<div className="flex items-center gap-2">
+						<p className="truncate text-sm font-semibold text-stone-900">{displayName}</p>
+						{isAdmin ? <span className="rounded-full bg-[#1B365D] px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-white">Admin</span> : null}
 					</div>
-					<nav className="py-2 text-sm">
-						{isAdmin ? (
-							<Link href="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
+					<p className="truncate text-xs text-stone-700">{user.email}</p>
+				</div>
+				<nav className="py-2 text-sm">
+					{isAdmin ? (
+						<DropdownMenuItem asChild>
+							<Link href="/admin" className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
 								<LayoutDashboard className="h-4 w-4" />
 								Admin Dashboard
 							</Link>
-						) : null}
-						<Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
+						</DropdownMenuItem>
+					) : null}
+					<DropdownMenuItem asChild>
+						<Link href="/account" className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
 							<UserIcon className="h-4 w-4" />
 							My Account
 						</Link>
-						<Link href="/account/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
+					</DropdownMenuItem>
+					<DropdownMenuItem asChild>
+						<Link href="/account/orders" className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
 							<Package className="h-4 w-4" />
 							My Orders
 						</Link>
-						<Link href="/account/addresses" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
+					</DropdownMenuItem>
+					<DropdownMenuItem asChild>
+						<Link href="/account/addresses" className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
 							<MapPin className="h-4 w-4" />
 							My Shipping Address
 						</Link>
-						{!isAdmin ? (
-							<div className="relative">
-								<Link href="/account/custom-requests" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
-									<div className="relative">
-										<MessageSquare className="h-4 w-4" />
-										{unreadCount > 0 ? <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
-									</div>
-									Custom Requests
-								</Link>
-							</div>
-						) : null}
-					</nav>
-					<button type="button" onClick={handleSignOut} className="flex w-full items-center gap-3 border-t border-stone-100 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50">
-						<LogOut className="h-4 w-4" />
-						Sign out
-					</button>
-				</div>
-			) : null}
-		</div>
+					</DropdownMenuItem>
+					{!isAdmin ? (
+						<DropdownMenuItem asChild>
+							<Link href="/account/custom-requests" className="flex items-center gap-3 px-4 py-2.5 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900">
+								<div className="relative">
+									<MessageSquare className="h-4 w-4" />
+									{unreadCount > 0 ? <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
+								</div>
+								Custom Requests
+							</Link>
+						</DropdownMenuItem>
+					) : null}
+				</nav>
+				<DropdownMenuItem onSelect={handleSignOut} className="border-t border-stone-100 text-red-600 hover:bg-red-50">
+					<LogOut className="h-4 w-4" />
+					Sign out
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
