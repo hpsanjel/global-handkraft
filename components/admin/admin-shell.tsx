@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Package, ShoppingCart, FileBarChart2, Tags, Ticket, Star, Quote, Settings, Menu, X, LogOut, Store, ChevronDown, Landmark } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileBarChart2, Tags, Ticket, Star, Quote, Settings, Menu, X, LogOut, Store, ChevronDown, Landmark, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ADMIN_CUSTOM_REQUESTS_TOPIC } from "@/lib/realtime-topics";
 import { SkipLink } from "@/components/skip-link";
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
 	{ href: "/admin/products", label: "Products", icon: Package },
 	{ href: "/admin/orders", label: "Orders", icon: ShoppingCart },
 	{ href: "/admin/custom-requests", label: "Custom Orders", icon: Landmark },
+	{ href: "/admin/stripe", label: "Stripe", icon: CreditCard },
 	{ href: "/admin/coupons", label: "Coupons", icon: Ticket },
 	{ href: "/admin/reviews", label: "Reviews", icon: Star },
 	{ href: "/admin/testimonials", label: "Testimonials", icon: Quote },
