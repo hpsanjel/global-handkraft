@@ -54,7 +54,13 @@ export function SiteFooter() {
 			</div>
 			<div className="border-t border-stone-200">
 				<div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-					<p className="text-xs text-stone-700 text-left sm:text-center mb-4">&copy; {new Date().getFullYear()} Global Handcrafts AS. All rights reserved.</p>
+					<p className="text-xs text-stone-700 text-left sm:text-center mb-1">&copy; {new Date().getFullYear()} Global Handcrafts AS. All rights reserved.</p>
+					<p className="text-xs text-stone-500 text-left sm:text-center mb-4">
+						Finely crafted by{" "}
+						<Link href="https://www.linkedin.com/in/hpsanjel/" target="_blank" rel="noopener noreferrer" className="font-medium text-stone-700 transition hover:text-stone-950">
+							Hari Prasad Sanjel
+						</Link>
+					</p>
 					<div className="flex flex-wrap items-center justify-start sm:justify-center gap-x-6 gap-y-2 mb-4">
 						{legalLinks.map((item) => (
 							<Link key={item.href} href={item.href} className="text-xs text-stone-700 transition hover:text-stone-950">
