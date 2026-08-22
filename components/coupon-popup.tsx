@@ -65,7 +65,7 @@ export function CouponPopup() {
 	};
 
 	return (
-		<Dialog open={isOpen} onClose={handleClose} className="w-full max-w-md overflow-hidden p-0">
+		<Dialog open={isOpen} onClose={handleClose} className="w-[calc(100%-2rem)] max-w-md overflow-hidden p-0">
 			<DialogClose label="Close offers popup" className="absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-stone-700 shadow-md ring-1 ring-black/5 transition hover:bg-stone-100 hover:text-stone-900">
 				<X className="h-4 w-4" />
 			</DialogClose>
