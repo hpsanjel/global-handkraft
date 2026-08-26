@@ -209,7 +209,7 @@ export function MandapInquiryThread({ inquiryId, messages: initialMessages, post
 									<div className="mt-2 flex flex-wrap gap-2">
 										{msg.attachments.map((url) => (
 											<a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-lg border border-slate-200">
-												<Image src={url} alt="Message attachment" width={80} height={80} className="h-full w-full object-cover" unoptimized />
+												<Image src={url} alt="Message attachment" width={80} height={80} className="h-full w-full object-cover" />
 											</a>
 										))}
 									</div>

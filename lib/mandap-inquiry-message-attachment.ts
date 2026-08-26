@@ -52,9 +52,12 @@ export async function uploadMandapMessageAttachment(file: File, inquiryId: strin
 	}
 
 	const supabase = createAdminClient();
+	// filePath is unique per upload (timestamp + uuid) and never overwritten,
+	// so a 1-year cache is safe and keeps repeat requests off Supabase's
+	// Storage egress quota.
 	const filePath = `messages/${inquiryId}/${Date.now()}-${randomUUID()}.${extension}`;
 	const { error } = await supabase.storage.from(MANDAP_INQUIRY_BUCKET).upload(filePath, file, {
-		cacheControl: "3600",
+		cacheControl: "31536000",
 		upsert: false,
 		contentType: file.type,
 	});

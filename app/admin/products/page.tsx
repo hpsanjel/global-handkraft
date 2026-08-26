@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -487,8 +488,7 @@ export default function AdminProductsPage() {
 							return (
 								<button key={product.id} type="button" onClick={() => selectProduct(product.id)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${isSelected ? "border-[#1B365D] bg-[#1B365D] text-white" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}`}>
 									{product.image ? (
-										// eslint-disable-next-line @next/next/no-img-element
-										<img src={product.image} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover" />
+										<Image src={product.image} alt="" width={48} height={48} className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover" />
 									) : (
 										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border text-xs ${isSelected ? "border-white/30 text-slate-300" : "border-dashed border-slate-200 text-slate-600"}`}>No image</div>
 									)}
@@ -618,8 +618,13 @@ export default function AdminProductsPage() {
 										{currentProduct.gallery.map((url, index) => (
 											<div key={url} className="space-y-1.5">
 												<div className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-													{/* eslint-disable-next-line @next/next/no-img-element */}
-													<img src={url} alt={`Product image ${index + 1} of ${currentProduct.gallery.length}${currentProduct.image === url ? " (cover)" : ""}`} className="h-full w-full object-cover" />
+													<Image
+														src={url}
+														alt={`Product image ${index + 1} of ${currentProduct.gallery.length}${currentProduct.image === url ? " (cover)" : ""}`}
+														fill
+														sizes="(min-width: 768px) 20vw, 33vw"
+														className="object-cover"
+													/>
 													{currentProduct.image === url && <span className="absolute left-2 top-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-xs font-semibold text-white">Cover</span>}
 													<div className="absolute inset-0 flex items-end justify-between gap-1 bg-linear-to-t from-black/50 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
 														{currentProduct.image !== url && (

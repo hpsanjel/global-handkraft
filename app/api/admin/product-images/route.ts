@@ -60,9 +60,12 @@ async function uploadProductImage(supabase: SupabaseClient, file: File, folder: 
 		throw new Error("Product image must include a valid file extension.");
 	}
 
+	// filePath is unique per upload (timestamp + uuid) and never overwritten —
+	// deletes go through a separate path — so a 1-year cache is safe and
+	// keeps repeat requests off Supabase's Storage egress quota.
 	const filePath = `${folder}/${Date.now()}-${randomUUID()}.${extension}`;
 	const { error } = await supabase.storage.from(PRODUCT_BUCKET).upload(filePath, file, {
-		cacheControl: "3600",
+		cacheControl: "31536000",
 		upsert: false,
 		contentType: file.type,
 	});

@@ -359,7 +359,7 @@ export default function AdminCategoriesPage() {
 											</td>
 											<td className="px-3 py-3.5">
 												{category.imageUrl ? (
-													<Image src={category.imageUrl} alt={`${category.name} preview`} width={48} height={48} className="h-12 w-12 rounded-lg border border-slate-200 object-cover" unoptimized />
+													<Image src={category.imageUrl} alt={`${category.name} preview`} width={48} height={48} className="h-12 w-12 rounded-lg border border-slate-200 object-cover" />
 												) : (
 													<div className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-slate-200 text-xs text-slate-600">No image</div>
 												)}

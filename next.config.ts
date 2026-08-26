@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
 				pathname: "/storage/v1/object/public/**",
 			},
 		],
+		// Every upload gets a fresh randomUUID() path (see the storage upload
+		// routes) and the old object is deleted on replace, so a cached image
+		// URL never goes stale — it's safe (and much cheaper on Supabase's
+		// Storage egress quota) to let next/image cache optimized variants for
+		// a long time instead of the 60s default, which was forcing a re-fetch
+		// from Supabase on almost every request.
+		minimumCacheTTL: 31536000,
 	},
 	// Enable compression for static assets
 	compress: true,

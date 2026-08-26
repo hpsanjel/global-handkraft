@@ -36,7 +36,7 @@ function TestimonialCard({ item }: { item: PublicTestimonial }) {
 			</div>
 			<p className="mt-4 flex-1 text-sm leading-7 text-stone-700">“{item.quote}”</p>
 			<div className="mt-5 flex items-center gap-3 border-t border-stone-200 pt-4">
-				{item.image ? <img src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" /> : <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-700 ring-2 ring-stone-100">{item.name.charAt(0).toUpperCase()}</div>}
+				{item.image ? <Image src={item.image} alt={item.name} width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-stone-100" /> : <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-700 ring-2 ring-stone-100">{item.name.charAt(0).toUpperCase()}</div>}
 				<div className="flex-1 min-w-0">
 					<p className="font-semibold text-stone-900 text-sm">{item.name}</p>
 					<p className="text-xs text-stone-700 flex items-center gap-1">
@@ -153,8 +153,9 @@ export default function HomePage() {
 							{categoryHighlights.map((category) => (
 								<Link key={category.slug} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="group flex w-40 shrink-0 snap-start flex-col overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-sm transition sm:w-48 md:hover:-translate-y-1 md:hover:border-stone-300 md:hover:shadow-lg">
 									<div className="relative aspect-square w-full overflow-hidden bg-stone-100">
-										<div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-xl" style={{ backgroundImage: `url('${category.previewImage}')` }} aria-hidden="true" />
-										<Image src={category.previewImage} alt={category.label} fill sizes="192px" className="object-contain" />
+										{/* Blurred backdrop reuses the same next/image-optimized source (tiny, low-quality) instead of a second raw fetch of the full-resolution original from Supabase. */}
+										<Image src={category.previewImage} alt="" fill sizes="32px" quality={20} aria-hidden="true" className="scale-110 object-cover opacity-60 blur-xl" />
+										<Image src={category.previewImage} alt={category.label} fill sizes="192px" className="relative object-contain" />
 									</div>
 									<div className="px-3 py-3 text-center md:align-middle">
 										<p className="text-sm font-semibold text-stone-900 group-hover:text-[#1B365D]">{category.label}</p>
@@ -172,8 +173,9 @@ export default function HomePage() {
 							return (
 								<div className="mt-8 hidden lg:grid lg:grid-cols-5 lg:gap-6">
 									<Link href={`/shop?category=${encodeURIComponent(heroCategory.slug)}`} className={`group relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-[2rem] border border-stone-200 shadow-sm transition duration-300 hover:shadow-xl ${restCategories.length > 0 ? "lg:col-span-3" : "lg:col-span-5"}`}>
-										<div className="absolute inset-0 scale-110 bg-stone-200 bg-cover bg-center opacity-70 blur-2xl" style={{ backgroundImage: `url('${heroCategory.previewImage}')` }} aria-hidden="true" />
-										<Image src={heroCategory.previewImage} alt={heroCategory.label} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-contain transition duration-500 group-hover:scale-105" />
+										{/* Blurred backdrop reuses the same next/image-optimized source (tiny, low-quality) instead of a second raw fetch of the full-resolution original from Supabase. */}
+										<Image src={heroCategory.previewImage} alt="" fill sizes="48px" quality={20} aria-hidden="true" className="scale-110 bg-stone-200 object-cover opacity-70 blur-2xl" />
+										<Image src={heroCategory.previewImage} alt={heroCategory.label} fill sizes="(min-width: 1024px) 60vw, 100vw" className="relative object-contain transition duration-500 group-hover:scale-105" />
 										<div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
 										<div className="relative z-10 p-8">
 											<span className="inline-flex items-center rounded-full bg-brand-orange px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] text-white shadow-sm">{isTemple(heroCategory) ? "Signature Collection" : "Most Popular"}</span>
@@ -191,8 +193,9 @@ export default function HomePage() {
 											{restCategories.map((category) => (
 												<Link key={category.slug} href={`/shop?category=${encodeURIComponent(category.slug)}`} className="group relative flex flex-1 items-center gap-4 overflow-hidden rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-lg">
 													<div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-stone-100">
-														<div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-lg" style={{ backgroundImage: `url('${category.previewImage}')` }} aria-hidden="true" />
-														<Image src={category.previewImage} alt={category.label} fill sizes="80px" className="object-contain transition duration-500 group-hover:scale-105" />
+														{/* Blurred backdrop reuses the same next/image-optimized source (tiny, low-quality) instead of a second raw fetch of the full-resolution original from Supabase. */}
+														<Image src={category.previewImage} alt="" fill sizes="24px" quality={20} aria-hidden="true" className="scale-110 object-cover opacity-60 blur-lg" />
+														<Image src={category.previewImage} alt={category.label} fill sizes="80px" className="relative object-contain transition duration-500 group-hover:scale-105" />
 													</div>
 													<div className="min-w-0 flex-1">
 														<p className="font-semibold text-stone-900 group-hover:text-[#1B365D]">{category.label}</p>
@@ -340,7 +343,8 @@ export default function HomePage() {
 					<section className="py-14 sm:py-20 md:py-24">
 						<div className="relative overflow-hidden border-y-4 border-brand-orange shadow-xl">
 							<div className="absolute inset-0 bg-stone-900" aria-hidden="true">
-								<div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url('${mandapCategory.imageUrl ?? mandapProducts[0]?.image ?? "/images/temple-2.jpg"}')` }} />
+								{/* Routed through next/image (instead of a raw CSS background-image) so it's optimized, resized, and cached at the edge rather than fetched full-resolution from Supabase on every visit. */}
+								<Image src={mandapCategory.imageUrl ?? mandapProducts[0]?.image ?? "/images/temple-2.jpg"} alt="" fill sizes="100vw" className="object-cover opacity-60" />
 								<div className="absolute inset-0 bg-gradient-to-r from-[#1B365D]/95 via-[#1B365D]/85 to-[#1B365D]/55" />
 							</div>
 							<div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-10 px-4 py-16 sm:gap-12 sm:px-6 sm:py-20 md:py-24 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-28">

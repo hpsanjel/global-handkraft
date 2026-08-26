@@ -69,9 +69,12 @@ async function uploadTestimonialImage(supabase: SupabaseClient, imageFile: File)
 		throw new Error("Testimonial photo must include a valid file extension.");
 	}
 
+	// filePath is unique per upload (timestamp + uuid) and never overwritten,
+	// so a 1-year cache is safe and keeps repeat requests off Supabase's
+	// Storage egress quota.
 	const filePath = `${Date.now()}-${randomUUID()}.${extension}`;
 	const { error } = await supabase.storage.from(TESTIMONIAL_BUCKET).upload(filePath, imageFile, {
-		cacheControl: "3600",
+		cacheControl: "31536000",
 		upsert: false,
 		contentType: imageFile.type,
 	});

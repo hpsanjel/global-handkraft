@@ -309,7 +309,7 @@ export default function AdminTestimonialsPage() {
 
 									{testimonial.imageUrl ? (
 										<div className="mb-3">
-											<Image src={testimonial.imageUrl} alt={`${testimonial.name} photo`} width={56} height={56} className="h-14 w-14 rounded-full border border-slate-200 object-cover" unoptimized />
+											<Image src={testimonial.imageUrl} alt={`${testimonial.name} photo`} width={56} height={56} className="h-14 w-14 rounded-full border border-slate-200 object-cover" />
 										</div>
 									) : null}
 
