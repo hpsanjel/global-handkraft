@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_SHIPPING_ZONE_CODE, SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 
-/** Used only when the database is unavailable or no default zone has been configured yet. */
-const FALLBACK_SHIPPING_COST = 99;
+/** Store policy is free shipping across all products and zones. Fallback cost is 0. */
+const FALLBACK_SHIPPING_COST = 0;
 
 export type ShippingRate = {
 	/** Shipping cost in the smallest currency unit (cents), after applying any free-shipping threshold. */

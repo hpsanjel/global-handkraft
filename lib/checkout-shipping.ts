@@ -21,22 +21,17 @@ export type ShippingQuote = {
 /**
  * Resolves static DB-driven shipping quotes based on destination country and subtotal.
  */
-export async function getShippingQuotes(shippingAddress: SavedShippingAddress | undefined, pricedItems?: PricedCheckoutItem[], subtotal = 0, selectedShippingId?: string | null): Promise<ShippingQuote[]> {
+export async function getShippingQuotes(shippingAddress?: SavedShippingAddress, pricedItems?: PricedCheckoutItem[], subtotal = 0, selectedShippingId?: string | null): Promise<ShippingQuote[]> {
+	void shippingAddress;
 	void pricedItems;
+	void subtotal;
 	void selectedShippingId;
-
-	let shippingRateAmountCents = 0;
-	try {
-		shippingRateAmountCents = (await getShippingRate(shippingAddress?.country, subtotal)).amountCents;
-	} catch {
-		shippingRateAmountCents = 0;
-	}
 
 	return [
 		{
-			id: "STATIC_FALLBACK",
-			displayName: shippingRateAmountCents === 0 ? "Free shipping" : "Standard shipping",
-			amountCents: shippingRateAmountCents,
+			id: "FREE_SHIPPING",
+			displayName: "Free shipping",
+			amountCents: 0,
 			deliveryType: "HOME",
 			deliveryEstimateDays: { min: 3, max: 10 },
 		},
