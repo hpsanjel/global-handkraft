@@ -7,6 +7,7 @@ import { CurrencyInit } from "@/components/currency-init";
 import { CurrencyBanner } from "@/components/currency-banner";
 import { CountryDetection } from "@/components/country-detection";
 import { PriceZonesProvider } from "@/components/price-zones-provider";
+import { cookies } from "next/headers";
 import { getPriceZones } from "@/lib/price-zones";
 import { siteConfig } from "@/app/metadata";
 
@@ -81,6 +82,8 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const cookieStore = await cookies();
+	const initialCountry = cookieStore.get("detected_country")?.value || null;
 	const priceZones = await getPriceZones();
 
 	return (
@@ -91,7 +94,7 @@ export default async function RootLayout({
 				<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800&display=swap" rel="stylesheet" />
 			</head>
 			<body className="min-h-full flex flex-col">
-				<PriceZonesProvider priceZones={priceZones}>
+				<PriceZonesProvider priceZones={priceZones} initialCountry={initialCountry}>
 					{children}
 					<CartDrawerProvider priceZones={priceZones} />
 					<CookieNotice />

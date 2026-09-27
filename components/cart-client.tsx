@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "@/lib/cart";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { createClient } from "@/lib/supabase/client";
-import { useDetectedCountry } from "@/hooks/use-detected-country";
+import { usePriceZones } from "@/components/price-zones-provider";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import type { CartItem } from "@/types/store";
 import { useFormattedPrice, ProductPrice } from "@/components/product-price";
@@ -15,14 +15,19 @@ import { ProductImage } from "@/components/ui/product-image";
 export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[] }) {
 	const products = useProductsCatalog();
 	const { formatPrice, currency, isConverted } = useFormattedPrice();
+	const { detectedCountry } = usePriceZones();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isMounted, setIsMounted] = useState(false);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
 	const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "VIPPS">("STRIPE");
-	const [shippingCountry, setShippingCountry] = useState("NO");
+	const [shippingCountry, setShippingCountry] = useState(() => detectedCountry || "NO");
 
-	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
+	useEffect(() => {
+		if (detectedCountry) {
+			setShippingCountry(detectedCountry);
+		}
+	}, [detectedCountry]);
 
 	useEffect(() => {
 		const syncItems = () => setItems(getCartItems());
@@ -41,15 +46,6 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 			window.removeEventListener("pageshow", syncItems);
 		};
 	}, []);
-
-	useEffect(() => {
-		if (detectedCountry && isDetectingCountry === false) {
-			const timer = window.setTimeout(() => {
-				setShippingCountry(detectedCountry);
-			}, 0);
-			return () => window.clearTimeout(timer);
-		}
-	}, [detectedCountry, isDetectingCountry]);
 
 	useEffect(() => {
 		let active = true;

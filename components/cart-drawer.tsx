@@ -10,6 +10,7 @@ import { useProductsCatalog } from "@/lib/products-catalog";
 import type { CartItem } from "@/types/store";
 import { useFormattedPrice } from "@/components/product-price";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
+import { usePriceZones } from "@/components/price-zones-provider";
 import { VisaMark, MastercardMark } from "@/components/payment-marks";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
@@ -24,11 +25,18 @@ type CartDrawerProps = {
 export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	const products = useProductsCatalog();
 	const { formatPrice, currency, isConverted } = useFormattedPrice();
+	const { detectedCountry } = usePriceZones();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
 	const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "VIPPS">("STRIPE");
-	const [shippingCountry, setShippingCountry] = useState("NO");
+	const [shippingCountry, setShippingCountry] = useState(() => detectedCountry || "NO");
+
+	useEffect(() => {
+		if (detectedCountry) {
+			setShippingCountry(detectedCountry);
+		}
+	}, [detectedCountry]);
 
 	useEffect(() => {
 		if (!isOpen) {

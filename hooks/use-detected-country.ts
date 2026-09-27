@@ -12,9 +12,20 @@ function getCookieValue(name: string): string | null {
 	return cookie ? cookie.split("=")[1] : null;
 }
 
-export function useDetectedCountry() {
-	const [country, setCountry] = useState<string | null>(null);
-	const [isDetecting, setIsDetecting] = useState(true);
+export function useDetectedCountry(initialCountry?: string | null) {
+	const [country, setCountry] = useState<string | null>(() => {
+		if (initialCountry && SHIPPING_COUNTRY_CODES.includes(initialCountry)) {
+			return initialCountry;
+		}
+		if (typeof document !== "undefined") {
+			const detected = getCookieValue(DETECTED_COUNTRY_COOKIE);
+			if (detected && SHIPPING_COUNTRY_CODES.includes(detected)) {
+				return detected;
+			}
+		}
+		return null;
+	});
+	const [isDetecting, setIsDetecting] = useState(() => !country);
 
 	useEffect(() => {
 		const detectedCountry = getCookieValue(DETECTED_COUNTRY_COOKIE) || localStorage.getItem("detected_country");

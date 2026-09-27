@@ -19,8 +19,8 @@ const PriceZonesContext = createContext<PriceZonesContextType>({
 	getZoneMarkupForCountry: () => 0,
 });
 
-export function PriceZonesProvider({ children, priceZones = [] }: { children: React.ReactNode; priceZones?: PriceZoneWithCountries[] }) {
-	const { country: detectedCountry } = useDetectedCountry();
+export function PriceZonesProvider({ children, priceZones = [], initialCountry = null }: { children: React.ReactNode; priceZones?: PriceZoneWithCountries[]; initialCountry?: string | null }) {
+	const { country: detectedCountry } = useDetectedCountry(initialCountry);
 
 	const zoneMarkup = useMemo(() => {
 		return detectedCountry ? resolveZoneMarkup(priceZones, detectedCountry) : 0;
