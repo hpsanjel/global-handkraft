@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "@/lib/cart";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { createClient } from "@/lib/supabase/client";
@@ -11,12 +11,13 @@ import { useDetectedCountry } from "@/hooks/use-detected-country";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { Package, MapPin, Truck, Loader2, Check } from "lucide-react";
 import type { CartItem } from "@/types/store";
-import { PriceEstimate } from "@/components/price-estimate";
+import { useFormattedPrice, ProductPrice } from "@/components/product-price";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { ProductImage } from "@/components/ui/product-image";
 
 export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[] }) {
 	const products = useProductsCatalog();
+	const { formatPrice, currency, isConverted } = useFormattedPrice();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isMounted, setIsMounted] = useState(false);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -59,50 +60,56 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 
 	useEffect(() => {
 		if (detectedCountry && isDetectingCountry === false) {
-			setShippingCountry(detectedCountry);
+			const timer = window.setTimeout(() => {
+				setShippingCountry(detectedCountry);
+			}, 0);
+			return () => window.clearTimeout(timer);
 		}
 	}, [detectedCountry, isDetectingCountry]);
 
-	const fetchBringOptions = async (postalCode: string, country: string, cartItems: CartItem[]) => {
-		setIsLoadingBring(true);
-		setBringError("");
+	const fetchBringOptions = useCallback(
+		async (postalCode: string, country: string, cartItems: CartItem[]) => {
+			setIsLoadingBring(true);
+			setBringError("");
 
-		try {
-			const lines = cartItems.map((item) => {
-				const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
-				return { weight: variant?.weight, width: variant?.width, height: variant?.height, depth: variant?.depth, quantity: item.quantity };
-			});
-			const packages = buildPackagesFromLines(lines);
+			try {
+				const lines = cartItems.map((item) => {
+					const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
+					return { weight: variant?.weight, width: variant?.width, height: variant?.height, depth: variant?.depth, quantity: item.quantity };
+				});
+				const packages = buildPackagesFromLines(lines);
 
-			const response = await fetch("/api/bring-shipping", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					toPostalCode: postalCode.trim(),
-					toCountry: country,
-					packages,
-				}),
-			});
+				const response = await fetch("/api/bring-shipping", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						toPostalCode: postalCode.trim(),
+						toCountry: country,
+						packages,
+					}),
+				});
 
-			const data = await response.json();
+				const data = await response.json();
 
-			if (!response.ok) {
-				throw new Error(data.error || "Unable to fetch shipping options.");
+				if (!response.ok) {
+					throw new Error(data.error || "Unable to fetch shipping options.");
+				}
+
+				setBringOptions(data.products || []);
+
+				if (data.products?.length > 0) {
+					const cheapest = data.products.reduce((min: BringShippingOption, p: BringShippingOption) => (p.priceCents < min.priceCents ? p : min));
+					setSelectedShippingId(cheapest.productId);
+				}
+			} catch (error) {
+				setBringError(error instanceof Error ? error.message : "Unable to fetch shipping options.");
+				setBringOptions([]);
+			} finally {
+				setIsLoadingBring(false);
 			}
-
-			setBringOptions(data.products || []);
-
-			if (data.products?.length > 0) {
-				const cheapest = data.products.reduce((min: BringShippingOption, p: BringShippingOption) => (p.priceCents < min.priceCents ? p : min));
-				setSelectedShippingId(cheapest.productId);
-			}
-		} catch (error) {
-			setBringError(error instanceof Error ? error.message : "Unable to fetch shipping options.");
-			setBringOptions([]);
-		} finally {
-			setIsLoadingBring(false);
-		}
-	};
+		},
+		[products],
+	);
 
 	useEffect(() => {
 		let active = true;
@@ -131,10 +138,13 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 		if (isDetectingCountry === false && detectedCountry) {
 			const cartItems = getCartItems();
 			if (cartItems.length > 0 && bringOptions.length === 0 && !showShippingForm) {
-				void fetchBringOptions(shippingPostalCode, detectedCountry, cartItems);
+				const timer = window.setTimeout(() => {
+					void fetchBringOptions(shippingPostalCode, detectedCountry, cartItems);
+				}, 0);
+				return () => window.clearTimeout(timer);
 			}
 		}
-	}, [isDetectingCountry, detectedCountry, shippingPostalCode, bringOptions.length, showShippingForm]);
+	}, [isDetectingCountry, detectedCountry, shippingPostalCode, bringOptions.length, showShippingForm, fetchBringOptions]);
 
 	const useDifferentAddress = () => {
 		setSavedAddressUsed(null);
@@ -143,23 +153,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 		setShowShippingForm(true);
 	};
 
-	useEffect(() => {
-		if (appliedCoupon?.freeShipping && selectedShippingId !== STORE_PICKUP_ID) {
-			setSelectedShippingId(STORE_PICKUP_ID);
-			setShowShippingForm(false);
-			setBringOptions([]);
-		}
-	}, [appliedCoupon, selectedShippingId]);
-
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
-
-	const subtotal = useMemo(() => {
-		return items.reduce((sum, item) => {
-			const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
-			const basePrice = variant?.price ?? item.price;
-			return sum + basePrice * item.quantity;
-		}, 0);
-	}, [items, products]);
 
 	const subtotalWithMarkup = useMemo(() => {
 		return items.reduce((sum, item) => {
@@ -268,6 +262,12 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 				freeShipping: data.freeShipping,
 				finalSubtotal: data.finalSubtotal,
 			});
+
+			if (data.freeShipping) {
+				setSelectedShippingId(STORE_PICKUP_ID);
+				setShowShippingForm(false);
+				setBringOptions([]);
+			}
 		} catch (error) {
 			setCouponError(error instanceof Error ? error.message : "Unable to apply coupon.");
 			setAppliedCoupon(null);
@@ -305,6 +305,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					items,
+					currency,
 					customerEmail: user?.email,
 					shippingAddress: {
 						...savedAddress,
@@ -424,8 +425,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 												</button>
 											</div>
 											<div className="text-right">
-												<p className="font-semibold text-stone-900">NOK {itemTotalBase}</p>
-												<PriceEstimate amountNok={itemTotalBase} className="text-xs text-stone-700" />
+												<p className="font-semibold text-stone-900">{formatPrice(itemTotalBase)}</p>
 											</div>
 											<button type="button" onClick={() => handleRemoveItem(item)} className="text-sm font-medium text-stone-700 transition hover:text-stone-900">
 												Remove
@@ -441,24 +441,12 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 								<div className="mt-4 space-y-3">
 									<div className="flex items-center justify-between text-sm text-stone-700">
 										<span>Subtotal</span>
-										<span className="text-right">
-											NOK {displaySubtotal}
-											<PriceEstimate amountNok={displaySubtotal} className="block text-xs text-stone-700" />
-										</span>
+										<span className="text-right font-medium text-stone-900">{formatPrice(displaySubtotal)}</span>
 									</div>
 									{selectedShippingId && !appliedCoupon?.freeShipping ? (
 										<div className="flex items-center justify-between text-sm">
 											<span className="text-stone-700">Shipping</span>
-											<span className="text-right font-medium text-stone-900">
-												{selectedShippingCost === 0 ? (
-													"Free"
-												) : (
-													<>
-														NOK {selectedShippingCost}
-														<PriceEstimate amountNok={selectedShippingCost} className="block text-xs font-normal text-stone-700" />
-													</>
-												)}
-											</span>
+											<span className="text-right font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : formatPrice(selectedShippingCost)}</span>
 										</div>
 									) : (
 										<div className="flex items-center justify-between text-sm text-stone-700">
@@ -469,11 +457,9 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 									<div className="border-t border-stone-200 pt-3">
 										<div className="flex items-center justify-between text-sm font-semibold text-stone-900">
 											<span>Estimated total</span>
-											<span className="text-right">
-												NOK {estimatedTotal}
-												<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-700" />
-											</span>
+											<span className="text-right">{formatPrice(estimatedTotal)}</span>
 										</div>
+										{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {estimatedTotal.toFixed(2)}</p> : null}
 									</div>
 								</div>
 
@@ -609,8 +595,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 														</div>
 													</div>
 													<div className="text-right">
-														<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
-														{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-700" />}
+														<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : formatPrice(option.priceCents / 100)}</p>
 														{option.expectedDelivery && <p className="text-xs text-stone-700">{option.expectedDelivery}</p>}
 													</div>
 												</div>
@@ -677,8 +662,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 										<ProductImage src={product.image} alt={product.name} sizes="(min-width: 768px) 25vw, 50vw" className="aspect-5/6 w-full bg-stone-100" />
 										<div className="p-3 sm:p-4">
 											<p className="line-clamp-2 text-sm font-semibold text-stone-900">{product.name}</p>
-											<p className="mt-2 text-sm font-semibold text-[#1B365D]">NOK {product.variants[0]?.price ?? 0}</p>
-											<PriceEstimate amountNok={product.variants[0]?.price ?? 0} className="text-xs text-stone-700" />
+											<ProductPrice amountNok={product.variants[0]?.price ?? 0} className="mt-2 block text-sm font-semibold text-[#1B365D]" />
 										</div>
 									</Link>
 								))}

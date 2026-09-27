@@ -5,32 +5,24 @@ import { getExchangeRates } from "@/lib/exchange-rates";
 import { priceCheckoutItems, type CheckoutItem } from "@/lib/checkout-pricing";
 import { getShippingQuotes, type SavedShippingAddress, type ShippingQuote } from "@/lib/checkout-shipping";
 import { resolveCoupon } from "@/lib/checkout-coupon";
+import { isCurrencyCode } from "@/lib/documents/utils/currency";
+import type { CurrencyCode } from "@/lib/documents/types";
 
 export const runtime = "nodejs";
 
-const DEFAULT_CURRENCY = "nok";
-
-// Live EUR/NOK exchange rate used as a display reference on the Stripe
-// checkout page. Stripe charges the exact amount in NOK; the EUR amount is
-// shown as an informational equivalent.
-function formatEurEquivalent(nokAmount: number, eurPerNok: number) {
-	return new Intl.NumberFormat("en-GB", {
-		style: "currency",
-		currency: "EUR",
-		maximumFractionDigits: 2,
-	}).format(nokAmount * eurPerNok);
-}
-
 /** Adapts a provider-agnostic ShippingQuote into a Stripe Checkout shipping option. */
-function toStripeShippingOption(quote: ShippingQuote, eurPerNok: number): Stripe.Checkout.SessionCreateParams.ShippingOption {
-	const displayName = quote.id === "STATIC_FALLBACK" && quote.amountCents > 0 ? `${quote.displayName} (${formatEurEquivalent(quote.amountCents / 100, eurPerNok)} EUR)` : quote.displayName;
+function toStripeShippingOption(quote: ShippingQuote, currencyCode: CurrencyCode, rate: number): Stripe.Checkout.SessionCreateParams.ShippingOption {
+	const isForeign = currencyCode !== "NOK";
+	const convertedAmountCents = quote.amountCents > 0 ? (isForeign ? Math.max(1, Math.round(quote.amountCents * rate)) : quote.amountCents) : 0;
+	const nokLabel = quote.amountCents > 0 ? ` (Equivalent to NOK ${(quote.amountCents / 100).toFixed(2)})` : "";
+	const displayName = isForeign && quote.amountCents > 0 ? `${quote.displayName}${nokLabel}` : quote.displayName;
 
 	return {
 		shipping_rate_data: {
 			type: "fixed_amount",
 			fixed_amount: {
-				amount: quote.amountCents,
-				currency: DEFAULT_CURRENCY,
+				amount: convertedAmountCents,
+				currency: currencyCode.toLowerCase(),
 			},
 			display_name: displayName,
 			delivery_estimate: quote.deliveryEstimateDays
@@ -88,6 +80,7 @@ export async function POST(request: Request) {
 			shippingAddress?: SavedShippingAddress;
 			selectedShippingId?: string | null;
 			couponCode?: string;
+			currency?: string;
 		};
 		const items = body.items;
 
@@ -106,20 +99,35 @@ export async function POST(request: Request) {
 
 		const countryCode = body.shippingAddress?.country;
 		const pricedItems = await priceCheckoutItems(items, countryCode);
+
+		const cookieHeader = request.headers.get("cookie") || "";
+		const currencyCookie = cookieHeader
+			.split("; ")
+			.find((row) => row.startsWith("global-handcraft-currency="))
+			?.split("=")[1];
+
+		const rawCurrency = (body.currency || currencyCookie || "NOK").toUpperCase();
+		const currencyCode: CurrencyCode = isCurrencyCode(rawCurrency) ? rawCurrency : "NOK";
+		const isForeign = currencyCode !== "NOK";
+
 		const { rates } = await getExchangeRates();
-		const eurPerNok = rates.EUR;
+		const rate = isForeign ? rates[currencyCode] || 1 : 1;
 		const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
 		const line_items = pricedItems.map((item) => {
 			// Stripe Checkout only renders images from publicly reachable https
 			// URLs (product images live in Supabase Storage), so skip local/dev URLs.
 			const images = item.image?.startsWith("https://") ? [item.image] : undefined;
 
 			const specs = [item.weight, [item.width, item.height, item.depth].filter(Boolean).join(" x ")].filter(Boolean).join(" · ");
-			const description = [specs, `Equivalent: ${formatEurEquivalent(item.unitAmountCents / 100, eurPerNok)} EUR`].filter(Boolean).join(" — ");
+			const nokPriceFormatted = `NOK ${(item.unitAmountCents / 100).toFixed(2)}`;
+			const description = isForeign ? [specs, `(Equivalent to ${nokPriceFormatted})`].filter(Boolean).join(" — ") : specs || undefined;
+
+			const unitAmountCents = isForeign ? Math.max(1, Math.round(item.unitAmountCents * rate)) : item.unitAmountCents;
 
 			return {
 				price_data: {
-					currency: DEFAULT_CURRENCY,
+					currency: currencyCode.toLowerCase(),
 					product_data: {
 						name: item.name,
 						description,
@@ -130,7 +138,7 @@ export async function POST(request: Request) {
 							zoneMarkup: String(item.zoneMarkup),
 						},
 					},
-					unit_amount: item.unitAmountCents,
+					unit_amount: unitAmountCents,
 				},
 				quantity: item.quantity,
 			};
@@ -162,7 +170,7 @@ export async function POST(request: Request) {
 
 		// Build shipping options - uses Bring API if configured, falls back to static
 		const shippingQuotes = await getShippingQuotes(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId, hasFreeShippingCoupon);
-		const shippingOptions = shippingQuotes.map((quote) => toStripeShippingOption(quote, eurPerNok));
+		const shippingOptions = shippingQuotes.map((quote) => toStripeShippingOption(quote, currencyCode, rate));
 
 		let customer: Stripe.Customer | undefined;
 		if (body.customerEmail) {
@@ -185,9 +193,19 @@ export async function POST(request: Request) {
 			allow_promotion_codes: !body.couponCode,
 			success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${origin}/checkout/cancel`,
+			custom_text: isForeign
+				? {
+						submit: {
+							message: `Prices are converted from Norwegian Krone (NOK) based on live exchange rates. Items show their NOK catalog equivalent.`,
+						},
+					}
+				: undefined,
 			metadata: {
 				items: compactItems,
 				...(body.couponCode && { couponCode: body.couponCode.toUpperCase() }),
+				exchangeRate: String(rate),
+				baseCurrency: "NOK",
+				displayCurrency: currencyCode,
 			},
 			invoice_creation: {
 				enabled: true,

@@ -17,7 +17,7 @@ export function CurrencySwitcher() {
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className="w-36">
 				{Object.values(CURRENCIES).map((option) => (
-					<DropdownMenuItem key={option.code} onSelect={() => setPreferredCurrency(option.code)} className={option.code === currency ? "font-semibold text-stone-900" : "text-stone-700"}>
+					<DropdownMenuItem key={option.code} onSelect={() => setPreferredCurrency(option.code, { manual: true })} className={option.code === currency ? "font-semibold text-stone-900" : "text-stone-700"}>
 						<span>{option.code}</span>
 						<span className="text-stone-700">{option.symbol}</span>
 					</DropdownMenuItem>

@@ -70,11 +70,8 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 	}, []);
 
 	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
-	const [zoneMarkup, setZoneMarkup] = useState(0);
-
-	useEffect(() => {
-		if (!detectedCountry) return;
-		setZoneMarkup(resolveZoneMarkup(priceZones, detectedCountry));
+	const zoneMarkup = useMemo(() => {
+		return detectedCountry ? resolveZoneMarkup(priceZones, detectedCountry) : 0;
 	}, [detectedCountry, priceZones]);
 
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
@@ -470,8 +467,8 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 										const isSelected = selectedVariant?.id === variant.id;
 										return (
 											<button
-										role="radio"
-										aria-checked={isSelected}
+												role="radio"
+												aria-checked={isSelected}
 												type="button"
 												key={variant.id}
 												className={`rounded-full cursor-pointer border px-4 py-2 text-sm font-medium transition ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 text-stone-700 hover:border-stone-400"}`}
@@ -560,8 +557,8 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 										const isSelected = selectedColor === entry.color;
 										return (
 											<button
-										role="radio"
-										aria-checked={isSelected}
+												role="radio"
+												aria-checked={isSelected}
 												type="button"
 												key={entry.color}
 												onClick={() => {
@@ -659,8 +656,8 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				</div>
 				<div className="flex-1 px-4 pb-6">
 					<div className="relative h-full w-full rounded-2xl">
-					<Image src={activePreviewImage} alt={product.name} fill sizes="100vw" className="object-contain" />
-				</div>
+						<Image src={activePreviewImage} alt={product.name} fill sizes="100vw" className="object-contain" />
+					</div>
 				</div>
 			</Dialog>
 		</div>

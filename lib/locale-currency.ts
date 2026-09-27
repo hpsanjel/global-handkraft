@@ -1,4 +1,5 @@
 import type { CurrencyCode } from "@/lib/documents/types";
+import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
 
 // Countries whose primary currency isn't the EUR default below.
 const COUNTRY_CURRENCY_OVERRIDES: Record<string, CurrencyCode> = {
@@ -8,6 +9,18 @@ const COUNTRY_CURRENCY_OVERRIDES: Record<string, CurrencyCode> = {
 	GB: "GBP",
 	US: "USD",
 };
+
+/**
+ * Maps a two-letter ISO country code (e.g. "NO", "DK", "DE") to its storefront currency.
+ */
+export function detectCurrencyFromCountry(countryCode: string | null | undefined): CurrencyCode {
+	if (!countryCode) return "EUR";
+	const upper = countryCode.toUpperCase();
+	if (upper in COUNTRY_CURRENCY_OVERRIDES) {
+		return COUNTRY_CURRENCY_OVERRIDES[upper];
+	}
+	return "EUR";
+}
 
 /**
  * Guesses a buyer's currency from a BCP 47 locale tag (e.g. `navigator.language`,
@@ -23,4 +36,12 @@ export function detectCurrencyFromLocale(locale: string | null | undefined): Cur
 	}
 
 	return "EUR";
+}
+
+/**
+ * Returns human-readable country name for a given ISO code (e.g. "DK" -> "Denmark").
+ */
+export function getCountryName(countryCode: string): string {
+	const found = SHIPPING_COUNTRIES.find((c) => c.code.toUpperCase() === countryCode.toUpperCase());
+	return found ? found.name : countryCode;
 }

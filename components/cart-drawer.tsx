@@ -10,7 +10,7 @@ import { useProductsCatalog } from "@/lib/products-catalog";
 import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
 import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
 import type { CartItem } from "@/types/store";
-import { PriceEstimate } from "@/components/price-estimate";
+import { useFormattedPrice } from "@/components/product-price";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { VisaMark, MastercardMark } from "@/components/payment-marks";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -25,6 +25,7 @@ type CartDrawerProps = {
 
 export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	const products = useProductsCatalog();
+	const { formatPrice, currency, isConverted } = useFormattedPrice();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
@@ -277,6 +278,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					items,
+					currency,
 					customerEmail: user?.email,
 					shippingAddress: {
 						...savedAddress,
@@ -380,8 +382,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 													</button>
 												</div>
 												<div className="text-right">
-													<p className="text-sm font-semibold text-stone-900">NOK {item.price * item.quantity}</p>
-													<PriceEstimate amountNok={item.price * item.quantity} className="text-xs text-stone-700" />
+													<p className="text-sm font-semibold text-stone-900">{formatPrice(item.price * item.quantity)}</p>
 												</div>
 											</div>
 										</div>
@@ -529,8 +530,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 													</div>
 												</div>
 												<div className="text-right">
-													<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : `NOK ${(option.priceCents / 100).toFixed(0)}`}</p>
-													{option.priceCents > 0 && <PriceEstimate amountNok={option.priceCents / 100} className="text-xs text-stone-700" />}
+													<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : formatPrice(option.priceCents / 100)}</p>
 												</div>
 											</div>
 											{selectedShippingId === option.productId ? (
@@ -553,25 +553,29 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 						<div className="shrink-0 border-t border-stone-200 px-5 py-4">
 							<div className="flex items-center justify-between text-sm">
 								<span className="text-stone-700">Subtotal</span>
-								<span className="font-medium text-stone-900">NOK {subtotal.toFixed(2)}</span>
+								<span className="font-medium text-stone-900">{formatPrice(subtotal)}</span>
 							</div>
 
 							{selectedShippingOption ? (
 								<div className="mt-1 flex items-center justify-between text-sm">
 									<span className="text-stone-700">Shipping</span>
-									<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : `NOK ${selectedShippingCost.toFixed(2)}`}</span>
+									<span className="font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : formatPrice(selectedShippingCost)}</span>
 								</div>
 							) : (
 								<p className="mt-1 text-xs text-stone-700">Shipping calculated at checkout.</p>
 							)}
 
 							{selectedShippingOption ? (
-								<div className="mt-2 flex items-center justify-between border-t border-dashed border-stone-200 pt-2 text-base font-semibold text-stone-900">
-									<span>Total</span>
-									<span className="text-right">
-										NOK {estimatedTotal.toFixed(2)}
-										<PriceEstimate amountNok={estimatedTotal} className="block text-xs font-normal text-stone-700" />
-									</span>
+								<div className="mt-2 border-t border-dashed border-stone-200 pt-2">
+									<div className="flex items-center justify-between text-base font-semibold text-stone-900">
+										<span>Total</span>
+										<span>{formatPrice(estimatedTotal)}</span>
+									</div>
+									{isConverted ? (
+										<p className="mt-1 text-right text-xs text-stone-700">
+											Equivalent to approx. NOK {estimatedTotal.toFixed(2)}
+										</p>
+									) : null}
 								</div>
 							) : null}
 

@@ -93,12 +93,16 @@ export async function POST(request: Request) {
 					}
 
 					const addonTotal = addons.reduce((sum, addon) => sum + addon.price, 0);
+					const exchangeRate = Number(session.metadata?.exchangeRate || 1);
+					const isForeign = (session.currency || "nok").toUpperCase() !== "NOK" && exchangeRate > 0 && exchangeRate !== 1;
+					const baseUnitPrice = variant.price + addonTotal;
+					const unitPrice = isForeign ? Number((baseUnitPrice * exchangeRate).toFixed(2)) : baseUnitPrice;
 
 					return {
 						productId: item.productId,
 						variantId: item.variantId,
 						quantity: Math.max(1, Number(item.quantity) || 1),
-						unitPrice: variant.price + addonTotal,
+						unitPrice,
 						addonNames: addons.map((addon) => addon.name),
 						name: variant.product.name,
 						variantName: variantLabel(variant.name, variant.color),

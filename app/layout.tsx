@@ -4,6 +4,7 @@ import { CartDrawerProvider } from "@/components/cart-drawer-provider";
 import { CookieNotice } from "@/components/cookie-notice";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { CurrencyInit } from "@/components/currency-init";
+import { CurrencyBanner } from "@/components/currency-banner";
 import { CountryDetection } from "@/components/country-detection";
 import { getPriceZones } from "@/lib/price-zones";
 import { siteConfig } from "@/app/metadata";
@@ -94,6 +95,7 @@ export default async function RootLayout({
 				<CookieNotice />
 				<WhatsAppButton />
 				<CurrencyInit />
+				<CurrencyBanner />
 				<CountryDetection />
 			</body>
 		</html>
