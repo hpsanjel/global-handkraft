@@ -53,7 +53,6 @@ export async function GET(request: Request) {
 			subtotal: (session.amount_subtotal ?? 0) / 100,
 			shipping: (session.total_details?.amount_shipping ?? 0) / 100,
 			shippingMethod,
-			couponCode: session.metadata?.couponCode || null,
 			total: (session.amount_total ?? 0) / 100,
 			currency: (session.currency || "nok").toUpperCase(),
 			address: {

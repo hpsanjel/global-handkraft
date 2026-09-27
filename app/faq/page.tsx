@@ -45,11 +45,6 @@ const faqCategories: FaqCategory[] = [
 				answer: "Yes. Every payment is processed directly by Stripe, one of the world's most trusted payment providers. Your card details are encrypted and never stored on our servers.",
 			},
 			{
-				id: "discount-codes",
-				question: "Can I use a discount or coupon code?",
-				answer: "Yes, you can enter a valid coupon code at checkout. Some coupons require a minimum order value or apply to specific products, and any restrictions will be shown when the code is applied.",
-			},
-			{
 				id: "order-changes",
 				question: "Can I change or cancel my order after placing it?",
 				answer: "Contact us as soon as possible by email or WhatsApp with your order number. We can usually amend or cancel an order before it has been processed for shipping, but we cannot guarantee changes once it is already on its way.",

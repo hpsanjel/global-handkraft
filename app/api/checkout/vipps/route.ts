@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { priceCheckoutItems, type CheckoutItem } from "@/lib/checkout-pricing";
 import { getShippingQuotes, type SavedShippingAddress } from "@/lib/checkout-shipping";
-import { resolveCoupon } from "@/lib/checkout-coupon";
 import { createVippsPayment } from "@/lib/vipps";
 
 export const runtime = "nodejs";
@@ -17,7 +16,6 @@ export async function POST(request: Request) {
 			customerEmail?: string;
 			shippingAddress?: SavedShippingAddress;
 			selectedShippingId?: string | null;
-			couponCode?: string;
 		};
 		const items = body.items;
 
@@ -29,25 +27,24 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: "Vipps is not configured yet." }, { status: 500 });
 		}
 
-		const countryCode = body.shippingAddress?.country;
+		const cookieHeader = request.headers.get("cookie") || "";
+		const detectedCountryCookie = cookieHeader
+			.split("; ")
+			.find((row) => row.startsWith("detected_country="))
+			?.split("=")[1];
+		const countryCode = body.shippingAddress?.country || detectedCountryCookie;
 		const pricedItems = await priceCheckoutItems(items, countryCode);
 		const subtotal = pricedItems.reduce((sum, item) => sum + item.lineSubtotal, 0);
-
-		const resolvedCoupon = await resolveCoupon(body.couponCode, subtotal);
-		const hasFreeShippingCoupon = resolvedCoupon?.freeShipping ?? false;
-		// Vipps has no native coupon-object concept the way Stripe does — the
-		// discount is just subtracted straight from the charged amount below.
-		const discountAmount = resolvedCoupon && resolvedCoupon.discountPct > 0 ? subtotal * (resolvedCoupon.discountPct / 100) : 0;
 
 		// Vipps' WEB_REDIRECT flow has no hosted "choose your shipping option"
 		// screen the way Stripe Checkout does — the buyer only approves a fixed
 		// amount, so the shipping method must already be locked in from the cart.
-		const shippingQuotes = await getShippingQuotes(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId, hasFreeShippingCoupon);
+		const shippingQuotes = await getShippingQuotes(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId);
 		const chosenQuote = shippingQuotes.find((quote) => quote.id === body.selectedShippingId) ?? shippingQuotes[0];
 		const shippingCents = chosenQuote?.amountCents ?? 0;
 
 		const subtotalCents = Math.round(subtotal * 100);
-		const totalCents = Math.max(0, subtotalCents - Math.round(discountAmount * 100)) + shippingCents;
+		const totalCents = subtotalCents + shippingCents;
 
 		// Re-fetch addon names (priceCheckoutItems only returns addonIds) — the
 		// PendingCheckout snapshot and later the confirmation email/receipt need
@@ -93,7 +90,6 @@ export async function POST(request: Request) {
 				shipping: shippingCents / 100,
 				total: totalCents / 100,
 				currency: "NOK",
-				couponCode: resolvedCoupon?.code ?? null,
 			},
 		});
 

@@ -21,6 +21,7 @@ export function CountryDetection() {
 		const localCountry = localStorage.getItem("detected_country");
 		if (localCountry && SHIPPING_COUNTRY_CODES.includes(localCountry)) {
 			setCookie(DETECTED_COUNTRY_COOKIE, localCountry, DETECTED_COUNTRY_COOKIE_MAX_AGE);
+			window.dispatchEvent(new CustomEvent("country:detected", { detail: { country: localCountry } }));
 			return;
 		}
 
@@ -38,7 +39,15 @@ export function CountryDetection() {
 					window.dispatchEvent(new CustomEvent("country:detected", { detail: { country } }));
 				}
 			} catch {
-				// Silently fail; user can manually select country in cart
+				// Fallback to browser locale country if it matches one of our shipping countries
+				if (typeof navigator !== "undefined" && navigator.language) {
+					const langCountry = navigator.language.split("-")[1]?.toUpperCase();
+					if (langCountry && SHIPPING_COUNTRY_CODES.includes(langCountry)) {
+						localStorage.setItem("detected_country", langCountry);
+						setCookie(DETECTED_COUNTRY_COOKIE, langCountry, DETECTED_COUNTRY_COOKIE_MAX_AGE);
+						window.dispatchEvent(new CustomEvent("country:detected", { detail: { country: langCountry } }));
+					}
+				}
 			}
 		})();
 	}, []);

@@ -11,25 +11,28 @@ The complete project scope, brand guidelines, product universe, and implementati
 ## Implemented Features
 
 **Storefront**
+
 - Home, Shop (category + filter browsing), product detail pages, cart, checkout, account, contact, FAQ, About, privacy/terms/returns/shipping info pages
 - Products with variants (price/size/stock per color and size combination) and paid add-ons
-- Slide-in cart drawer, coupon code entry, site-wide active-coupon promo popup
+- Slide-in cart drawer
 - Currency switcher with live exchange rates (NOK/EUR/USD)
 - Zone-based international pricing: admin-configurable markup applied automatically by shipping country
 - Dynamic Open Graph image generation, `sitemap.xml`/`robots.txt`, newsletter signup, cookie/GDPR notice, WhatsApp contact button
 
 **Checkout & Payments**
+
 - Stripe Checkout and Vipps (ePayment API) with webhook-driven order creation — buyer chooses either at checkout. Vipps requires `VIPPS_*` credentials to be configured (see Getting Started) before it's selectable.
 - Live shipping rate quotes via Bring (Posten Norge) and PostNord integrations, with admin-configurable shipping zones and free-shipping thresholds
 - Per-country VAT rates
-- Coupon engine: percentage discounts, free shipping, expiry, minimum cart-value requirement, and per-customer/global usage caps
 
 **Orders & Documents**
+
 - Full order status lifecycle (Pending → Paid → Processing → Shipped → Delivered, plus Cancelled/Refunded) with a status history timeline and customer email at each transition
 - PDF document generation (via `@react-pdf/renderer`) for invoices, receipts, packing lists, customs invoices, gift receipts, return cards, shipping summaries, and order summaries — with barcodes, QR codes, and sequential document numbering
 - Customer order history with document downloads
 
 **Custom Orders (Mandap/Temple builds)**
+
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
 - Dedicated admin Custom Orders dashboard, segregated from the regular Orders view
 - Threaded messaging between customer and admin with unread indicators, rich-text notes
@@ -37,33 +40,38 @@ The complete project scope, brand guidelines, product universe, and implementati
 - Admin quoting workflow: request status (Pending/Accepted/Declined/Paid), quoted price, and a manually-entered Stripe payment link
 
 **Accounts**
+
 - Supabase email/password authentication, with admin role granted via an email allow-list or user metadata
 - Customer account area: order history, addresses, custom-request threads, profile
 - GDPR self-service data export and account-deletion request (with admin notification)
 
 **Admin Dashboard**
+
 - Live overview stats
 - Sales reporting dashboard: date-range trend chart, revenue/refunds summary, country breakdown, CSV export
 - Products CRUD with variant/add-on management, automatic slug generation, and image uploads (Supabase Storage)
 - Categories CRUD
 - Orders management, status control, and document generation
-- Coupons CRUD
 - Dedicated Custom Orders section: mandap/temple inquiry management with threaded messaging and payment status control
 - Shipping zone and rate configuration
 - Pricing zone configuration for international markup
 
 **Transactional Email (Resend)**
+
 - Order confirmation (with optional PDF receipt attached), order status updates, custom-inquiry notifications and replies, payment-status updates, and account-deletion admin alerts
 
 **Reviews & Ratings**
+
 - Customers submit star ratings and written reviews per product; reviews are held for admin approval before they appear publicly
 - Admin moderation queue to approve, unapprove, or delete reviews
 - Product page displays the approved review list plus an aggregate rating that recomputes automatically from approved reviews
 
 **Testimonials**
+
 - Admin CRUD for homepage testimonials (name, quote, star rating, photo, drag-to-reorder, show/hide) backed by the database and Supabase Storage, replacing the previous hardcoded array
 
 **Security & Data Access**
+
 - Row Level Security enabled (deny-all policy set) on every Prisma-managed table, closing off Supabase's auto-exposed PostgREST Data API to the `anon`/`authenticated` roles — the app itself is unaffected since it talks to Postgres exclusively through Prisma's `BYPASSRLS` role
 - Realtime Authorization policies scope the live-chat private channels so only the inquiry's customer (matched by email) or an admin can join a given custom-request channel, and only admins can join the admin count-badge channel
 - Storage bucket policies audited and trimmed to remove public/unauthenticated list and upload access left over on the `products` bucket; all uploads go through the service-role client
@@ -95,8 +103,7 @@ The complete project scope, brand guidelines, product universe, and implementati
    ```bash
    cp .env.example .env.local
    ```
-3. Configure PostgreSQL (Supabase) and service credentials (Stripe, Resend, Supabase, Bring/PostNord).
-   For Vipps, set these in `.env.local` (test values from the [Vipps MobilePay developer portal](https://developer.vippsmobilepay.com/)):
+3. Configure PostgreSQL (Supabase) and service credentials (Stripe, Resend, Supabase, Bring/PostNord). For Vipps, set these in `.env.local` (test values from the [Vipps MobilePay developer portal](https://developer.vippsmobilepay.com/)):
    ```bash
    VIPPS_CLIENT_ID=
    VIPPS_CLIENT_SECRET=

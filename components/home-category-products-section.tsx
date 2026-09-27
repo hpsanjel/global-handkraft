@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/types/store";
-import { PriceEstimate } from "@/components/price-estimate";
+import { ProductPrice } from "@/components/product-price";
 import { ProductImage } from "@/components/ui/product-image";
 
 type HomeCategoryProductsSectionProps = {
@@ -35,8 +35,7 @@ export function HomeCategoryProductsSection({ title, href, products }: HomeCateg
 							</Link>
 							<div className="mt-auto flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-5 sm:pb-5">
 								<div>
-									<p className="text-sm font-semibold text-[#1B365D] sm:text-base">NOK {product.variants[0].price}</p>
-									<PriceEstimate amountNok={product.variants[0].price} className="text-xs text-stone-700" />
+									<ProductPrice amountNok={product.variants[0].price} className="text-sm font-semibold text-[#1B365D] sm:text-base" />
 								</div>
 								<Button asChild className="rounded-full bg-brand-orange px-4 py-2 text-xs text-white hover:bg-[#d87810] sm:text-sm">
 									<Link href={`/product/${product.slug}`}>Buy</Link>

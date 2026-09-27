@@ -1,6 +1,5 @@
 /**
- * Client-safe shipping helpers shared between the cart drawer, the full
- * /cart page, and the server-side checkout/Bring integration. No Prisma,
+ * Client-safe shipping helpers shared across the store. No Prisma,
  * no process.env, no React — safe to import from "use client" components.
  */
 
@@ -13,12 +12,14 @@ export type MeasurableCartLine = {
 	quantity: number;
 };
 
-export type BringPackageInput = {
+export type PackageInput = {
 	weightInGrams: number;
 	length: number;
 	width: number;
 	height: number;
 };
+
+export type BringPackageInput = PackageInput;
 
 /** Extracts the first numeric value from a free-text measurement string (e.g. "10 kg" -> 10). */
 export function parseMeasurement(value: string | null | undefined): number | null {
@@ -32,16 +33,12 @@ export function parseMeasurement(value: string | null | undefined): number | nul
 }
 
 /**
- * Expands cart lines into individual Bring packages — one package per physical
+ * Expands cart lines into individual packages — one package per physical
  * unit (a line with quantity 3 becomes 3 packages), each using that item's own
  * weight/dimensions, with a 30x20x15cm / 200g floor when nothing parses.
- *
- * This lets Bring quote the real combination of parcels instead of one
- * approximated box for the whole cart, which meaningfully undercharges when
- * items have different sizes (verified against live Bring responses).
  */
-export function buildPackagesFromLines(lines: MeasurableCartLine[]): BringPackageInput[] {
-	const packages: BringPackageInput[] = [];
+export function buildPackagesFromLines(lines: MeasurableCartLine[]): PackageInput[] {
+	const packages: PackageInput[] = [];
 
 	for (const line of lines) {
 		const weightKg = parseMeasurement(line.weight);
@@ -60,31 +57,8 @@ export function buildPackagesFromLines(lines: MeasurableCartLine[]): BringPackag
 	return packages;
 }
 
-/** Mirrors the shape returned by POST /api/bring-shipping. */
-export type BringShippingOption = {
-	productId: string;
-	displayName: string;
-	priceCents: number;
-	expectedDelivery: string | null;
-	maxDays: number | null;
-	deliveryType: "HOME" | "PICKUP" | "MAILBOX";
-	guiInformation: string | null;
-};
-
 /**
- * Sentinel ID used everywhere (drawer, cart page, checkout route, webhook) to
- * mean "customer will collect the order in person at the Oslo store" —
- * never a real Bring product id.
+ * Sentinel ID retained for historical orders where customer collected order in store.
  */
 export const STORE_PICKUP_ID = "STORE_PICKUP" as const;
 export const STORE_PICKUP_DISPLAY_NAME = "Collect Myself — Bærum Store";
-
-export const STORE_PICKUP_OPTION: BringShippingOption = {
-	productId: STORE_PICKUP_ID,
-	displayName: STORE_PICKUP_DISPLAY_NAME,
-	priceCents: 0,
-	expectedDelivery: "Ready for pickup today",
-	maxDays: null,
-	deliveryType: "PICKUP",
-	guiInformation: "Pick up your order in person at our Bærum store — we'll email you when it's ready.",
-};

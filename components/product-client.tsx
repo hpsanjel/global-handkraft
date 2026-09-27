@@ -7,7 +7,8 @@ import type { Product } from "@/types/store";
 import { Button } from "@/components/ui/button";
 import { saveCartItems, getCartItems } from "@/lib/cart";
 import { variantLabel } from "@/lib/product-transform";
-import { PriceEstimate } from "@/components/price-estimate";
+import { ProductPrice } from "@/components/product-price";
+import { usePriceZones } from "@/components/price-zones-provider";
 import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { useDetectedCountry } from "@/hooks/use-detected-country";
@@ -69,10 +70,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 		};
 	}, []);
 
-	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
-	const zoneMarkup = useMemo(() => {
-		return detectedCountry ? resolveZoneMarkup(priceZones, detectedCountry) : 0;
-	}, [detectedCountry, priceZones]);
+
 
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
 
@@ -147,13 +145,13 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 
 	const selectedAddons = useMemo(() => product.addons.filter((addon) => selectedAddonIds.includes(addon.id)), [product.addons, selectedAddonIds]);
 
+	const { zoneMarkup } = usePriceZones();
 	const basePrice = useMemo(() => {
 		const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
 		return (selectedVariant?.price ?? 0) + addonsTotal;
 	}, [selectedAddons, selectedVariant]);
 
 	const totalPrice = useMemo(() => basePrice + zoneMarkup, [basePrice, zoneMarkup]);
-	const countryUndetected = !isDetectingCountry && !detectedCountry;
 
 	const toggleAddon = (addonId: string) => {
 		setSelectedAddonIds((current) => (current.includes(addonId) ? current.filter((id) => id !== addonId) : [...current, addonId]));
@@ -431,9 +429,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 					<div className="flex items-center justify-between gap-3">
 						<p className="text-sm font-medium text-stone-700">{hasMultipleVariants ? "Selected option" : "Ready to order"}</p>
 						<div className="text-right">
-							<p className="text-3xl font-semibold text-stone-900">NOK {totalPrice}</p>
-							<PriceEstimate amountNok={totalPrice} className="text-sm text-stone-700" />
-							{countryUndetected ? <p className="mt-1 text-xs text-stone-700">Final price may include a regional adjustment, confirmed at checkout.</p> : null}
+							<ProductPrice amountNok={basePrice} showApproxNok className="text-3xl font-semibold text-stone-900" />
 						</div>
 					</div>
 					<div className="mt-6 space-y-4">
@@ -584,8 +580,14 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 											<button type="button" aria-pressed={isSelected} key={addon.id} className={`flex w-full flex-col gap-2 rounded-2xl border px-4 py-3 text-left text-sm transition sm:flex-row sm:items-center sm:justify-between ${isSelected ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 text-stone-700 hover:border-stone-400"}`} onClick={() => toggleAddon(addon.id)}>
 												<div>
 													<p className="font-medium">
-														{addon.name} {isSelected ? "✓" : "+NOK " + addon.price}
-														{!isSelected ? <PriceEstimate amountNok={addon.price} className="ml-1 text-xs text-stone-700" /> : null}
+														{addon.name}{" "}
+														{isSelected ? (
+															"✓"
+														) : (
+															<>
+																+<ProductPrice amountNok={addon.price} includeMarkup={false} />
+															</>
+														)}
 													</p>
 													<p className={`text-xs ${isSelected ? "text-stone-200" : "text-stone-700"}`}>{addon.description}</p>
 												</div>
@@ -612,8 +614,11 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				) : null}
 				<div className="mt-2">
 					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<p className="text-sm font-semibold text-stone-900">Shipping</p>
-						<p className="mt-2 text-sm text-stone-700">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo}</p>
+						<div className="flex items-center justify-between">
+							<p className="text-sm font-semibold text-stone-900">Shipping</p>
+							<span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Free</span>
+						</div>
+						<p className="mt-2 text-sm text-stone-700">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo || "Free delivery on all orders."}</p>
 					</div>
 				</div>
 			</div>
@@ -622,9 +627,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				<div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
 					<div>
 						<p className="text-xs text-stone-700">Total</p>
-						<p className="text-lg font-semibold text-stone-900">NOK {totalPrice}</p>
-						<PriceEstimate amountNok={totalPrice} className="text-xs text-stone-700" />
-						{countryUndetected ? <p className="text-xs text-stone-700">Regional adjustment confirmed at checkout</p> : null}
+						<ProductPrice amountNok={basePrice} showApproxNok className="text-lg font-semibold text-stone-900" />
 					</div>
 					<div className="flex flex-col items-end gap-2">
 						<Button className="rounded-full px-6 disabled:cursor-not-allowed disabled:opacity-50" onClick={handleAddToCart} disabled={!selectedVariant || isOutOfStock}>

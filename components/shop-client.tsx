@@ -7,7 +7,7 @@ import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import type { CategorySummary } from "@/lib/category-utils";
 import type { Product } from "@/types/store";
-import { PriceEstimate } from "@/components/price-estimate";
+import { ProductPrice } from "@/components/product-price";
 import { Dialog, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ProductImage } from "@/components/ui/product-image";
 
@@ -351,10 +351,7 @@ export function ShopClient({ initialProducts, initialCategories }: ShopClientPro
 											{product.name}
 										</h2>
 										<div className={`${viewMode === "list" ? "flex flex-col items-start gap-1 mt-1" : "mt-1 flex gap-2 md:gap-3 items-center justify-between"}`}>
-											<div>
-												<p className="text-xs md:text-sm font-medium text-stone-900">{product.variants[0] ? `From NOK ${product.variants[0].price}` : "View details"}</p>
-												{product.variants[0] ? <PriceEstimate amountNok={product.variants[0].price} className="text-xs text-stone-700" /> : null}
-											</div>
+											<div>{product.variants[0] ? <ProductPrice amountNok={product.variants[0].price} prefix="From " className="text-xs md:text-sm font-medium text-stone-900" /> : <p className="text-xs md:text-sm font-medium text-stone-900">View details</p>}</div>
 
 											<span className={`${loading ? "opacity-50 cursor-not-allowed" : ""} inline-flex items-center rounded-full bg-brand-orange px-3 py-1 text-xs font-semibold text-white`}>Buy</span>
 										</div>

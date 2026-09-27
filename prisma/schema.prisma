@@ -149,7 +149,6 @@ model PendingCheckout {
   shipping           Float
   total              Float
   currency           String    @default("NOK")
-  couponCode         String?
   createdAt          DateTime  @default(now())
   /// Set once an Order has been created from this row (webhook idempotency).
   consumedAt         DateTime?
@@ -196,24 +195,6 @@ model Review {
 
   @@index([productId])
   @@index([approved])
-}
-
-model Coupon {
-  id                  String    @id @default(cuid())
-  code                String    @unique
-  discountPct         Float
-  freeShipping        Boolean   @default(false)
-  active              Boolean   @default(true)
-  expiresAt           DateTime?
-  maxUses             Int?
-  maxUsesPerCustomer  Int?
-  minPurchaseAmount   Float?
-  currentUses         Int       @default(0)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  @@index([code])
-  @@index([expiresAt])
 }
 
 model VATRate {

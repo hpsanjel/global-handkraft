@@ -8,7 +8,6 @@ import { SkipLink } from "@/components/skip-link";
 import { SiteFooter } from "@/components/site-footer";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { HomeCategoryProductsSection } from "@/components/home-category-products-section";
-import { CouponPopup } from "@/components/coupon-popup";
 import { useCategoriesCatalog } from "@/lib/categories-catalog";
 import { useTestimonialsCatalog, type PublicTestimonial } from "@/lib/testimonials-catalog";
 import { useState } from "react";
@@ -16,6 +15,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { HeroSection } from "@/components/hero-section";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { ProductImage } from "@/components/ui/product-image";
+import { ProductPrice } from "@/components/product-price";
 
 function TestimonialCard({ item }: { item: PublicTestimonial }) {
 	return (
@@ -130,7 +130,6 @@ export default function HomePage() {
 
 	return (
 		<div className="flex min-h-screen flex-col bg-saffron text-stone-800">
-			<CouponPopup />
 			<SkipLink />
 			<SiteHeader />
 			<main id="main-content" className="flex-1">
@@ -257,8 +256,8 @@ export default function HomePage() {
 									</div>
 									<div className="mt-auto flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-5 sm:pb-5">
 										<div className="flex flex-col">
-											<p className="text-sm font-semibold text-[#1B365D] sm:text-base">NOK {displayPrice}</p>
-											{discount > 0 && <p className="text-xs text-stone-700 line-through">NOK {originalPrice.toFixed(2)}</p>}
+											<ProductPrice amountNok={displayPrice} className="text-sm font-semibold text-[#1B365D] sm:text-base" />
+											{discount > 0 && <ProductPrice amountNok={originalPrice} className="text-xs text-stone-700 line-through" />}
 										</div>
 										<Button asChild className={`${buying ? "opacity-50 cursor-not-allowed" : ""} rounded-full bg-brand-orange px-4 py-2 text-xs text-white hover:bg-[#d87810] sm:text-sm`} disabled={buying}>
 											<Link href={`/product/${product.slug}`}>Buy</Link>
@@ -320,8 +319,8 @@ export default function HomePage() {
 										<div className="mt-6 flex items-end justify-between gap-3 border-t border-stone-100 pt-5">
 											<div className="flex flex-col">
 												<span className="text-xs font-medium uppercase tracking-[0.15em] text-stone-700">Price</span>
-												<p className="text-xl font-bold text-[#1B365D]">NOK {displayPrice}</p>
-												{discount > 0 && <p className="text-xs text-stone-700 line-through">NOK {originalPrice.toFixed(2)}</p>}
+												<ProductPrice amountNok={displayPrice} className="text-xl font-bold text-[#1B365D]" />
+												{discount > 0 && <ProductPrice amountNok={originalPrice} className="text-xs text-stone-700 line-through" />}
 											</div>
 											<span className="inline-flex items-center gap-1.5 rounded-full bg-[#1B365D] px-5 py-2.5 text-xs font-semibold text-white transition group-hover:gap-2.5 group-hover:bg-[#152d4c]">
 												Shop Now

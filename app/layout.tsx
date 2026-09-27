@@ -6,6 +6,7 @@ import { WhatsAppButton } from "@/components/whatsapp-button";
 import { CurrencyInit } from "@/components/currency-init";
 import { CurrencyBanner } from "@/components/currency-banner";
 import { CountryDetection } from "@/components/country-detection";
+import { PriceZonesProvider } from "@/components/price-zones-provider";
 import { getPriceZones } from "@/lib/price-zones";
 import { siteConfig } from "@/app/metadata";
 
@@ -90,13 +91,15 @@ export default async function RootLayout({
 				<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800&display=swap" rel="stylesheet" />
 			</head>
 			<body className="min-h-full flex flex-col">
-				{children}
-				<CartDrawerProvider priceZones={priceZones} />
-				<CookieNotice />
-				<WhatsAppButton />
-				<CurrencyInit />
-				<CurrencyBanner />
-				<CountryDetection />
+				<PriceZonesProvider priceZones={priceZones}>
+					{children}
+					<CartDrawerProvider priceZones={priceZones} />
+					<CookieNotice />
+					<WhatsAppButton />
+					<CurrencyInit />
+					<CurrencyBanner />
+					<CountryDetection />
+				</PriceZonesProvider>
 			</body>
 		</html>
 	);

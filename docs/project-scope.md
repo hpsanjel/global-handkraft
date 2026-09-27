@@ -9,26 +9,29 @@ This section reflects what is actually built in the codebase today, as opposed t
 ### Live today
 
 **Storefront**
+
 - Home, Shop with category/filter browsing, Product Detail, Cart, Checkout, Account, Contact, FAQ, About, Privacy, Terms, Shipping, Returns pages
 - Product variants (price/size/stock per color and size combination) and paid add-ons
-- Slide-in cart drawer, coupon code entry at checkout, site-wide active-coupon promo popup
+- Slide-in cart drawer and checkout flow
 - Currency switcher with live exchange rates (NOK/EUR/USD)
 - Zone-based international pricing: admin-configurable markup applied automatically by shipping country (`/admin/settings/pricing-zones`)
 - Newsletter signup, cookie/GDPR notice, WhatsApp contact button
 - Dynamic Open Graph image generation, `sitemap.xml`, `robots.txt`
 
 **Checkout & payments**
+
 - Stripe Checkout and Vipps ePayment API, buyer's choice at checkout, both webhook-driven order creation (Vipps needs `VIPPS_*` credentials configured before it's selectable; see Getting Started in the README)
 - Live shipping rate quotes via Bring (Posten Norge) and PostNord, admin-configurable shipping zones and free-shipping thresholds
 - Per-country VAT rates
-- Coupon engine: percentage discount, free shipping, expiry, minimum cart-value requirement, global and per-customer usage caps
 
 **Orders & documents**
+
 - Full order status lifecycle (Pending, Paid, Processing, Shipped, Delivered, Cancelled, Refunded) with a status-history timeline and a customer email sent on every transition
 - PDF generation (`@react-pdf/renderer`) for invoices, receipts, packing lists, customs invoices, gift receipts, return cards, shipping summaries, and order summaries, with barcodes (`bwip-js`), QR codes, and sequential document numbering
 - Customer-facing order history with document downloads
 
 **Custom orders (Mandap/Temple builds)**
+
 - Customer-submitted custom order inquiries with dimensions, material, budget range, and reference images
 - Dedicated admin Custom Orders dashboard (`/admin/custom-requests`), segregated from the regular Orders view
 - Threaded messaging between customer and admin with unread indicators and rich-text formatting
@@ -36,34 +39,39 @@ This section reflects what is actually built in the codebase today, as opposed t
 - Admin quoting workflow: request status (Pending/Accepted/Declined/Paid), quoted price, and a manually-entered Stripe payment link — no in-app deposit/balance split or pro forma invoicing at this time
 
 **Accounts**
+
 - Supabase email/password authentication; admin role via email allow-list (`ADMIN_EMAILS`) or user metadata
 - Customer account area: order history, addresses, custom-request threads, profile
 - GDPR self-service data export and account-deletion request flow (with admin notification and a 30-day manual-processing note for bookkeeping retention)
 
 **Admin dashboard**
+
 - Live overview stats
 - Sales reporting dashboard (`/admin/reports`): date-range trend chart, revenue/refunds summary, country breakdown, CSV export
 - Products CRUD with variant/add-on management, automatic slug generation, and image upload to Supabase Storage
 - Categories CRUD
 - Orders management, status control, and document generation
-- Coupons CRUD
 - Custom Orders section (`/admin/custom-requests`), segregated from the Orders dashboard: mandap/temple inquiry management with threaded messaging and payment status control
 - Shipping zone and rate configuration
 - Pricing zone configuration for international markup
 
 **Transactional email (Resend)**
+
 - Order confirmation (with optional PDF receipt attached), order status updates, custom-inquiry admin notifications and customer replies, payment-status updates, account-deletion admin alerts
 
 **Reviews & ratings**
+
 - Public review submission per product (name, optional email, 1-5 star rating, title, comment), held as pending until an admin approves it
 - Admin moderation queue (`/admin/reviews`) with pending/approved/all filters, approve/unapprove, and delete
 - Approved reviews display on the product page with an aggregate star rating and count, kept in sync automatically (`Product.rating`/`reviewCount` recompute from approved reviews on every moderation action), plus Schema.org `AggregateRating` structured data
 
 **Testimonials**
+
 - Admin-managed homepage testimonials (`/admin/testimonials`): create/edit/delete, star rating, drag-to-reorder, show/hide toggle, and customer photo upload to Supabase Storage
 - Replaces the previously hardcoded testimonial array; the homepage now fetches active testimonials live
 
 **Security and data access**
+
 - Row Level Security enabled with a deny-all policy set on every Prisma-managed table (`supabase/migrations/20260813020000_enable_rls_all_tables.sql`), closing Supabase's auto-exposed PostgREST Data API to the `anon`/`authenticated` roles; the app itself is unaffected since Prisma connects with a `BYPASSRLS` role
 - Realtime Authorization policies (`supabase/migrations/20260813030000_realtime_authorization_mandap_inquiries.sql`) scope the live-chat private channels so only the inquiry's own customer (matched by email) or an admin can join an `inquiry:<id>` channel, and only admins can join the `admin:custom-requests` badge channel
 - Storage bucket policies audited and trimmed (`supabase/migrations/20260813040000_drop_products_bucket_open_policies.sql`) to remove unauthenticated list/upload access left on the `products` bucket; all uploads go through the service-role client, matching the other buckets
@@ -331,7 +339,6 @@ Cart capabilities:
 
 - Slide-in cart drawer
 - Quantity updates
-- Coupon application
 - Gift message
 - Shipping estimate
 
@@ -424,7 +431,6 @@ Admin modules:
 - Customers
 - Products
 - Inventory
-- Coupons and discounts
 - Analytics and sales graph
 - Product reviews moderation
 - Shipping settings
@@ -514,7 +520,7 @@ Phase 3: Admin and operational maturity
 
 - Dashboard modules and content management
 - Review moderation and analytics
-- Campaign tools (coupons, featured collections)
+- Campaign tools (featured collections)
 
 Phase 4: Growth and advanced capabilities
 

@@ -4,7 +4,6 @@ import { SHIPPING_COUNTRY_CODES } from "@/lib/shipping-countries";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { priceCheckoutItems, type CheckoutItem } from "@/lib/checkout-pricing";
 import { getShippingQuotes, type SavedShippingAddress, type ShippingQuote } from "@/lib/checkout-shipping";
-import { resolveCoupon } from "@/lib/checkout-coupon";
 import { isCurrencyCode } from "@/lib/documents/utils/currency";
 import type { CurrencyCode } from "@/lib/documents/types";
 
@@ -79,7 +78,6 @@ export async function POST(request: Request) {
 			customerEmail?: string;
 			shippingAddress?: SavedShippingAddress;
 			selectedShippingId?: string | null;
-			couponCode?: string;
 			currency?: string;
 		};
 		const items = body.items;
@@ -97,14 +95,18 @@ export async function POST(request: Request) {
 			apiVersion: "2026-07-29.dahlia",
 		});
 
-		const countryCode = body.shippingAddress?.country;
-		const pricedItems = await priceCheckoutItems(items, countryCode);
-
 		const cookieHeader = request.headers.get("cookie") || "";
+		const detectedCountryCookie = cookieHeader
+			.split("; ")
+			.find((row) => row.startsWith("detected_country="))
+			?.split("=")[1];
 		const currencyCookie = cookieHeader
 			.split("; ")
 			.find((row) => row.startsWith("global-handcraft-currency="))
 			?.split("=")[1];
+
+		const countryCode = body.shippingAddress?.country || detectedCountryCookie;
+		const pricedItems = await priceCheckoutItems(items, countryCode);
 
 		const rawCurrency = (body.currency || currencyCookie || "NOK").toUpperCase();
 		const currencyCode: CurrencyCode = isCurrencyCode(rawCurrency) ? rawCurrency : "NOK";
@@ -148,28 +150,8 @@ export async function POST(request: Request) {
 
 		const subtotal = pricedItems.reduce((sum, item) => sum + item.lineSubtotal, 0);
 
-		// Handle coupon if provided - do this before building shipping options
-		let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
-		const resolvedCoupon = await resolveCoupon(body.couponCode, subtotal);
-		const hasFreeShippingCoupon = resolvedCoupon?.freeShipping ?? false;
-
-		// Only create a Stripe coupon if there's an actual percentage discount
-		if (resolvedCoupon && resolvedCoupon.discountPct > 0) {
-			const stripeCoupon = await stripe.coupons.create({
-				name: resolvedCoupon.code,
-				percent_off: resolvedCoupon.discountPct,
-				duration: "once",
-			});
-
-			discounts = [
-				{
-					coupon: stripeCoupon.id,
-				},
-			];
-		}
-
-		// Build shipping options - uses Bring API if configured, falls back to static
-		const shippingQuotes = await getShippingQuotes(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId, hasFreeShippingCoupon);
+		// Build shipping options - uses static DB shipping rates
+		const shippingQuotes = await getShippingQuotes(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId);
 		const shippingOptions = shippingQuotes.map((quote) => toStripeShippingOption(quote, currencyCode, rate));
 
 		let customer: Stripe.Customer | undefined;
@@ -188,9 +170,6 @@ export async function POST(request: Request) {
 				allowed_countries: SHIPPING_COUNTRY_CODES as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
 			},
 			shipping_options: shippingOptions,
-			...(discounts && { discounts }),
-
-			allow_promotion_codes: !body.couponCode,
 			success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${origin}/checkout/cancel`,
 			custom_text: isForeign
@@ -202,7 +181,6 @@ export async function POST(request: Request) {
 				: undefined,
 			metadata: {
 				items: compactItems,
-				...(body.couponCode && { couponCode: body.couponCode.toUpperCase() }),
 				exchangeRate: String(rate),
 				baseCurrency: "NOK",
 				displayCurrency: currencyCode,

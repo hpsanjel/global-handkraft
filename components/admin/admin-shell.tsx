@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Package, ShoppingCart, FileBarChart2, Tags, Ticket, Star, Quote, Settings, Menu, X, LogOut, Store, ChevronDown, Landmark, CreditCard } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileBarChart2, Tags, Star, Quote, Settings, Menu, X, LogOut, Store, ChevronDown, Landmark, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ADMIN_CUSTOM_REQUESTS_TOPIC } from "@/lib/realtime-topics";
 import { SkipLink } from "@/components/skip-link";
@@ -17,7 +17,6 @@ const NAV_ITEMS = [
 	{ href: "/admin/orders", label: "Orders", icon: ShoppingCart },
 	{ href: "/admin/custom-requests", label: "Custom Orders", icon: Landmark },
 	{ href: "/admin/stripe", label: "Stripe", icon: CreditCard },
-	{ href: "/admin/coupons", label: "Coupons", icon: Ticket },
 	{ href: "/admin/reviews", label: "Reviews", icon: Star },
 	{ href: "/admin/testimonials", label: "Testimonials", icon: Quote },
 	{ href: "/admin/reports", label: "Reports", icon: FileBarChart2 },
@@ -80,7 +79,11 @@ function SidebarNav({ pathname, onNavigate, customRequestCount }: { pathname: st
 						<span className={`h-5 w-0.5 shrink-0 -ml-3 rounded-r-full transition ${active ? "bg-stone-500" : "bg-transparent"}`} aria-hidden="true" />
 						<Icon className={`h-4.5 w-4.5 shrink-0 ${active ? "text-stone-700" : "text-slate-600 group-hover:text-slate-200"}`} />
 						<span className="flex-1">{item.label}</span>
-						{showBadge ? <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white">{customRequestCount.pending}/{customRequestCount.total}</span> : null}
+						{showBadge ? (
+							<span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white">
+								{customRequestCount.pending}/{customRequestCount.total}
+							</span>
+						) : null}
 					</Link>
 				);
 			})}

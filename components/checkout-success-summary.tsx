@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Loader2, Mail, MapPin, Package, Tag } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, MapPin, Package } from "lucide-react";
 import { ProductImage } from "@/components/ui/product-image";
 import { InlineAlert } from "@/components/ui/inline-alert";
 
@@ -10,7 +10,6 @@ export type OrderSummary = {
 	subtotal: number;
 	shipping: number;
 	shippingMethod: string | null;
-	couponCode: string | null;
 	total: number;
 	currency: string;
 	address: { line1: string; city: string; postalCode: string; country: string };
@@ -125,16 +124,6 @@ export function CheckoutSuccessSummary({ order, isLoading, error }: { order: Ord
 									<span>Subtotal</span>
 									<span className="font-medium text-stone-900">{formatMoney(order.subtotal, order.currency)}</span>
 								</div>
-								{order.couponCode ? (
-									<div className="flex items-center justify-between text-stone-700">
-										<span className="inline-flex items-center gap-1.5">
-											<Tag className="h-3.5 w-3.5" />
-											Coupon
-											<span className="rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-xs font-semibold text-emerald-700">{order.couponCode}</span>
-										</span>
-										<span className="font-medium text-emerald-700">Applied</span>
-									</div>
-								) : null}
 								<div className="flex items-center justify-between text-stone-700">
 									<span>Shipping{order.shippingMethod ? ` (${order.shippingMethod})` : ""}</span>
 									<span className="font-medium text-stone-900">{order.shipping === 0 ? "Free" : formatMoney(order.shipping, order.currency)}</span>

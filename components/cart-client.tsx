@@ -1,15 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { clearCart, getCartItems, removeCartItem, updateCartItemQuantity } from "@/lib/cart";
 import { useProductsCatalog } from "@/lib/products-catalog";
 import { createClient } from "@/lib/supabase/client";
-import { SHIPPING_COUNTRIES } from "@/lib/shipping-countries";
-import { buildPackagesFromLines, STORE_PICKUP_ID, STORE_PICKUP_OPTION, type BringShippingOption } from "@/lib/shipping-client";
 import { useDetectedCountry } from "@/hooks/use-detected-country";
 import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
-import { Package, MapPin, Truck, Loader2, Check } from "lucide-react";
 import type { CartItem } from "@/types/store";
 import { useFormattedPrice, ProductPrice } from "@/components/product-price";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -23,20 +20,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 	const [checkoutError, setCheckoutError] = useState("");
 	const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "VIPPS">("STRIPE");
-
-	const [couponCode, setCouponCode] = useState("");
-	const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPct: number; freeShipping: boolean; finalSubtotal: number } | null>(null);
-	const [couponError, setCouponError] = useState("");
-	const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
-
-	const [showShippingForm, setShowShippingForm] = useState(false);
-	const [shippingPostalCode, setShippingPostalCode] = useState("");
 	const [shippingCountry, setShippingCountry] = useState("NO");
-	const [bringOptions, setBringOptions] = useState<BringShippingOption[]>([]);
-	const [selectedShippingId, setSelectedShippingId] = useState<string | null>(STORE_PICKUP_ID);
-	const [isLoadingBring, setIsLoadingBring] = useState(false);
-	const [bringError, setBringError] = useState("");
-	const [savedAddressUsed, setSavedAddressUsed] = useState<{ postalCode: string; city?: string } | null>(null);
 
 	const { country: detectedCountry, isDetecting: isDetectingCountry } = useDetectedCountry();
 
@@ -67,138 +51,52 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 		}
 	}, [detectedCountry, isDetectingCountry]);
 
-	const fetchBringOptions = useCallback(
-		async (postalCode: string, country: string, cartItems: CartItem[]) => {
-			setIsLoadingBring(true);
-			setBringError("");
-
-			try {
-				const lines = cartItems.map((item) => {
-					const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
-					return { weight: variant?.weight, width: variant?.width, height: variant?.height, depth: variant?.depth, quantity: item.quantity };
-				});
-				const packages = buildPackagesFromLines(lines);
-
-				const response = await fetch("/api/bring-shipping", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						toPostalCode: postalCode.trim(),
-						toCountry: country,
-						packages,
-					}),
-				});
-
-				const data = await response.json();
-
-				if (!response.ok) {
-					throw new Error(data.error || "Unable to fetch shipping options.");
-				}
-
-				setBringOptions(data.products || []);
-
-				if (data.products?.length > 0) {
-					const cheapest = data.products.reduce((min: BringShippingOption, p: BringShippingOption) => (p.priceCents < min.priceCents ? p : min));
-					setSelectedShippingId(cheapest.productId);
-				}
-			} catch (error) {
-				setBringError(error instanceof Error ? error.message : "Unable to fetch shipping options.");
-				setBringOptions([]);
-			} finally {
-				setIsLoadingBring(false);
-			}
-		},
-		[products],
-	);
-
 	useEffect(() => {
 		let active = true;
 		const supabase = createClient();
 		supabase.auth.getUser().then(({ data }) => {
 			if (!active) return;
-			const saved = data.user?.user_metadata?.shipping_address as { postalCode?: string; country?: string; city?: string } | undefined;
-			if (!saved?.postalCode || !saved?.country) return;
-
-			setShippingPostalCode(saved.postalCode);
-			setShippingCountry(saved.country);
-
-			const cartItems = getCartItems();
-			if (cartItems.length > 0) {
-				setSavedAddressUsed({ postalCode: saved.postalCode, city: saved.city });
-				void fetchBringOptions(saved.postalCode, saved.country, cartItems);
+			const saved = data.user?.user_metadata?.shipping_address as { country?: string } | undefined;
+			if (saved?.country) {
+				setShippingCountry(saved.country);
 			}
 		});
 		return () => {
 			active = false;
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	useEffect(() => {
-		if (isDetectingCountry === false && detectedCountry) {
-			const cartItems = getCartItems();
-			if (cartItems.length > 0 && bringOptions.length === 0 && !showShippingForm) {
-				const timer = window.setTimeout(() => {
-					void fetchBringOptions(shippingPostalCode, detectedCountry, cartItems);
-				}, 0);
-				return () => window.clearTimeout(timer);
-			}
-		}
-	}, [isDetectingCountry, detectedCountry, shippingPostalCode, bringOptions.length, showShippingForm, fetchBringOptions]);
-
-	const useDifferentAddress = () => {
-		setSavedAddressUsed(null);
-		setBringOptions([]);
-		setSelectedShippingId(STORE_PICKUP_ID);
-		setShowShippingForm(true);
-	};
 
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
 
-	const subtotalWithMarkup = useMemo(() => {
+	const subtotal = useMemo(() => {
 		return items.reduce((sum, item) => {
 			const variant = products.find((p) => p.id === item.productId)?.variants.find((v) => v.id === item.variantId);
 			const basePrice = variant?.price ?? item.price;
-			const addonSum = item.addonIds.reduce((addonSum, addonId) => {
+			const addonSum = item.addonIds.reduce((s, addonId) => {
 				const product = products.find((p) => p.id === item.productId);
 				const addon = product?.addons.find((a) => a.id === addonId);
-				return addonSum + (addon?.price ?? 0);
+				return s + (addon?.price ?? 0);
 			}, 0);
-			const itemBasePrice = basePrice + addonSum;
 			const markup = resolveZoneMarkup(priceZones, shippingCountry);
-			return sum + (itemBasePrice + markup) * item.quantity;
+			return sum + (basePrice + addonSum + markup) * item.quantity;
 		}, 0);
-	}, [items, products, shippingCountry, priceZones]);
-
-	const handleFetchBringOptions = () => {
-		if (!shippingPostalCode.trim()) {
-			setBringError("Please enter a postal code.");
-			return;
-		}
-		setSavedAddressUsed(null);
-		void fetchBringOptions(shippingPostalCode, shippingCountry, items);
-	};
+	}, [items, products, priceZones, shippingCountry]);
 
 	const recommendedProducts = useMemo(() => {
+		if (items.length === 0 || products.length === 0) return [];
 		const cartProductIds = new Set(items.map((item) => item.productId));
-		const cartProducts = products.filter((product) => cartProductIds.has(product.id));
+		const cartCategories = new Set(products.filter((p) => cartProductIds.has(p.id)).map((p) => p.category));
+		const cartAvgPrice = items.reduce((sum, item) => sum + item.price, 0) / items.length;
 
-		const categoryCount = cartProducts.reduce<Record<string, number>>((acc, product) => {
-			acc[product.category] = (acc[product.category] ?? 0) + 1;
-			return acc;
-		}, {});
-
-		const avgCartPrice = items.length > 0 ? items.reduce((sum, item) => sum + item.price, 0) / items.length : 0;
-		const candidates = products.filter((product) => !cartProductIds.has(product.id));
-
-		return candidates
+		return products
+			.filter((product) => !cartProductIds.has(product.id))
 			.map((product) => {
-				const sameCategoryScore = (categoryCount[product.category] ?? 0) * 120;
-				const featuredScore = product.featured ? 30 : 0;
-				const ratingScore = product.rating * 10;
-				const productPrice = product.variants[0]?.price ?? 0;
-				const priceDistance = avgCartPrice > 0 ? Math.abs(productPrice - avgCartPrice) : 0;
-				const priceAffinityScore = avgCartPrice > 0 ? Math.max(0, 40 - priceDistance / 8) : 15;
+				const price = product.variants[0]?.price ?? 0;
+				const sameCategoryScore = cartCategories.has(product.category) ? 3 : 0;
+				const featuredScore = product.featured ? 2 : 0;
+				const ratingScore = (product.rating ?? 0) / 2;
+				const priceDiffRatio = cartAvgPrice > 0 ? Math.abs(price - cartAvgPrice) / cartAvgPrice : 1;
+				const priceAffinityScore = Math.max(0, 2 - priceDiffRatio);
 
 				return {
 					product,
@@ -225,69 +123,6 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 		setItems(getCartItems());
 	};
 
-	const handleApplyCoupon = async () => {
-		if (!couponCode.trim()) {
-			setCouponError("Please enter a coupon code.");
-			return;
-		}
-
-		setIsValidatingCoupon(true);
-		setCouponError("");
-
-		try {
-			const supabase = createClient();
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-
-			const response = await fetch("/api/coupons/validate", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					code: couponCode,
-					subtotal: subtotalWithMarkup,
-					email: user?.email,
-				}),
-			});
-
-			const data = await response.json();
-
-			if (!response.ok || !data.valid) {
-				throw new Error(data.error || "Invalid coupon code.");
-			}
-
-			setAppliedCoupon({
-				code: couponCode.toUpperCase(),
-				discountPct: data.discountPct,
-				freeShipping: data.freeShipping,
-				finalSubtotal: data.finalSubtotal,
-			});
-
-			if (data.freeShipping) {
-				setSelectedShippingId(STORE_PICKUP_ID);
-				setShowShippingForm(false);
-				setBringOptions([]);
-			}
-		} catch (error) {
-			setCouponError(error instanceof Error ? error.message : "Unable to apply coupon.");
-			setAppliedCoupon(null);
-		} finally {
-			setIsValidatingCoupon(false);
-		}
-	};
-
-	const handleRemoveCoupon = () => {
-		setCouponCode("");
-		setAppliedCoupon(null);
-		setCouponError("");
-	};
-
-	const getSelectedShippingCost = (): number => {
-		if (!selectedShippingId) return 0;
-		const option = [...bringOptions, STORE_PICKUP_OPTION].find((o: BringShippingOption) => o.productId === selectedShippingId);
-		return option ? option.priceCents / 100 : 0;
-	};
-
 	const handleCheckout = async () => {
 		setIsCheckingOut(true);
 		setCheckoutError("");
@@ -309,11 +144,8 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 					customerEmail: user?.email,
 					shippingAddress: {
 						...savedAddress,
-						postalCode: shippingPostalCode || savedAddress.postalCode || undefined,
 						country: shippingCountry || savedAddress.country || undefined,
 					},
-					selectedShippingId: appliedCoupon?.freeShipping ? "FREE_SHIPPING_COUPON" : selectedShippingId,
-					couponCode: appliedCoupon?.code,
 				}),
 			});
 
@@ -336,33 +168,6 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 			setCheckoutError(error instanceof Error ? error.message : "Unable to start checkout.");
 		} finally {
 			setIsCheckingOut(false);
-		}
-	};
-
-	const selectedShippingCost = getSelectedShippingCost();
-	const displaySubtotal = appliedCoupon ? appliedCoupon.finalSubtotal : subtotalWithMarkup;
-	const shippingCostAfterCoupon = appliedCoupon?.freeShipping ? 0 : selectedShippingCost;
-	const estimatedTotal = displaySubtotal + shippingCostAfterCoupon;
-
-	const getDeliveryIcon = (type: string) => {
-		switch (type) {
-			case "PICKUP":
-				return <MapPin className="h-4 w-4" />;
-			case "MAILBOX":
-				return <Package className="h-4 w-4" />;
-			default:
-				return <Truck className="h-4 w-4" />;
-		}
-	};
-
-	const getDeliveryTypeLabel = (type: string) => {
-		switch (type) {
-			case "PICKUP":
-				return "Pickup point";
-			case "MAILBOX":
-				return "Mailbox delivery";
-			default:
-				return "Home delivery";
 		}
 	};
 
@@ -403,7 +208,8 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 									const addon = product?.addons.find((a) => a.id === addonId);
 									return sum + (addon?.price ?? 0);
 								}, 0);
-								const itemTotalBase = (basePrice + addonSum) * item.quantity;
+								const markup = resolveZoneMarkup(priceZones, shippingCountry);
+								const itemTotal = (basePrice + addonSum + markup) * item.quantity;
 
 								return (
 									<div key={`${item.productId}-${item.variantId}-${item.addonIds.join("-")}`} className="flex flex-col gap-4 rounded-[1.5rem] border border-stone-200 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -425,7 +231,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 												</button>
 											</div>
 											<div className="text-right">
-												<p className="font-semibold text-stone-900">{formatPrice(itemTotalBase)}</p>
+												<p className="font-semibold text-stone-900">{formatPrice(itemTotal, { includeMarkup: false })}</p>
 											</div>
 											<button type="button" onClick={() => handleRemoveItem(item)} className="text-sm font-medium text-stone-700 transition hover:text-stone-900">
 												Remove
@@ -441,178 +247,20 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 								<div className="mt-4 space-y-3">
 									<div className="flex items-center justify-between text-sm text-stone-700">
 										<span>Subtotal</span>
-										<span className="text-right font-medium text-stone-900">{formatPrice(displaySubtotal)}</span>
+										<span className="text-right font-medium text-stone-900">{formatPrice(subtotal, { includeMarkup: false })}</span>
 									</div>
-									{selectedShippingId && !appliedCoupon?.freeShipping ? (
-										<div className="flex items-center justify-between text-sm">
-											<span className="text-stone-700">Shipping</span>
-											<span className="text-right font-medium text-stone-900">{selectedShippingCost === 0 ? "Free" : formatPrice(selectedShippingCost)}</span>
-										</div>
-									) : (
-										<div className="flex items-center justify-between text-sm text-stone-700">
-											<span>Shipping</span>
-											<span>Calculated at checkout</span>
-										</div>
-									)}
+									<div className="flex items-center justify-between text-sm text-stone-700">
+										<span>Shipping</span>
+										<span className="font-semibold text-emerald-600">Free</span>
+									</div>
 									<div className="border-t border-stone-200 pt-3">
 										<div className="flex items-center justify-between text-sm font-semibold text-stone-900">
 											<span>Estimated total</span>
-											<span className="text-right">{formatPrice(estimatedTotal)}</span>
+											<span className="text-right">{formatPrice(subtotal, { includeMarkup: false })}</span>
 										</div>
-										{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {estimatedTotal.toFixed(2)}</p> : null}
+										{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {subtotal.toFixed(2)}</p> : null}
 									</div>
 								</div>
-
-								{appliedCoupon ? (
-									<div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
-										<div className="flex items-center justify-between">
-											<div>
-												<p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Coupon Applied</p>
-												<p className="mt-1 font-mono text-sm font-semibold text-emerald-900">{appliedCoupon.code}</p>
-												<p className="text-xs text-emerald-700">
-													{appliedCoupon.discountPct}% discount {appliedCoupon.freeShipping && "• Free shipping"}
-												</p>
-											</div>
-											<button type="button" onClick={handleRemoveCoupon} className="text-xs font-medium text-emerald-700 underline underline-offset-2 hover:text-emerald-900">
-												Remove
-											</button>
-										</div>
-									</div>
-								) : (
-									<div className="mt-4 rounded-2xl border border-stone-200 bg-white p-3">
-										<label htmlFor="cart-coupon-code" className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">
-											Have a coupon?
-										</label>
-										<div className="mt-2 flex gap-2">
-											<input id="cart-coupon-code" type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter code" className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm uppercase" onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()} />
-											<button type="button" onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
-												{isValidatingCoupon ? "Applying..." : "Apply"}
-											</button>
-										</div>
-										{couponError ? (
-											<InlineAlert tone="error" className="mt-2">
-												{couponError}
-											</InlineAlert>
-										) : null}
-									</div>
-								)}
-
-								{!appliedCoupon?.freeShipping && (
-									<button type="button" onClick={() => setSelectedShippingId(STORE_PICKUP_ID)} className={`mt-4 w-full rounded-[1rem] border p-3 text-left transition ${selectedShippingId === STORE_PICKUP_ID ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
-										<div className="flex items-start justify-between gap-3">
-											<div className="flex items-center gap-2">
-												<MapPin className="h-4 w-4" />
-												<div>
-													<p className="text-sm font-semibold text-stone-900">{STORE_PICKUP_OPTION.displayName}</p>
-													<p className="text-xs text-stone-700">{STORE_PICKUP_OPTION.expectedDelivery}</p>
-												</div>
-											</div>
-											<p className="text-sm font-semibold text-stone-900">Free</p>
-										</div>
-										{selectedShippingId === STORE_PICKUP_ID ? (
-											<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-												<Check className="h-3.5 w-3.5" />
-												Selected
-											</div>
-										) : null}
-									</button>
-								)}
-
-								{isLoadingBring && bringOptions.length === 0 ? (
-									<p className="mt-4 flex items-center gap-1.5 text-xs text-stone-700">
-										<Loader2 className="h-3.5 w-3.5 animate-spin" />
-										Checking rates for your saved address...
-									</p>
-								) : null}
-
-								{!showShippingForm && !isLoadingBring && bringOptions.length === 0 ? (
-									<button type="button" onClick={() => setShowShippingForm(true)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50">
-										<Truck className="h-4 w-4" />
-										Calculate shipping costs
-									</button>
-								) : null}
-
-								{!appliedCoupon?.freeShipping && bringOptions.length === 0 && showShippingForm ? (
-									<div className="mt-4 rounded-[1rem] border border-stone-200 bg-white p-4">
-										<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Delivery location</p>
-										<div className="mt-2 grid grid-cols-2 gap-2">
-											<div>
-												<label htmlFor="cart-shipping-country" className="sr-only">
-													Country
-												</label>
-												<select id="cart-shipping-country" value={shippingCountry} onChange={(e) => setShippingCountry(e.target.value)} className="w-full rounded-[0.75rem] border border-stone-200 p-2.5 text-sm text-stone-900">
-													{SHIPPING_COUNTRIES.map((c) => (
-														<option key={c.code} value={c.code}>
-															{c.name}
-														</option>
-													))}
-												</select>
-											</div>
-											<div>
-												<label htmlFor="cart-shipping-postal-code" className="sr-only">
-													Postal code
-												</label>
-												<input id="cart-shipping-postal-code" type="text" placeholder="Postal code" value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value)} className="w-full rounded-[0.75rem] border border-stone-200 p-2.5 text-sm text-stone-900" />
-											</div>
-										</div>
-										{bringError ? (
-											<InlineAlert tone="error" className="mt-2">
-												{bringError}
-											</InlineAlert>
-										) : null}
-										<button type="button" onClick={handleFetchBringOptions} disabled={isLoadingBring} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:opacity-60">
-											{isLoadingBring ? (
-												<>
-													<Loader2 className="h-4 w-4 animate-spin" />
-													Calculating...
-												</>
-											) : (
-												"Get shipping rates"
-											)}
-										</button>
-									</div>
-								) : null}
-
-								{!appliedCoupon?.freeShipping && bringOptions.length > 0 ? (
-									<div className="mt-4 space-y-2">
-										<div className="flex flex-wrap items-center justify-between gap-2">
-											<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Select shipping method</p>
-											{savedAddressUsed ? (
-												<p className="text-xs text-stone-700">
-													Using saved address ({savedAddressUsed.city ? `${savedAddressUsed.city}, ` : ""}
-													{savedAddressUsed.postalCode})
-												</p>
-											) : null}
-										</div>
-										{bringOptions.map((option) => (
-											<button key={option.productId} type="button" onClick={() => setSelectedShippingId(option.productId)} className={`w-full rounded-[1rem] border p-3 text-left transition ${selectedShippingId === option.productId ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
-												<div className="flex items-start justify-between gap-3">
-													<div className="flex items-center gap-2">
-														{getDeliveryIcon(option.deliveryType)}
-														<div>
-															<p className="text-sm font-semibold text-stone-900">{option.displayName}</p>
-															<p className="text-xs text-stone-700">{getDeliveryTypeLabel(option.deliveryType)}</p>
-														</div>
-													</div>
-													<div className="text-right">
-														<p className="text-sm font-semibold text-stone-900">{option.priceCents === 0 ? "Free" : formatPrice(option.priceCents / 100)}</p>
-														{option.expectedDelivery && <p className="text-xs text-stone-700">{option.expectedDelivery}</p>}
-													</div>
-												</div>
-												{selectedShippingId === option.productId && (
-													<div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-														<Check className="h-3.5 w-3.5" />
-														Selected
-													</div>
-												)}
-											</button>
-										))}
-
-										<button type="button" onClick={useDifferentAddress} className="mt-1 text-xs font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
-											Change location
-										</button>
-									</div>
-								) : null}
 
 								<div className="mt-6 grid grid-cols-2 gap-2">
 									<button type="button" onClick={() => setPaymentMethod("STRIPE")} aria-pressed={paymentMethod === "STRIPE"} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
@@ -623,8 +271,8 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 									</button>
 								</div>
 
-								<button type="button" onClick={handleCheckout} disabled={isCheckingOut || items.length === 0} className="mt-2 w-full rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
-									{isCheckingOut ? (paymentMethod === "VIPPS" ? "Redirecting to Vipps..." : "Redirecting to Stripe...") : appliedCoupon?.freeShipping ? "Proceed to Checkout" : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}
+								<button type="button" onClick={handleCheckout} disabled={isCheckingOut || items.length === 0} className="mt-4 w-full rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
+									{isCheckingOut ? (paymentMethod === "VIPPS" ? "Redirecting to Vipps..." : "Redirecting to Stripe...") : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}
 								</button>
 								<Link href="/shop" className="mt-3 inline-flex w-full items-center justify-center text-sm font-semibold text-[#1B365D] underline-offset-4 transition hover:text-[#152d4c] hover:underline">
 									Continue shopping

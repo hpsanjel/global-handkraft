@@ -57,7 +57,6 @@ export async function GET(request: Request) {
 			subtotal: pending.subtotal,
 			shipping: pending.shipping,
 			shippingMethod: pending.shippingMethod,
-			couponCode: pending.couponCode,
 			total: pending.total,
 			currency: pending.currency,
 			address: {
