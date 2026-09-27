@@ -22,9 +22,8 @@ export function DropdownMenuItem({ children, className, onSelect, disabled, asCh
 		<DropdownMenuPrimitive.Item
 			asChild={asChild}
 			disabled={disabled}
-			onSelect={(event) => {
+			onSelect={() => {
 				if (asChild) return; // let the child (e.g. next/link) handle its own navigation
-				event.preventDefault();
 				onSelect?.();
 			}}
 			className={asChild ? "outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50" : cn("flex w-full cursor-pointer items-center justify-between px-4 py-2 text-left text-stone-700 outline-none transition hover:bg-stone-50 focus:bg-stone-50 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50", className)}
