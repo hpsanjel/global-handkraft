@@ -35,3 +35,14 @@ export const SHIPPING_COUNTRY_CODES = SHIPPING_COUNTRIES.map((country) => countr
 
 /** Sentinel "country" code used to store the fallback rate applied to any country without its own zone. */
 export const DEFAULT_SHIPPING_ZONE_CODE = "DEFAULT";
+
+/**
+ * Vipps MobilePay works natively across four Nordic countries:
+ * Norway (NO), Sweden (SE), Denmark (DK), and Finland (FI).
+ */
+export const VIPPS_SUPPORTED_COUNTRIES = ["NO", "SE", "DK", "FI"] as const;
+export type VippsSupportedCountry = (typeof VIPPS_SUPPORTED_COUNTRIES)[number];
+
+export function isVippsSupportedCountry(countryCode?: string | null): boolean {
+	return Boolean(countryCode && VIPPS_SUPPORTED_COUNTRIES.includes(countryCode.toUpperCase() as VippsSupportedCountry));
+}

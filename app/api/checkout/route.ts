@@ -167,9 +167,12 @@ export async function POST(request: Request) {
 			mode: "payment",
 			line_items,
 			shipping_address_collection: {
-				allowed_countries: SHIPPING_COUNTRY_CODES as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
+				allowed_countries: (countryCode && SHIPPING_COUNTRY_CODES.includes(countryCode) ? [countryCode] : SHIPPING_COUNTRY_CODES) as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
 			},
 			shipping_options: shippingOptions,
+			phone_number_collection: {
+				enabled: true,
+			},
 			success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${origin}/checkout/cancel`,
 			custom_text: isForeign

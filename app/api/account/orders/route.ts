@@ -40,7 +40,33 @@ export async function GET() {
 			orderBy: { createdAt: "desc" },
 		});
 
-		return NextResponse.json(orders);
+		const mappedOrders = orders.map((order) => {
+			const baseItemsSubtotal = order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+			const hasUnmergedMarkup = order.subtotal > baseItemsSubtotal + 0.01;
+
+			const mappedItems = order.items.map((item) => {
+				let effectiveUnitPrice = item.unitPrice;
+				if (hasUnmergedMarkup) {
+					if (item.zoneMarkup > 0) {
+						effectiveUnitPrice = item.unitPrice + item.zoneMarkup;
+					} else if (baseItemsSubtotal > 0) {
+						const markupShare = (order.subtotal - baseItemsSubtotal) * ((item.unitPrice * item.quantity) / baseItemsSubtotal);
+						effectiveUnitPrice = Number(((item.unitPrice * item.quantity + markupShare) / item.quantity).toFixed(2));
+					}
+				}
+				return {
+					...item,
+					unitPrice: effectiveUnitPrice,
+				};
+			});
+
+			return {
+				...order,
+				items: mappedItems,
+			};
+		});
+
+		return NextResponse.json(mappedOrders);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to load orders.";
 		return NextResponse.json({ error: message }, { status: 500 });

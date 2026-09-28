@@ -49,6 +49,7 @@ export async function GET(request: Request) {
 			orderNumber: `ORD-${session.id.slice(-8).toUpperCase()}`,
 			customerEmail: session.customer_details?.email || session.customer_email || "",
 			customerName: session.customer_details?.name || "",
+			customerPhone: session.customer_details?.phone || "",
 			items,
 			subtotal: (session.amount_subtotal ?? 0) / 100,
 			shipping: (session.total_details?.amount_shipping ?? 0) / 100,

@@ -127,13 +127,120 @@ export async function sendOrderConfirmationEmail(params: OrderConfirmationParams
 		</div>
 	`;
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: SENDER,
 		to: params.to,
 		subject: `Order confirmed — ${params.orderNumber}`,
 		html,
 		attachments: params.attachment ? [{ filename: params.attachment.filename, content: params.attachment.content }] : undefined,
 	});
+
+	if (result.error) {
+		console.error(`Failed to send order confirmation email for order ${params.orderNumber}:`, result.error);
+	}
+}
+
+export type NewOrderAdminNotificationParams = {
+	orderNumber: string;
+	paymentMethod: string;
+	customerName: string;
+	customerEmail: string;
+	customerPhone?: string;
+	items: OrderConfirmationItem[];
+	subtotal: number;
+	shipping: number;
+	shippingMethod: string | null;
+	total: number;
+	currency: string;
+	address: OrderConfirmationAddress;
+	isPickupOrder?: boolean;
+	pickupAddress?: OrderConfirmationAddress;
+};
+
+/**
+ * Notifies admins by email when a new order has been paid and created.
+ * Failures are the caller's responsibility to catch — a failed email should
+ * never roll back or fail the order itself.
+ */
+export async function sendNewOrderAdminNotification(params: NewOrderAdminNotificationParams) {
+	if (!process.env.RESEND_API_KEY) {
+		console.warn("RESEND_API_KEY not configured; skipping new order admin notification email.");
+		return;
+	}
+
+	const adminEmails = getAdminEmails();
+	if (adminEmails.length === 0) {
+		console.warn("ADMIN_EMAILS not configured; skipping new order admin notification email.");
+		return;
+	}
+
+	const orderAdminUrl = `${SITE_URL}/admin/orders#order-${params.orderNumber}`;
+
+	const itemsHtml = params.items
+		.map(
+			(item) => `
+			<tr>
+				<td style="padding:8px 0; border-bottom:1px solid #f0efec;">
+					${item.name}${item.variantName ? ` (${item.variantName})` : ""}
+					${item.addonNames.length ? `<br/><span style="color:#78716c;font-size:12px;">+ ${item.addonNames.join(", ")}</span>` : ""}
+				</td>
+				<td style="padding:8px 0; border-bottom:1px solid #f0efec; text-align:center;">${item.quantity}</td>
+				<td style="padding:8px 0; border-bottom:1px solid #f0efec; text-align:right;">${formatMoney(item.unitPrice * item.quantity, params.currency)}</td>
+			</tr>`,
+		)
+		.join("");
+
+	const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color:#1c1917;">
+			<h2 style="color:#1B365D; margin-bottom:4px;">New Order Received: ${params.orderNumber}</h2>
+			<p>A new order has been paid and is ready for fulfillment.</p>
+
+			<table style="width:100%; margin-top:16px; border-collapse:collapse;">
+				<tr><td style="padding:4px 0; color:#57534e;">Customer</td><td style="padding:4px 0; text-align:right; font-weight:bold;">${params.customerName || "Guest"}</td></tr>
+				<tr><td style="padding:4px 0; color:#57534e;">Email</td><td style="padding:4px 0; text-align:right;"><a href="mailto:${params.customerEmail}" style="color:#1B365D;">${params.customerEmail}</a></td></tr>
+				${params.customerPhone ? `<tr><td style="padding:4px 0; color:#57534e;">Phone</td><td style="padding:4px 0; text-align:right;"><a href="tel:${params.customerPhone}" style="color:#1B365D;">${params.customerPhone}</a></td></tr>` : ""}
+				<tr><td style="padding:4px 0; color:#57534e;">Payment Method</td><td style="padding:4px 0; text-align:right;">${params.paymentMethod}</td></tr>
+			</table>
+
+			<table style="width:100%; border-collapse:collapse; margin-top:20px;">
+				<thead>
+					<tr style="border-bottom:2px solid #1B365D; text-align:left;">
+						<th style="padding-bottom:8px;">Item</th>
+						<th style="padding-bottom:8px; text-align:center;">Qty</th>
+						<th style="padding-bottom:8px; text-align:right;">Price</th>
+					</tr>
+				</thead>
+				<tbody>${itemsHtml}</tbody>
+			</table>
+
+			<table style="width:100%; margin-top:16px;">
+				<tr><td style="padding:2px 0; color:#57534e;">Subtotal</td><td style="padding:2px 0; text-align:right;">${formatMoney(params.subtotal, params.currency)}</td></tr>
+				<tr><td style="padding:2px 0; color:#57534e;">Shipping (${params.shippingMethod || "Standard"})</td><td style="padding:2px 0; text-align:right;">${formatMoney(params.shipping, params.currency)}</td></tr>
+				<tr style="font-weight:bold; border-top:1px solid #e7e5e4;"><td style="padding-top:8px;">Total</td><td style="text-align:right; padding-top:8px;">${formatMoney(params.total, params.currency)}</td></tr>
+			</table>
+
+			<h3 style="margin-top:24px; margin-bottom:6px; color:#1B365D;">${params.isPickupOrder ? "Pickup details" : "Shipping details"}</h3>
+			<p style="color:#44403c; margin-top:0;">
+				${params.isPickupOrder ? "In-store pickup" : params.shippingMethod || "Standard shipping"}<br/>
+				${params.address.address}<br/>${params.address.postalCode} ${params.address.city}<br/>${params.address.country}
+			</p>
+
+			<p style="margin-top:28px;">
+				<a href="${orderAdminUrl}" style="background:#1B365D; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; display:inline-block;">View in Admin Dashboard</a>
+			</p>
+		</div>
+	`;
+
+	const result = await resend.emails.send({
+		from: SENDER,
+		to: adminEmails,
+		subject: `New order ${params.orderNumber} — ${formatMoney(params.total, params.currency)} (${params.customerName || "Customer"})`,
+		html,
+	});
+
+	if (result.error) {
+		console.error(`Failed to send new order admin notification for order ${params.orderNumber}:`, result.error);
+	}
 }
 
 type OrderStatusUpdateParams = {

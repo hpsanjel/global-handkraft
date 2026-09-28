@@ -100,7 +100,20 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 		shippingAddress: address,
 	};
 
+	const baseItemsSubtotal = order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+	const hasUnmergedMarkup = order.subtotal > baseItemsSubtotal + 0.01;
+
 	const items: OrderItem[] = order.items.map((item) => {
+		let effectiveUnitPrice = item.unitPrice;
+		if (hasUnmergedMarkup) {
+			if (item.zoneMarkup > 0) {
+				effectiveUnitPrice = item.unitPrice + item.zoneMarkup;
+			} else if (baseItemsSubtotal > 0) {
+				const markupShare = (order.subtotal - baseItemsSubtotal) * ((item.unitPrice * item.quantity) / baseItemsSubtotal);
+				effectiveUnitPrice = Number(((item.unitPrice * item.quantity + markupShare) / item.quantity).toFixed(2));
+			}
+		}
+		const lineTotal = Number((effectiveUnitPrice * item.quantity).toFixed(2));
 		const weightKg = parseMeasurement(item.variant.weight);
 		return {
 			sku: item.variant.sku,
@@ -108,8 +121,8 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 			variantName: variantLabel(item.variant.name, item.variant.color),
 			description: item.product.shortDescription,
 			quantity: item.quantity,
-			unitPrice: item.unitPrice,
-			lineTotal: item.unitPrice * item.quantity,
+			unitPrice: effectiveUnitPrice,
+			lineTotal,
 			addonNames: item.addonNames,
 			// No per-product hsCode column exists in the schema yet, so it's left
 			// undefined (renders as "—") rather than guessed — a wrong customs code
@@ -122,6 +135,16 @@ export async function loadOrderDocumentData(orderId: string): Promise<OrderDocum
 			dimensions: { width: item.variant.width, height: item.variant.height, depth: item.variant.depth },
 		};
 	});
+
+	if (hasUnmergedMarkup && items.length > 0) {
+		const itemsSum = items.reduce((sum, item) => sum + item.lineTotal, 0);
+		const diff = Number((order.subtotal - itemsSum).toFixed(2));
+		if (Math.abs(diff) > 0 && Math.abs(diff) <= 0.05) {
+			const last = items[items.length - 1];
+			last.lineTotal = Number((last.lineTotal + diff).toFixed(2));
+			last.unitPrice = Number((last.lineTotal / last.quantity).toFixed(2));
+		}
+	}
 
 	// Order.vat is never populated by the current checkout flow (always the schema
 	// default of 0) — Stripe handles tax without persisting a breakdown to this

@@ -11,6 +11,9 @@ import type { CartItem } from "@/types/store";
 import { useFormattedPrice, ProductPrice } from "@/components/product-price";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { ProductImage } from "@/components/ui/product-image";
+import { SHIPPING_COUNTRIES, isVippsSupportedCountry } from "@/lib/shipping-countries";
+import { isCurrencyManuallySet, setPreferredCurrency } from "@/lib/currency-preference";
+import { detectCurrencyFromCountry } from "@/lib/locale-currency";
 
 export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[] }) {
 	const products = useProductsCatalog();
@@ -256,16 +259,45 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 										</div>
 										{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {subtotal.toFixed(2)}</p> : null}
 									</div>
+
+									<div className="border-t border-stone-200 py-3.5">
+										<label htmlFor="shipping-destination" className="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-2">
+											Shipping destination
+										</label>
+										<select
+											id="shipping-destination"
+											value={shippingCountry}
+											onChange={(e) => {
+												const newCountry = e.target.value;
+												setShippingCountry(newCountry);
+												if (!isVippsSupportedCountry(newCountry) && paymentMethod === "VIPPS") {
+													setPaymentMethod("STRIPE");
+												}
+												if (!isCurrencyManuallySet()) {
+													setPreferredCurrency(detectCurrencyFromCountry(newCountry), { manual: false });
+												}
+											}}
+											className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-800 focus:border-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+										>
+											{SHIPPING_COUNTRIES.map((c) => (
+												<option key={c.code} value={c.code}>
+													{c.name}
+												</option>
+											))}
+										</select>
+									</div>
 								</div>
 
-								<div className="mt-6 grid grid-cols-2 gap-2">
-									<button type="button" onClick={() => setPaymentMethod("STRIPE")} aria-pressed={paymentMethod === "STRIPE"} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
-										Card (Stripe)
-									</button>
-									<button type="button" onClick={() => setPaymentMethod("VIPPS")} aria-pressed={paymentMethod === "VIPPS"} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
-										Vipps
-									</button>
-								</div>
+								{isVippsSupportedCountry(shippingCountry) ? (
+									<div className="mt-6 grid grid-cols-2 gap-2">
+										<button type="button" onClick={() => setPaymentMethod("STRIPE")} aria-pressed={paymentMethod === "STRIPE"} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
+											Card (Stripe)
+										</button>
+										<button type="button" onClick={() => setPaymentMethod("VIPPS")} aria-pressed={paymentMethod === "VIPPS"} className={`rounded-[1rem] border p-2.5 text-center text-xs font-semibold transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-stone-50 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-300 bg-white"}`}>
+											Vipps
+										</button>
+									</div>
+								) : null}
 
 								<button type="button" onClick={handleCheckout} disabled={isCheckingOut || items.length === 0} className="mt-4 w-full rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
 									{isCheckingOut ? (paymentMethod === "VIPPS" ? "Redirecting to Vipps..." : "Redirecting to Stripe...") : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}

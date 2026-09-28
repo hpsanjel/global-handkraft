@@ -15,6 +15,9 @@ import { VisaMark, MastercardMark } from "@/components/payment-marks";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { ProductImage } from "@/components/ui/product-image";
+import { SHIPPING_COUNTRIES, isVippsSupportedCountry } from "@/lib/shipping-countries";
+import { isCurrencyManuallySet, setPreferredCurrency } from "@/lib/currency-preference";
+import { detectCurrencyFromCountry } from "@/lib/locale-currency";
 
 type CartDrawerProps = {
 	isOpen: boolean;
@@ -259,33 +262,63 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {subtotal.toFixed(2)}</p> : null}
 						</div>
 
-						{/* Payment method — large, image-led cards so Stripe vs. Vipps is unmistakable */}
-						<div className="mt-4">
-							<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Pay with</p>
-							<div className="mt-2 grid grid-cols-2 gap-3">
-								<button type="button" onClick={() => setPaymentMethod("STRIPE")} aria-pressed={paymentMethod === "STRIPE"} className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border p-3 py-4 transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
-									{paymentMethod === "STRIPE" ? (
-										<span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
-											<Check className="h-2.5 w-2.5" />
-										</span>
-									) : null}
-									<div className="flex items-center gap-1.5">
-										<VisaMark className="h-6 w-9" />
-										<MastercardMark className="h-6 w-9" />
-									</div>
-									<span className="text-xs font-semibold text-stone-900">Card</span>
-								</button>
-								<button type="button" onClick={() => setPaymentMethod("VIPPS")} aria-pressed={paymentMethod === "VIPPS"} className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border p-3 py-4 transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
-									{paymentMethod === "VIPPS" ? (
-										<span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
-											<Check className="h-2.5 w-2.5" />
-										</span>
-									) : null}
-									<Image src="/images/vipps-logo.webp" alt="Vipps" width={80} height={26} className="h-6.5 w-20 rounded object-contain" />
-									<span className="text-xs font-semibold text-stone-900">Vipps</span>
-								</button>
-							</div>
+						{/* Shipping destination dropdown */}
+						<div className="mt-3.5 border-t border-stone-200 py-3.5">
+							<label htmlFor="drawer-shipping-destination" className="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-2">
+								Shipping destination
+							</label>
+							<select
+								id="drawer-shipping-destination"
+								value={shippingCountry}
+								onChange={(e) => {
+									const newCountry = e.target.value;
+									setShippingCountry(newCountry);
+									if (!isVippsSupportedCountry(newCountry) && paymentMethod === "VIPPS") {
+										setPaymentMethod("STRIPE");
+									}
+									if (!isCurrencyManuallySet()) {
+										setPreferredCurrency(detectCurrencyFromCountry(newCountry), { manual: false });
+									}
+								}}
+								className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-800 focus:border-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+							>
+								{SHIPPING_COUNTRIES.map((c) => (
+									<option key={c.code} value={c.code}>
+										{c.name}
+									</option>
+								))}
+							</select>
 						</div>
+
+						{/* Payment method — large, image-led cards so Stripe vs. Vipps is unmistakable */}
+						{isVippsSupportedCountry(shippingCountry) ? (
+							<div className="mt-4">
+								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-700">Pay with</p>
+								<div className="mt-2 grid grid-cols-2 gap-3">
+									<button type="button" onClick={() => setPaymentMethod("STRIPE")} aria-pressed={paymentMethod === "STRIPE"} className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border p-3 py-4 transition ${paymentMethod === "STRIPE" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+										{paymentMethod === "STRIPE" ? (
+											<span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+												<Check className="h-2.5 w-2.5" />
+											</span>
+										) : null}
+										<div className="flex items-center gap-1.5">
+											<VisaMark className="h-6 w-9" />
+											<MastercardMark className="h-6 w-9" />
+										</div>
+										<span className="text-xs font-semibold text-stone-900">Card</span>
+									</button>
+									<button type="button" onClick={() => setPaymentMethod("VIPPS")} aria-pressed={paymentMethod === "VIPPS"} className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border p-3 py-4 transition ${paymentMethod === "VIPPS" ? "border-stone-900 bg-white ring-1 ring-stone-900" : "border-stone-200 bg-white hover:border-stone-300"}`}>
+										{paymentMethod === "VIPPS" ? (
+											<span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+												<Check className="h-2.5 w-2.5" />
+											</span>
+										) : null}
+										<Image src="/images/vipps-logo.webp" alt="Vipps" width={80} height={26} className="h-6.5 w-20 rounded object-contain" />
+										<span className="text-xs font-semibold text-stone-900">Vipps</span>
+									</button>
+								</div>
+							</div>
+						) : null}
 
 						<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
 							{isCheckingOut ? "Preparing checkout..." : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}

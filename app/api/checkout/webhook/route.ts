@@ -71,8 +71,14 @@ export async function POST(request: Request) {
 				.split("|")
 				.filter(Boolean)
 				.map((entry) => {
-					const [productId, variantId, quantity, addonIds] = entry.split(":");
-					return { productId, variantId, quantity: Number(quantity || 0), addonIds: addonIds ? addonIds.split("+").filter(Boolean) : [] };
+					const [productId, variantId, quantity, addonIds, zoneMarkupStr] = entry.split(":");
+					return {
+						productId,
+						variantId,
+						quantity: Number(quantity || 0),
+						addonIds: addonIds ? addonIds.split("+").filter(Boolean) : [],
+						zoneMarkup: Number(zoneMarkupStr || 0),
+					};
 				});
 
 			const items: FulfillOrderItemInput[] = await Promise.all(
@@ -95,14 +101,17 @@ export async function POST(request: Request) {
 					const addonTotal = addons.reduce((sum, addon) => sum + addon.price, 0);
 					const exchangeRate = Number(session.metadata?.exchangeRate || 1);
 					const isForeign = (session.currency || "nok").toUpperCase() !== "NOK" && exchangeRate > 0 && exchangeRate !== 1;
-					const baseUnitPrice = variant.price + addonTotal;
-					const unitPrice = isForeign ? Number((baseUnitPrice * exchangeRate).toFixed(2)) : baseUnitPrice;
+					const zoneMarkup = item.zoneMarkup || 0;
+					const totalUnitPrice = variant.price + addonTotal + zoneMarkup;
+					const unitPrice = isForeign ? Number((totalUnitPrice * exchangeRate).toFixed(2)) : totalUnitPrice;
+					const convertedZoneMarkup = isForeign ? Number((zoneMarkup * exchangeRate).toFixed(2)) : zoneMarkup;
 
 					return {
 						productId: item.productId,
 						variantId: item.variantId,
 						quantity: Math.max(1, Number(item.quantity) || 1),
 						unitPrice,
+						zoneMarkup: convertedZoneMarkup,
 						addonNames: addons.map((addon) => addon.name),
 						name: variant.product.name,
 						variantName: variantLabel(variant.name, variant.color),

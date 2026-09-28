@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import { sendOrderConfirmationEmail, sendNewOrderAdminNotification } from "@/lib/email";
 import { generateDocument } from "@/lib/documents";
 import { BUSINESS } from "@/lib/documents/business-config";
 import type { Order } from "@/app/generated/prisma";
@@ -145,6 +145,39 @@ export async function fulfillOrder(input: FulfillOrderInput): Promise<{ order: O
 		});
 	} catch (emailError) {
 		console.error("Failed to send order confirmation email:", emailError);
+	}
+
+	try {
+		await sendNewOrderAdminNotification({
+			orderNumber: input.orderNumber,
+			paymentMethod: input.paymentMethod,
+			customerName: input.customer.fullName,
+			customerEmail: input.customer.email,
+			customerPhone: input.customer.phone || undefined,
+			items: input.items,
+			subtotal: order.subtotal,
+			shipping: order.shipping,
+			shippingMethod: input.shippingMethod,
+			total: order.total,
+			currency: order.currency,
+			address: {
+				address: input.customer.address,
+				city: input.customer.city,
+				postalCode: input.customer.postalCode,
+				country: input.customer.country,
+			},
+			isPickupOrder,
+			pickupAddress: isPickupOrder
+				? {
+						address: `${BUSINESS.seller.address.line1}, ${BUSINESS.seller.address.city}`,
+						city: BUSINESS.seller.address.city,
+						postalCode: BUSINESS.seller.address.postalCode,
+						country: BUSINESS.seller.address.country,
+					}
+				: undefined,
+		});
+	} catch (adminEmailError) {
+		console.error("Failed to send new order admin notification email:", adminEmailError);
 	}
 
 	return { order, created: true };

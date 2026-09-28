@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 					productId: item.productId,
 					variantId: item.variantId,
 					quantity: item.quantity,
-					unitPrice: item.unitAmountCents / 100 - item.zoneMarkup,
+					unitPrice: item.unitAmountCents / 100,
 					zoneMarkup: item.zoneMarkup,
 					addonNames: addons.map((addon) => addon.name),
 					name: item.productName,
