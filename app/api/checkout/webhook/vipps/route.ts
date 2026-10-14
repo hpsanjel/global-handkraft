@@ -45,6 +45,7 @@ export async function POST(request: Request) {
 			pathAndQuery: `${url.pathname}${url.search}`,
 			headers: {
 				host: request.headers.get("host") ?? "",
+				"x-forwarded-host": request.headers.get("x-forwarded-host") ?? "",
 				"x-ms-date": request.headers.get("x-ms-date") ?? "",
 				"x-ms-content-sha256": request.headers.get("x-ms-content-sha256") ?? "",
 				authorization: request.headers.get("authorization") ?? "",
@@ -91,22 +92,24 @@ export async function POST(request: Request) {
 
 		const items = pending.itemsJson as unknown as FulfillOrderItemInput[];
 
+		const rawUserDetails = event.userDetails as any;
+		const vippsName = rawUserDetails?.name || [rawUserDetails?.firstName, rawUserDetails?.lastName].filter(Boolean).join(" ");
+		const vippsPhone = rawUserDetails?.phoneNumber || rawUserDetails?.mobileNumber;
+		const vippsEmail = rawUserDetails?.email;
+		const vippsAddress = rawUserDetails?.address;
+
 		const { order, created } = await fulfillOrder({
 			orderNumber: pending.reference,
 			paymentMethod: "VIPPS",
 			paymentId: event.pspReference,
 			customer: {
-				// TODO(verify): confirm the payment-creation parameter that
-				// populates event.userDetails (name/email/phoneNumber) — until
-				// then, fall back to what the buyer entered in our own checkout
-				// form so fulfillment never breaks on a missing profile scope.
-				fullName: event.userDetails?.name || pending.customerName || "Guest",
-				email: event.userDetails?.email || pending.customerEmail,
-				phone: event.userDetails?.phoneNumber || pending.customerPhone || "",
-				country: pending.shippingCountry,
-				address: pending.shippingAddress,
-				postalCode: pending.shippingPostalCode,
-				city: pending.shippingCity,
+				fullName: vippsName || pending.customerName || "Guest",
+				email: vippsEmail || pending.customerEmail,
+				phone: vippsPhone || pending.customerPhone || "",
+				country: vippsAddress?.country || pending.shippingCountry || "NO",
+				address: vippsAddress?.streetAddress || pending.shippingAddress,
+				postalCode: vippsAddress?.postalCode || pending.shippingPostalCode,
+				city: vippsAddress?.city || pending.shippingCity,
 			},
 			amounts: {
 				subtotal: pending.subtotal,

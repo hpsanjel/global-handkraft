@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getVippsPayment } from "@/lib/vipps";
+import { getVippsPayment, capturePayment } from "@/lib/vipps";
+import { fulfillOrder, type FulfillOrderItemInput } from "@/lib/order-fulfillment";
 
 export const runtime = "nodejs";
 
@@ -19,6 +20,9 @@ type PendingCheckoutItem = {
  * does, so display data is reconstructed from our own PendingCheckout
  * snapshot rather than from the Vipps API response, which is only consulted
  * to confirm the payment actually succeeded.
+ *
+ * Also acts as an immediate, synchronous capture and fulfillment fallback
+ * if background webhooks were delayed or blocked by firewall/proxy.
  */
 export async function GET(request: Request) {
 	try {
@@ -31,15 +35,72 @@ export async function GET(request: Request) {
 
 		const payment = await getVippsPayment(reference);
 
-		// TODO(verify): confirm against Open Items whether AUTHORIZED or a
-		// later state is the right "payment succeeded" signal for this account.
-		if (payment.state !== "AUTHORIZED") {
+		const isAuthorizedOrCaptured =
+			payment.state === "AUTHORIZED" ||
+			payment.state === "TERMINATED" ||
+			(payment.aggregate?.capturedAmount?.value ?? 0) > 0;
+
+		if (!isAuthorizedOrCaptured) {
 			return NextResponse.json({ error: "This payment was not completed.", state: payment.state }, { status: 409 });
 		}
 
 		const pending = await prisma.pendingCheckout.findUnique({ where: { reference } });
 		if (!pending) {
 			return NextResponse.json({ error: "Order details not found." }, { status: 404 });
+		}
+
+		// Fallback 1: If payment is authorized but not yet captured, capture it immediately
+		const capturedOre = payment.aggregate?.capturedAmount?.value ?? 0;
+		const totalOre = Math.round(pending.total * 100);
+		if (capturedOre < totalOre && payment.state === "AUTHORIZED") {
+			try {
+				await capturePayment(reference, totalOre);
+			} catch (captureErr) {
+				console.error("Vipps session auto-capture error:", captureErr);
+			}
+		}
+
+		// Fallback 2: If order is not yet created in the DB (e.g. webhook was delayed or rejected), fulfill now
+		const existingOrder = await prisma.order.findUnique({ where: { orderNumber: reference } });
+		if (!existingOrder) {
+			try {
+				const items = pending.itemsJson as unknown as FulfillOrderItemInput[];
+				const rawUserDetails = payment.userDetails as any;
+				const vippsName = rawUserDetails?.name || [rawUserDetails?.firstName, rawUserDetails?.lastName].filter(Boolean).join(" ");
+				const vippsPhone = rawUserDetails?.phoneNumber || rawUserDetails?.mobileNumber;
+				const vippsEmail = rawUserDetails?.email;
+				const vippsAddress = rawUserDetails?.address;
+
+				const { created } = await fulfillOrder({
+					orderNumber: pending.reference,
+					paymentMethod: "VIPPS",
+					paymentId: payment.pspReference ?? null,
+					customer: {
+						fullName: vippsName || pending.customerName || "Guest",
+						email: vippsEmail || pending.customerEmail,
+						phone: vippsPhone || pending.customerPhone || "",
+						country: vippsAddress?.country || pending.shippingCountry || "NO",
+						address: vippsAddress?.streetAddress || pending.shippingAddress,
+						postalCode: vippsAddress?.postalCode || pending.shippingPostalCode,
+						city: vippsAddress?.city || pending.shippingCity,
+					},
+					amounts: {
+						subtotal: pending.subtotal,
+						shipping: pending.shipping,
+						total: pending.total,
+						currency: pending.currency,
+					},
+					items,
+					shippingMethod: pending.shippingMethod,
+					shippingProductId: pending.shippingProductId,
+				});
+
+				if (created) {
+					await prisma.pendingCheckout.update({ where: { id: pending.id }, data: { consumedAt: new Date() } });
+				}
+			} catch (fulfillErr) {
+				console.error("Vipps session auto-fulfillment fallback error:", fulfillErr);
+			}
 		}
 
 		const items = (pending.itemsJson as unknown as PendingCheckoutItem[]).map((item) => ({

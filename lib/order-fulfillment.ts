@@ -82,7 +82,14 @@ export async function fulfillOrder(input: FulfillOrderInput): Promise<{ order: O
 				shippingProductId: input.shippingProductId,
 				addressId: address.id,
 				items: {
-					create: input.items.map(({ name, variantName, ...orderItem }) => orderItem),
+					create: input.items.map((item) => ({
+						productId: item.productId,
+						variantId: item.variantId,
+						quantity: item.quantity,
+						unitPrice: item.unitPrice,
+						zoneMarkup: item.zoneMarkup ?? 0,
+						addonNames: item.addonNames,
+					})),
 				},
 			},
 		});

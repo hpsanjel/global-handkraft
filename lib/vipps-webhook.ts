@@ -15,11 +15,12 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 export function verifyVippsWebhookSignature(params: {
 	method: string;
 	pathAndQuery: string;
-	headers: { host: string; "x-ms-date": string; "x-ms-content-sha256": string; authorization: string };
+	headers: { host: string; "x-forwarded-host"?: string; "x-ms-date": string; "x-ms-content-sha256": string; authorization: string };
 	rawBody: string;
 	secret: string;
 }): boolean {
-	if (!params.headers.host || !params.headers["x-ms-date"] || !params.headers["x-ms-content-sha256"] || !params.headers.authorization || !params.secret) {
+	const hostCandidates = [params.headers["x-forwarded-host"], params.headers.host].filter(Boolean) as string[];
+	if (hostCandidates.length === 0 || !params.headers["x-ms-date"] || !params.headers["x-ms-content-sha256"] || !params.headers.authorization || !params.secret) {
 		return false;
 	}
 
@@ -28,17 +29,21 @@ export function verifyVippsWebhookSignature(params: {
 		return false;
 	}
 
-	const stringToSign = [params.method, params.pathAndQuery, `${params.headers["x-ms-date"]};${params.headers.host};${params.headers["x-ms-content-sha256"]}`].join("\n");
-
-	const computedSignature = createHmac("sha256", params.secret).update(stringToSign).digest("base64");
-
 	const match = /Signature=([^&]+)$/.exec(params.headers.authorization);
 	const providedSignature = match?.[1];
 	if (!providedSignature) {
 		return false;
 	}
 
-	return timingSafeEqualStrings(computedSignature, providedSignature);
+	for (const host of hostCandidates) {
+		const stringToSign = [params.method, params.pathAndQuery, `${params.headers["x-ms-date"]};${host};${params.headers["x-ms-content-sha256"]}`].join("\n");
+		const computedSignature = createHmac("sha256", params.secret).update(stringToSign).digest("base64");
+		if (timingSafeEqualStrings(computedSignature, providedSignature)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function timingSafeEqualStrings(a: string, b: string): boolean {

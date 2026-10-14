@@ -20,6 +20,21 @@ export type VippsPaymentDetails = {
 		capturedAmount: { value: number; currency: string };
 		refundedAmount: { value: number; currency: string };
 	};
+	userDetails?: {
+		firstName?: string;
+		lastName?: string;
+		name?: string;
+		email?: string;
+		mobileNumber?: string;
+		phoneNumber?: string;
+		address?: {
+			streetAddress?: string;
+			postalCode?: string;
+			city?: string;
+			country?: string;
+		};
+	};
+	profile?: Record<string, unknown>;
 };
 
 function vippsBaseUrl(): string {
@@ -104,16 +119,15 @@ export async function createVippsPayment(params: CreateVippsPaymentParams): Prom
 		headers: await vippsHeaders(randomUUID()),
 		body: JSON.stringify({
 			amount: { value: params.amountValueOre, currency: "NOK" },
-			// TODO(verify): confirm the exact field/scope for requesting payer
-			// profile (name/email/phone) back via the webhook's `userDetails`
-			// once real Vipps API reference access is available. Until then,
-			// fulfillOrder() falls back to our own collected checkout-form data.
 			paymentMethod: { type: "WALLET" },
 			reference: params.reference,
 			userFlow: "WEB_REDIRECT",
 			returnUrl: params.returnUrl,
 			paymentDescription: params.paymentDescription,
 			metadata: params.metadata,
+			profile: {
+				scope: "name email phoneNumber address",
+			},
 		}),
 	});
 
