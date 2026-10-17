@@ -43,7 +43,7 @@ export default function ShippingPage() {
 
 					<section>
 						<h2 className="text-2xl font-semibold mb-2">Shipping Charges</h2>
-						<p>Shipping costs are calculated at checkout based on the destination, package size, and selected shipping method. Any applicable customs duties or import taxes are the responsibility of the customer unless otherwise stated.</p>
+						<p>Shipping is free for all orders of <strong>NOK 1,500</strong> or more. For orders under NOK 1,500, a standard shipping charge of <strong>NOK 76</strong> applies across Norway and Europe. Any applicable customs duties or import taxes are the responsibility of the customer unless otherwise stated.</p>
 					</section>
 
 					<section>

@@ -16,6 +16,7 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { ProductImage } from "@/components/ui/product-image";
 import { SHIPPING_COUNTRIES, isVippsSupportedCountry } from "@/lib/shipping-countries";
+import { calculateShippingFee, FREE_SHIPPING_THRESHOLD_NOK } from "@/lib/shipping-client";
 import { isCurrencyManuallySet, setPreferredCurrency } from "@/lib/currency-preference";
 import { detectCurrencyFromCountry } from "@/lib/locale-currency";
 
@@ -91,6 +92,8 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 		}, 0);
 	}, [items, products, shippingCountry, priceZones]);
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length), [subtotal, items.length]);
+	const orderTotal = useMemo(() => subtotal + shippingFee, [subtotal, shippingFee]);
 
 	const handleQuantityChange = (item: CartItem, delta: number) => {
 		updateCartItemQuantity(item.productId, item.variantId, item.addonIds, delta);
@@ -251,15 +254,25 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 
 						<div className="mt-1 flex items-center justify-between text-sm">
 							<span className="text-stone-700">Shipping</span>
-							<span className="font-semibold text-emerald-600">Free</span>
+							{shippingFee === 0 ? (
+								<span className="font-semibold text-emerald-600">Free</span>
+							) : (
+								<span className="font-medium text-stone-900">{formatPrice(shippingFee, { includeMarkup: false })}</span>
+							)}
 						</div>
+
+						{subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD_NOK ? (
+							<p className="mt-1.5 text-xs text-stone-700">
+								Add <span className="font-semibold text-stone-900">{formatPrice(FREE_SHIPPING_THRESHOLD_NOK - subtotal, { includeMarkup: false })}</span> more for free shipping!
+							</p>
+						) : null}
 
 						<div className="mt-2 border-t border-dashed border-stone-200 pt-2">
 							<div className="flex items-center justify-between text-base font-semibold text-stone-900">
 								<span>Total</span>
-								<span>{formatPrice(subtotal, { includeMarkup: false })}</span>
+								<span>{formatPrice(orderTotal, { includeMarkup: false })}</span>
 							</div>
-							{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {subtotal.toFixed(2)}</p> : null}
+							{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {orderTotal.toFixed(2)}</p> : null}
 						</div>
 
 						{/* Shipping destination dropdown */}

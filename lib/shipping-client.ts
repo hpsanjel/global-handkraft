@@ -3,6 +3,23 @@
  * no process.env, no React — safe to import from "use client" components.
  */
 
+/** Free shipping applies to any cart whose subtotal reaches this threshold (in NOK). */
+export const FREE_SHIPPING_THRESHOLD_NOK = 1500;
+
+/** Standard shipping charge applied when subtotal is below the free shipping threshold (in NOK). */
+export const STANDARD_SHIPPING_FEE_NOK = 76;
+
+/**
+ * Calculates shipping fee in NOK based on cart subtotal and whether items are present.
+ * - Subtotal >= 1500 NOK: Free shipping (0 NOK)
+ * - Subtotal < 1500 NOK (with items in cart): 76 NOK
+ * - Empty cart (0 items or 0 subtotal): 0 NOK
+ */
+export function calculateShippingFee(subtotalNok: number, itemCount = 1): number {
+	if (itemCount <= 0 || subtotalNok <= 0) return 0;
+	return subtotalNok < FREE_SHIPPING_THRESHOLD_NOK ? STANDARD_SHIPPING_FEE_NOK : 0;
+}
+
 /** Any cart line that carries free-text weight/dimension strings ("10 kg", "40 cm"). */
 export type MeasurableCartLine = {
 	weight?: string | null;

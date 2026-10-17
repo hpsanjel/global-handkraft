@@ -15,6 +15,7 @@ import { useDetectedCountry } from "@/hooks/use-detected-country";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Dialog, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ProductImage } from "@/components/ui/product-image";
+import { FREE_SHIPPING_THRESHOLD_NOK, STANDARD_SHIPPING_FEE_NOK } from "@/lib/shipping-client";
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -614,11 +615,28 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				) : null}
 				<div className="mt-2">
 					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
-						<div className="flex items-center justify-between">
-							<p className="text-sm font-semibold text-stone-900">Shipping</p>
-							<span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Free</span>
-						</div>
-						<p className="mt-2 text-sm text-stone-700">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo || "Free delivery on all orders."}</p>
+						{(() => {
+							const qualifiesForFreeShipping = (selectedVariant?.price ?? 0) >= FREE_SHIPPING_THRESHOLD_NOK;
+							return (
+								<>
+									<div className="flex items-center justify-between">
+										<p className="text-sm font-semibold text-stone-900">Shipping</p>
+										{qualifiesForFreeShipping ? (
+											<span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Free</span>
+										) : (
+											<span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-stone-700">NOK {STANDARD_SHIPPING_FEE_NOK} (Free over NOK {FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")})</span>
+										)}
+									</div>
+									<p className="mt-2 text-sm text-stone-700">
+										{selectedVariant?.shippingNote?.trim()
+											? selectedVariant.shippingNote
+											: product.shippingInfo
+												? `${product.shippingInfo} Free shipping on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")}.`
+												: `Free delivery on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")} (NOK ${STANDARD_SHIPPING_FEE_NOK} standard shipping).`}
+									</p>
+								</>
+							);
+						})()}
 					</div>
 				</div>
 			</div>

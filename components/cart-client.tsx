@@ -12,6 +12,7 @@ import { useFormattedPrice, ProductPrice } from "@/components/product-price";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { ProductImage } from "@/components/ui/product-image";
 import { SHIPPING_COUNTRIES, isVippsSupportedCountry } from "@/lib/shipping-countries";
+import { calculateShippingFee, FREE_SHIPPING_THRESHOLD_NOK } from "@/lib/shipping-client";
 import { isCurrencyManuallySet, setPreferredCurrency } from "@/lib/currency-preference";
 import { detectCurrencyFromCountry } from "@/lib/locale-currency";
 
@@ -80,6 +81,9 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 			return sum + (basePrice + addonSum + markup) * item.quantity;
 		}, 0);
 	}, [items, products, priceZones, shippingCountry]);
+
+	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length), [subtotal, items.length]);
+	const orderTotal = useMemo(() => subtotal + shippingFee, [subtotal, shippingFee]);
 
 	const recommendedProducts = useMemo(() => {
 		if (items.length === 0 || products.length === 0) return [];
@@ -250,14 +254,23 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 									</div>
 									<div className="flex items-center justify-between text-sm text-stone-700">
 										<span>Shipping</span>
-										<span className="font-semibold text-emerald-600">Free</span>
+										{shippingFee === 0 ? (
+											<span className="font-semibold text-emerald-600">Free</span>
+										) : (
+											<span className="text-right font-medium text-stone-900">{formatPrice(shippingFee, { includeMarkup: false })}</span>
+										)}
 									</div>
+									{subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD_NOK ? (
+										<p className="text-xs text-stone-700">
+											Add <span className="font-semibold text-stone-900">{formatPrice(FREE_SHIPPING_THRESHOLD_NOK - subtotal, { includeMarkup: false })}</span> more for free shipping!
+										</p>
+									) : null}
 									<div className="border-t border-stone-200 pt-3">
 										<div className="flex items-center justify-between text-sm font-semibold text-stone-900">
 											<span>Estimated total</span>
-											<span className="text-right">{formatPrice(subtotal, { includeMarkup: false })}</span>
+											<span className="text-right">{formatPrice(orderTotal, { includeMarkup: false })}</span>
 										</div>
-										{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {subtotal.toFixed(2)}</p> : null}
+										{isConverted ? <p className="mt-1 text-right text-xs text-stone-700">Equivalent to approx. NOK {orderTotal.toFixed(2)}</p> : null}
 									</div>
 
 									<div className="border-t border-stone-200 py-3.5">

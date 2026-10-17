@@ -64,7 +64,7 @@ const faqCategories: FaqCategory[] = [
 			{
 				id: "ship-cost",
 				question: "How much does shipping cost?",
-				answer: "Shipping is calculated at checkout based on your delivery address and the size and weight of your order, using live rates from Bring (Posten Norge) and PostNord. Orders above certain thresholds may qualify for free shipping.",
+				answer: "Shipping is free for all orders of NOK 1,500 or more. For orders under NOK 1,500, a standard shipping fee of NOK 76 applies.",
 			},
 			{
 				id: "ship-time",
