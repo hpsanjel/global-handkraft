@@ -28,6 +28,9 @@ export type PricedCheckoutItem = {
 	depth: string;
 	/** Zone markup applied per unit */
 	zoneMarkup: number;
+	shippingNorway?: number | null;
+	shippingInternational?: number | null;
+	freeShippingExcluded?: boolean;
 };
 
 export function normalizeCheckoutItems(items: CheckoutItem[]) {
@@ -108,6 +111,9 @@ export async function priceCheckoutItems(items: CheckoutItem[], countryCode?: st
 				height: variant.height,
 				depth: variant.depth,
 				zoneMarkup: markup,
+				shippingNorway: variant.product.shippingNorway,
+				shippingInternational: variant.product.shippingInternational,
+				freeShippingExcluded: variant.product.freeShippingExcluded,
 			};
 		}),
 	);

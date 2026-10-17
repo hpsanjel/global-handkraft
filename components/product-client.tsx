@@ -15,6 +15,7 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { Dialog, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ProductImage } from "@/components/ui/product-image";
 import { FREE_SHIPPING_THRESHOLD_NOK, NORWAY_SHIPPING_FEE_NOK, INTERNATIONAL_SHIPPING_FEE_NOK } from "@/lib/shipping-client";
+import { useShippingConfig } from "@/components/shipping-provider";
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -32,6 +33,7 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 export function ProductClient({ product, priceZones }: { product: Product; priceZones: PriceZoneWithCountries[] }) {
+	const shippingConfig = useShippingConfig();
 	const { detectedCountry } = usePriceZones();
 	const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id ?? "");
 	const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
@@ -620,22 +622,47 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 				<div className="mt-2">
 					<div className="rounded-[1.5rem] border border-stone-200 bg-white p-6 shadow-sm">
 						{(() => {
-							const qualifiesForFreeShipping = (selectedVariant?.price ?? 0) >= FREE_SHIPPING_THRESHOLD_NOK;
+							const defaultNorway = shippingConfig?.norwayRate ?? NORWAY_SHIPPING_FEE_NOK;
+							const defaultIntl = shippingConfig?.internationalRate ?? INTERNATIONAL_SHIPPING_FEE_NOK;
+							const freeThreshold = shippingConfig?.freeShippingThreshold ?? FREE_SHIPPING_THRESHOLD_NOK;
 							const isNorway = !detectedCountry || detectedCountry.toUpperCase() === "NO";
-							const standardShippingFee = isNorway ? NORWAY_SHIPPING_FEE_NOK : INTERNATIONAL_SHIPPING_FEE_NOK;
+							const customRate = isNorway ? product.shippingNorway : product.shippingInternational;
+							const standardShippingFee = typeof customRate === "number" && !isNaN(customRate) && customRate >= 0 ? customRate : (isNorway ? defaultNorway : defaultIntl);
+							const qualifiesForFreeShipping = !product.freeShippingExcluded && freeThreshold > 0 && (selectedVariant?.price ?? 0) >= freeThreshold;
+
 							return (
 								<>
 									<div className="flex items-center justify-between">
 										<p className="text-sm font-semibold text-stone-900">Shipping</p>
 										{qualifiesForFreeShipping ? (
 											<span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Free</span>
+										) : product.freeShippingExcluded ? (
+											<span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">
+												NOK {standardShippingFee} (Fixed delivery rate)
+											</span>
 										) : (
 											<span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-stone-700">
-												NOK {standardShippingFee} (Free over NOK {FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")})
+												NOK {standardShippingFee} {freeThreshold > 0 ? `(Free over NOK ${freeThreshold.toLocaleString("en-GB")})` : ""}
 											</span>
 										)}
 									</div>
-									<p className="mt-2 text-sm text-stone-700">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo ? `${product.shippingInfo} Free shipping on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")}.` : `Free delivery on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")} (NOK ${NORWAY_SHIPPING_FEE_NOK} in Norway, NOK ${INTERNATIONAL_SHIPPING_FEE_NOK} international).`}</p>
+									<p className="mt-2 text-sm text-stone-700">
+										{selectedVariant?.shippingNote?.trim()
+											? selectedVariant.shippingNote
+											: product.shippingInfo
+											? `${product.shippingInfo} ${
+													product.freeShippingExcluded
+														? "This item has a fixed delivery rate."
+														: freeThreshold > 0
+														? `Free shipping on orders over NOK ${freeThreshold.toLocaleString("en-GB")}.`
+														: ""
+											  }`
+											: product.freeShippingExcluded
+											? `Fixed delivery fee: NOK ${standardShippingFee} for ${isNorway ? "Norway" : "International"}.`
+											: freeThreshold > 0
+											? `Free delivery on orders over NOK ${freeThreshold.toLocaleString("en-GB")} (NOK ${standardShippingFee} standard).`
+											: `Standard delivery fee: NOK ${standardShippingFee}.`}
+									</p>
 								</>
 							);
 						})()}

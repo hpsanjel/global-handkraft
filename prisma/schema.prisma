@@ -50,6 +50,9 @@ model Product {
   weight           String?
   seoTitle         String?
   seoDescription   String?
+  shippingNorway        Float?
+  shippingInternational Float?
+  freeShippingExcluded  Boolean     @default(false)
   variants         Variant[]
   addons           Addon[]
   orderItems       OrderItem[]

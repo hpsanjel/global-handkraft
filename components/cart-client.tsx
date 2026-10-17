@@ -13,11 +13,13 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { ProductImage } from "@/components/ui/product-image";
 import { SHIPPING_COUNTRIES, isVippsSupportedCountry } from "@/lib/shipping-countries";
 import { calculateShippingFee, FREE_SHIPPING_THRESHOLD_NOK } from "@/lib/shipping-client";
+import { useShippingConfig } from "@/components/shipping-provider";
 import { isCurrencyManuallySet, setPreferredCurrency } from "@/lib/currency-preference";
 import { detectCurrencyFromCountry } from "@/lib/locale-currency";
 
 export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[] }) {
 	const products = useProductsCatalog();
+	const shippingConfig = useShippingConfig();
 	const { formatPrice, currency, isConverted } = useFormattedPrice();
 	const { detectedCountry } = usePriceZones();
 	const [items, setItems] = useState<CartItem[]>([]);
@@ -82,7 +84,23 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 		}, 0);
 	}, [items, products, priceZones, shippingCountry]);
 
-	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length, shippingCountry), [subtotal, items.length, shippingCountry]);
+	const cartShippingItems = useMemo(() => {
+		return items.map((item) => {
+			const product = products.find((p) => p.id === item.productId);
+			return {
+				productId: item.productId,
+				shippingNorway: product?.shippingNorway,
+				shippingInternational: product?.shippingInternational,
+				freeShippingExcluded: product?.freeShippingExcluded,
+				quantity: item.quantity,
+			};
+		});
+	}, [items, products]);
+
+	const shippingFee = useMemo(
+		() => calculateShippingFee(subtotal, items.length, shippingCountry, cartShippingItems, shippingConfig),
+		[subtotal, items.length, shippingCountry, cartShippingItems, shippingConfig]
+	);
 	const orderTotal = useMemo(() => subtotal + shippingFee, [subtotal, shippingFee]);
 
 	const recommendedProducts = useMemo(() => {
@@ -260,9 +278,9 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 											<span className="text-right font-medium text-stone-900">{formatPrice(shippingFee, { includeMarkup: false })}</span>
 										)}
 									</div>
-									{subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD_NOK ? (
+									{subtotal > 0 && shippingConfig.freeShippingThreshold > 0 && subtotal < shippingConfig.freeShippingThreshold ? (
 										<p className="text-xs text-stone-700">
-											Add <span className="font-semibold text-stone-900">{formatPrice(FREE_SHIPPING_THRESHOLD_NOK - subtotal, { includeMarkup: false })}</span> more for free shipping!
+											Add <span className="font-semibold text-stone-900">{formatPrice(shippingConfig.freeShippingThreshold - subtotal, { includeMarkup: false })}</span> more for free shipping!
 										</p>
 									) : null}
 									<div className="border-t border-stone-200 pt-3">

@@ -22,6 +22,9 @@ type ProductRequestPayload = {
 	reviewCount?: number;
 	dimensions?: string;
 	weight?: string;
+	shippingNorway?: number | null;
+	shippingInternational?: number | null;
+	freeShippingExcluded?: boolean;
 	variants: Array<{
 		id?: string;
 		name: string;
@@ -246,6 +249,9 @@ export async function POST(request: Request) {
 				weight: body.weight?.trim() || null,
 				seoTitle: body.name.trim(),
 				seoDescription: body.shortDescription?.trim() || body.name.trim(),
+				shippingNorway: typeof body.shippingNorway === "number" && !isNaN(body.shippingNorway) && body.shippingNorway >= 0 ? body.shippingNorway : null,
+				shippingInternational: typeof body.shippingInternational === "number" && !isNaN(body.shippingInternational) && body.shippingInternational >= 0 ? body.shippingInternational : null,
+				freeShippingExcluded: Boolean(body.freeShippingExcluded),
 				variants: {
 					create: body.variants.map((variant, index) => ({
 						name: variant.name.trim(),
@@ -325,6 +331,9 @@ export async function PUT(request: Request) {
 					weight: body.weight?.trim() || null,
 					seoTitle: body.name.trim(),
 					seoDescription: body.shortDescription?.trim() || body.name.trim(),
+					shippingNorway: typeof body.shippingNorway === "number" && !isNaN(body.shippingNorway) && body.shippingNorway >= 0 ? body.shippingNorway : null,
+					shippingInternational: typeof body.shippingInternational === "number" && !isNaN(body.shippingInternational) && body.shippingInternational >= 0 ? body.shippingInternational : null,
+					freeShippingExcluded: Boolean(body.freeShippingExcluded),
 					addons: {
 						deleteMany: {},
 						create: body.addons.map((addon) => ({

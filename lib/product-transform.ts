@@ -55,6 +55,9 @@ type DbProductRecord = {
 	reviewCount: number;
 	dimensions: string | null;
 	weight: string | null;
+	shippingNorway?: number | null;
+	shippingInternational?: number | null;
+	freeShippingExcluded?: boolean;
 	category: {
 		name: string;
 		slug: string;
@@ -113,6 +116,9 @@ export function toStoreProduct(record: DbProductRecord): Product {
 		active: record.active,
 		dimensions: record.dimensions ?? undefined,
 		weight: record.weight ?? undefined,
+		shippingNorway: record.shippingNorway ?? null,
+		shippingInternational: record.shippingInternational ?? null,
+		freeShippingExcluded: Boolean(record.freeShippingExcluded),
 		variants: record.variants.map((variant) => ({
 			id: variant.id,
 			name: variant.name,

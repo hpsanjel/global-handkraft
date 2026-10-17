@@ -55,6 +55,9 @@ export type Product = {
 	handcraftedStory?: string;
 	dimensions?: string;
 	weight?: string;
+	shippingNorway?: number | null;
+	shippingInternational?: number | null;
+	freeShippingExcluded?: boolean;
 	careInstructions?: string;
 	specifications?: string[];
 	reviews?: ProductReview[];

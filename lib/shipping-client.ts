@@ -15,21 +15,78 @@ export const INTERNATIONAL_SHIPPING_FEE_NOK = 200;
 /** Standard shipping charge applied when subtotal is below the free shipping threshold (in NOK). */
 export const STANDARD_SHIPPING_FEE_NOK = NORWAY_SHIPPING_FEE_NOK;
 
+/** Any item in cart that may have custom product shipping rates or free shipping rules. */
+export type ShippingRateItemInput = {
+	productId?: string;
+	shippingNorway?: number | null;
+	shippingInternational?: number | null;
+	freeShippingExcluded?: boolean;
+	quantity?: number;
+};
+
+export type ShippingConfig = {
+	norwayRate: number;
+	internationalRate: number;
+	freeShippingThreshold: number;
+};
+
+export const DEFAULT_SHIPPING_CONFIG: ShippingConfig = {
+	norwayRate: NORWAY_SHIPPING_FEE_NOK,
+	internationalRate: INTERNATIONAL_SHIPPING_FEE_NOK,
+	freeShippingThreshold: FREE_SHIPPING_THRESHOLD_NOK,
+};
+
+export type ShippingRatesConfigInput = Partial<ShippingConfig>;
+
 /**
- * Calculates shipping fee in NOK based on cart subtotal, item count, and destination country.
- * - Subtotal >= 1500 NOK: Free shipping (0 NOK)
- * - Subtotal < 1500 NOK (with items in cart):
- *   - Norway (NO): 76 NOK
- *   - Outside Norway: 200 NOK
+ * Calculates shipping fee in NOK based on cart subtotal, item count, destination country,
+ * optional items with custom rates, and optional admin shipping configuration.
+ * - Subtotal >= freeShippingThreshold: Free shipping (0 NOK), unless items are marked freeShippingExcluded.
+ * - Subtotal < freeShippingThreshold:
+ *   - Norway (NO): default norwayRate (76 NOK) or max custom rate among cart items
+ *   - Outside Norway: default internationalRate (200 NOK) or max custom rate among cart items
  * - Empty cart (0 items or 0 subtotal): 0 NOK
  */
-export function calculateShippingFee(subtotalNok: number, itemCount = 1, countryCode?: string | null): number {
+export function calculateShippingFee(
+	subtotalNok: number,
+	itemCount = 1,
+	countryCode?: string | null,
+	items?: ShippingRateItemInput[],
+	config?: ShippingRatesConfigInput
+): number {
 	if (itemCount <= 0 || subtotalNok <= 0) return 0;
-	if (subtotalNok >= FREE_SHIPPING_THRESHOLD_NOK) return 0;
+
+	const defaultNorway = config?.norwayRate ?? NORWAY_SHIPPING_FEE_NOK;
+	const defaultIntl = config?.internationalRate ?? INTERNATIONAL_SHIPPING_FEE_NOK;
+	const threshold = config?.freeShippingThreshold ?? FREE_SHIPPING_THRESHOLD_NOK;
 
 	const normalizedCountry = countryCode?.trim().toUpperCase();
 	const isNorway = !normalizedCountry || normalizedCountry === "NO";
-	return isNorway ? NORWAY_SHIPPING_FEE_NOK : INTERNATIONAL_SHIPPING_FEE_NOK;
+	const defaultRate = isNorway ? defaultNorway : defaultIntl;
+
+	const resolvedItems =
+		items && items.length > 0
+			? items.map((item) => {
+					const customRate = isNorway ? item.shippingNorway : item.shippingInternational;
+					const rate = typeof customRate === "number" && !isNaN(customRate) && customRate >= 0 ? customRate : defaultRate;
+					return {
+						rate,
+						freeShippingExcluded: Boolean(item.freeShippingExcluded),
+					};
+			  })
+			: [{ rate: defaultRate, freeShippingExcluded: false }];
+
+	const qualifiesForFreeShipping = threshold > 0 && subtotalNok >= threshold;
+
+	if (qualifiesForFreeShipping) {
+		const excludedItems = resolvedItems.filter((i) => i.freeShippingExcluded);
+		if (excludedItems.length > 0) {
+			return Math.max(...excludedItems.map((i) => i.rate));
+		}
+		return 0;
+	}
+
+	return Math.max(...resolvedItems.map((i) => i.rate));
 }
 
 /** Any cart line that carries free-text weight/dimension strings ("10 kg", "40 cm"). */

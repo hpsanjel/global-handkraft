@@ -95,13 +95,14 @@ function createEmptyAddon(): ProductAddon {
 	return { id: generateId("addon"), name: "New add-on", price: 0, description: "" };
 }
 
-type EditorTab = "details" | "images" | "variants" | "addons";
+type EditorTab = "details" | "images" | "variants" | "addons" | "shipping";
 
 const EDITOR_TABS: { id: EditorTab; label: string }[] = [
 	{ id: "details", label: "Details" },
 	{ id: "images", label: "Images" },
 	{ id: "variants", label: "Variants" },
 	{ id: "addons", label: "Add-ons" },
+	{ id: "shipping", label: "Shipping" },
 ];
 
 export default function AdminProductsPage() {
@@ -330,6 +331,9 @@ export default function AdminProductsPage() {
 			sizeLabel: categoryNormalizedProduct.sizeLabel?.trim() || undefined,
 			dimensions: categoryNormalizedProduct.dimensions?.trim() || undefined,
 			weight: categoryNormalizedProduct.weight?.trim() || undefined,
+			shippingNorway: typeof draftProduct.shippingNorway === "number" && !isNaN(draftProduct.shippingNorway) && draftProduct.shippingNorway >= 0 ? draftProduct.shippingNorway : null,
+			shippingInternational: typeof draftProduct.shippingInternational === "number" && !isNaN(draftProduct.shippingInternational) && draftProduct.shippingInternational >= 0 ? draftProduct.shippingInternational : null,
+			freeShippingExcluded: Boolean(draftProduct.freeShippingExcluded),
 			variants: draftProduct.variants.filter((variant) => variant.name.trim()),
 			addons: draftProduct.addons.filter((addon) => addon.name.trim()),
 		};
@@ -534,7 +538,16 @@ export default function AdminProductsPage() {
 
 							<div className="flex flex-wrap gap-1.5 border-b border-slate-200">
 								{EDITOR_TABS.map((tab) => {
-									const count = tab.id === "images" ? currentProduct.gallery.length : tab.id === "variants" ? currentProduct.variants.length : tab.id === "addons" ? currentProduct.addons.length : null;
+									const count =
+										tab.id === "images"
+											? currentProduct.gallery.length
+											: tab.id === "variants"
+											? currentProduct.variants.length
+											: tab.id === "addons"
+											? currentProduct.addons.length
+											: tab.id === "shipping" && (currentProduct.shippingNorway !== null || currentProduct.shippingInternational !== null || currentProduct.freeShippingExcluded)
+											? "Custom"
+											: null;
 									const isActive = activeTab === tab.id;
 									return (
 										<button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold transition ${isActive ? "border-stone-600 text-stone-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
@@ -767,6 +780,70 @@ export default function AdminProductsPage() {
 												</div>
 											</div>
 										))}
+									</div>
+								</div>
+							) : null}
+
+							{activeTab === "shipping" ? (
+								<div className="space-y-6">
+									<div>
+										<h3 className="text-sm font-semibold text-slate-900">Product Shipping Overrides</h3>
+										<p className="mt-1 text-xs text-slate-500">
+											Optionally override the store-wide default shipping rates for this product. If left empty, the default rates configured in{" "}
+											<Link href="/admin/shipping-rates" className="font-medium text-[#1B365D] underline hover:text-stone-700">
+												Shipping Rates
+											</Link>{" "}
+											will be used.
+										</p>
+									</div>
+
+									<div className="grid gap-4 md:grid-cols-2">
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Custom Norway Shipping Fee (NOK)</span>
+											<input
+												type="number"
+												min="0"
+												step="1"
+												placeholder="Leave blank for store default"
+												value={currentProduct.shippingNorway !== null && currentProduct.shippingNorway !== undefined ? currentProduct.shippingNorway : ""}
+												onChange={(e) => {
+													const val = e.target.value.trim();
+													updateDraftField("shippingNorway", val === "" ? null : Number(val));
+												}}
+												className={FIELD_INPUT}
+											/>
+										</label>
+
+										<label className={FIELD_LABEL}>
+											<span className="font-medium text-slate-700">Custom International Shipping Fee (NOK)</span>
+											<input
+												type="number"
+												min="0"
+												step="1"
+												placeholder="Leave blank for store default"
+												value={currentProduct.shippingInternational !== null && currentProduct.shippingInternational !== undefined ? currentProduct.shippingInternational : ""}
+												onChange={(e) => {
+													const val = e.target.value.trim();
+													updateDraftField("shippingInternational", val === "" ? null : Number(val));
+												}}
+												className={FIELD_INPUT}
+											/>
+										</label>
+
+										<label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2 cursor-pointer">
+											<input
+												type="checkbox"
+												checked={Boolean(currentProduct.freeShippingExcluded)}
+												onChange={(e) => updateDraftField("freeShippingExcluded", e.target.checked)}
+												className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#1B365D]"
+											/>
+											<div>
+												<span className="font-medium text-slate-900">Exclude from Free Shipping threshold</span>
+												<p className="mt-0.5 text-xs text-slate-500">
+													If checked, the shipping fee for this item will always be charged even if the order subtotal reaches the free shipping threshold.
+												</p>
+											</div>
+										</label>
 									</div>
 								</div>
 							) : null}

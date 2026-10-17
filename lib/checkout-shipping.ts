@@ -1,4 +1,5 @@
 import { calculateShippingFee } from "@/lib/shipping-client";
+import { getShippingConfig } from "@/lib/shipping-config";
 import type { PricedCheckoutItem } from "@/lib/checkout-pricing";
 
 export type SavedShippingAddress = {
@@ -19,10 +20,8 @@ export type ShippingQuote = {
 };
 
 /**
- * Resolves shipping quotes based on destination country and cart subtotal:
- * - Free shipping for orders >= 1500 NOK
- * - 76 NOK standard shipping within Norway for orders < 1500 NOK
- * - 200 NOK international shipping outside Norway for orders < 1500 NOK
+ * Resolves shipping quotes based on destination country, cart subtotal,
+ * per-product custom shipping rates, and store-wide default shipping configuration.
  */
 export async function getShippingQuotes(
 	shippingAddress?: SavedShippingAddress,
@@ -32,8 +31,9 @@ export async function getShippingQuotes(
 ): Promise<ShippingQuote[]> {
 	void selectedShippingId;
 
+	const config = await getShippingConfig();
 	const itemCount = pricedItems?.reduce((sum, item) => sum + item.quantity, 0) ?? (subtotal > 0 ? 1 : 0);
-	const shippingFeeNok = calculateShippingFee(subtotal, itemCount, shippingAddress?.country);
+	const shippingFeeNok = calculateShippingFee(subtotal, itemCount, shippingAddress?.country, pricedItems, config);
 
 	if (shippingFeeNok === 0) {
 		return [

@@ -17,6 +17,7 @@ import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { ProductImage } from "@/components/ui/product-image";
 import { SHIPPING_COUNTRIES, isVippsSupportedCountry } from "@/lib/shipping-countries";
 import { calculateShippingFee, FREE_SHIPPING_THRESHOLD_NOK } from "@/lib/shipping-client";
+import { useShippingConfig } from "@/components/shipping-provider";
 import { isCurrencyManuallySet, setPreferredCurrency } from "@/lib/currency-preference";
 import { detectCurrencyFromCountry } from "@/lib/locale-currency";
 
@@ -28,6 +29,7 @@ type CartDrawerProps = {
 
 export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	const products = useProductsCatalog();
+	const shippingConfig = useShippingConfig();
 	const { formatPrice, currency, isConverted } = useFormattedPrice();
 	const { detectedCountry } = usePriceZones();
 	const [items, setItems] = useState<CartItem[]>([]);
@@ -92,7 +94,24 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 		}, 0);
 	}, [items, products, shippingCountry, priceZones]);
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
-	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length, shippingCountry), [subtotal, items.length, shippingCountry]);
+
+	const cartShippingItems = useMemo(() => {
+		return items.map((item) => {
+			const product = products.find((p) => p.id === item.productId);
+			return {
+				productId: item.productId,
+				shippingNorway: product?.shippingNorway,
+				shippingInternational: product?.shippingInternational,
+				freeShippingExcluded: product?.freeShippingExcluded,
+				quantity: item.quantity,
+			};
+		});
+	}, [items, products]);
+
+	const shippingFee = useMemo(
+		() => calculateShippingFee(subtotal, items.length, shippingCountry, cartShippingItems, shippingConfig),
+		[subtotal, items.length, shippingCountry, cartShippingItems, shippingConfig]
+	);
 	const orderTotal = useMemo(() => subtotal + shippingFee, [subtotal, shippingFee]);
 
 	const handleQuantityChange = (item: CartItem, delta: number) => {
@@ -261,9 +280,9 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							)}
 						</div>
 
-						{subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD_NOK ? (
+						{subtotal > 0 && shippingConfig.freeShippingThreshold > 0 && subtotal < shippingConfig.freeShippingThreshold ? (
 							<p className="mt-1.5 text-xs text-stone-700">
-								Add <span className="font-semibold text-stone-900">{formatPrice(FREE_SHIPPING_THRESHOLD_NOK - subtotal, { includeMarkup: false })}</span> more for free shipping!
+								Add <span className="font-semibold text-stone-900">{formatPrice(shippingConfig.freeShippingThreshold - subtotal, { includeMarkup: false })}</span> more for free shipping!
 							</p>
 						) : null}
 
