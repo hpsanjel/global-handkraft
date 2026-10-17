@@ -80,33 +80,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			updateData.stripePaymentLink = body.stripePaymentLink;
 		}
 
-		// If accepting and no payment link provided, attempt auto-generation if Stripe is configured
-		if (
-			body.paymentStatus === "ACCEPTED" &&
-			!body.stripePaymentLink &&
-			!inquiry.stripePaymentLink &&
-			(body.quotedPrice || inquiry.quotedPrice) &&
-			process.env.STRIPE_SECRET_KEY
-		) {
-			try {
-				const priceToUse = body.quotedPrice ?? inquiry.quotedPrice ?? 0;
-				if (priceToUse > 0) {
-					const { createMandapPaymentLink } = await import("@/lib/stripe");
-					const autoLink = await createMandapPaymentLink({
-						inquiryId: inquiry.id,
-						productName: inquiry.productName,
-						category: inquiry.category,
-						quotedPriceNok: priceToUse,
-					});
-					if (autoLink) {
-						updateData.stripePaymentLink = autoLink;
-					}
-				}
-			} catch (linkError) {
-				console.warn("Could not auto-generate Stripe payment link on accept:", linkError);
-			}
-		}
-
 		const updated = await prisma.mandapInquiry.update({
 			where: { id },
 			data: updateData,
@@ -121,31 +94,36 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 		// Send email notification to customer if status changed, order was accepted, or payment link/price updated
 		if ((statusChanged || isAcceptance || linkOrPriceUpdatedOnAccepted) && updated.email) {
-			sendMandapInquiryStatusUpdateEmail({
-				to: updated.email,
-				category: updated.category,
-				productName: updated.productName,
-				paymentStatus: updated.paymentStatus,
-				adminNote: updated.adminNote || "",
-				quotedPrice: updated.quotedPrice ?? undefined,
-				stripePaymentLink: updated.stripePaymentLink ?? undefined,
-				length: updated.length,
-				width: updated.width,
-				height: updated.height,
-				material: updated.material,
-			}).catch((error) => {
+			try {
+				await sendMandapInquiryStatusUpdateEmail({
+					to: updated.email,
+					category: updated.category,
+					productName: updated.productName,
+					paymentStatus: updated.paymentStatus,
+					adminNote: updated.adminNote || "",
+					quotedPrice: updated.quotedPrice ?? undefined,
+					stripePaymentLink: updated.stripePaymentLink ?? undefined,
+					length: updated.length,
+					width: updated.width,
+					height: updated.height,
+					material: updated.material,
+				});
+			} catch (error) {
 				console.error("Unable to send status update email:", error);
-			});
+			}
 
-			broadcastCustomRequestCount().catch((error) => {
+			try {
+				await broadcastCustomRequestCount();
+			} catch (error) {
 				console.error("Unable to broadcast custom request count:", error);
-			});
+			}
 		}
 
 		// If marked as PAID by admin, also notify admins
 		if (body.paymentStatus === "PAID" && inquiry.paymentStatus !== "PAID") {
-			import("@/lib/email").then(({ sendCustomOrderPaymentAdminNotification }) => {
-				sendCustomOrderPaymentAdminNotification({
+			try {
+				const { sendCustomOrderPaymentAdminNotification } = await import("@/lib/email");
+				await sendCustomOrderPaymentAdminNotification({
 					inquiryId: updated.id,
 					category: updated.category,
 					productName: updated.productName,
@@ -158,10 +136,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 					material: updated.material,
 					description: updated.description,
 					stripeSessionId: "Admin Manual Update",
-				}).catch((error) => {
-					console.error("Unable to send payment admin notification on manual PAID:", error);
 				});
-			});
+			} catch (error) {
+				console.error("Unable to send payment admin notification on manual PAID:", error);
+			}
 		}
 
 		return NextResponse.json({

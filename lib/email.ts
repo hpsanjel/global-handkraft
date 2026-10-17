@@ -9,6 +9,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.handcraftsglob
 function getAdminEmails(): string[] {
 	const raw = process.env.ADMIN_EMAILS ?? "";
 	return raw
+		.replace(/["']/g, "")
 		.split(/[\n,;\s]+/)
 		.map((value) => value.trim())
 		.filter(Boolean);
@@ -339,16 +340,21 @@ export async function sendCustomInquiryAdminNotification(params: CustomInquiryNo
 			<p style="margin-top:16px;"><strong>Description:</strong><br/>${params.description}</p>
 			${sampleImagesHtml}
 
-			<p style="margin-top:28px;">View and manage this request in the <a href="https://handcraftsglobal.com/admin/orders" style="color:#1B365D;">admin dashboard</a>.</p>
+			<p style="margin-top:28px;"><a href="${SITE_URL}/admin/custom-requests" style="background:#1B365D; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; display:inline-block;">View in Admin Dashboard</a></p>
 		</div>
 	`;
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: SENDER,
 		to: adminEmails,
+		replyTo: params.email || undefined,
 		subject: `New custom ${params.category.toLowerCase()} order request — ${params.productName}`,
 		html,
 	});
+
+	if (result.error) {
+		console.error("Failed to send custom inquiry admin notification email:", result.error);
+	}
 }
 
 type ContactFormNotificationParams = {
@@ -634,12 +640,16 @@ export async function sendMandapInquiryStatusUpdateEmail(params: MandapInquirySt
 		</div>
 	`;
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: SENDER,
 		to: params.to,
 		subject,
 		html,
 	});
+
+	if (result.error) {
+		console.error(`Failed to send status update email to ${params.to}:`, result.error);
+	}
 }
 
 export type CustomOrderPaymentAdminNotificationParams = {

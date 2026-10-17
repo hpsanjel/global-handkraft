@@ -151,26 +151,30 @@ export async function POST(request: Request) {
 			},
 		});
 
-		sendCustomInquiryAdminNotification({
-			category: inquiry.category,
-			productName: inquiry.productName,
-			productSlug: inquiry.productSlug,
-			length: inquiry.length,
-			width: inquiry.width,
-			height: inquiry.height,
-			material: inquiry.material,
-			expectedCostRange: inquiry.expectedCostRange,
-			description: inquiry.description,
-			whatsapp: inquiry.whatsapp,
-			email: inquiry.email,
-			sampleImages: inquiry.sampleImages,
-		}).catch((error) => {
+		try {
+			await sendCustomInquiryAdminNotification({
+				category: inquiry.category,
+				productName: inquiry.productName,
+				productSlug: inquiry.productSlug,
+				length: inquiry.length,
+				width: inquiry.width,
+				height: inquiry.height,
+				material: inquiry.material,
+				expectedCostRange: inquiry.expectedCostRange,
+				description: inquiry.description,
+				whatsapp: inquiry.whatsapp,
+				email: inquiry.email,
+				sampleImages: inquiry.sampleImages,
+			});
+		} catch (error) {
 			console.error("Unable to send custom inquiry admin notification email:", error);
-		});
+		}
 
-		broadcastCustomRequestCount().catch((error) => {
+		try {
+			await broadcastCustomRequestCount();
+		} catch (error) {
 			console.error("Unable to broadcast custom request count:", error);
-		});
+		}
 
 		return NextResponse.json({ success: true, id: inquiry.id });
 	} catch (error) {

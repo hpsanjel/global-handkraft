@@ -25,42 +25,8 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 	const [quotedPrice, setQuotedPrice] = useState(inquiry.quotedPrice?.toString() || "");
 	const [stripePaymentLink, setStripePaymentLink] = useState(inquiry.stripePaymentLink || "");
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 	const [successNotice, setSuccessNotice] = useState("");
 	const [error, setError] = useState("");
-
-	const handleGeneratePaymentLink = async () => {
-		const parsedPrice = parseFloat(quotedPrice);
-		if (!parsedPrice || parsedPrice <= 0) {
-			setError("Please enter a valid quoted price (NOK) before generating a Stripe payment link.");
-			return;
-		}
-
-		setIsGeneratingLink(true);
-		setError("");
-		setSuccessNotice("");
-
-		try {
-			const response = await fetch(`/api/admin/mandap-inquiries/${inquiry.id}/payment-link`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ quotedPrice: parsedPrice }),
-			});
-
-			const payload = await response.json();
-			if (!response.ok) {
-				throw new Error(payload.error ?? "Failed to generate Stripe payment link.");
-			}
-
-			setStripePaymentLink(payload.stripePaymentLink);
-			setSuccessNotice("Stripe payment link generated successfully!");
-			onUpdate?.();
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Unable to generate payment link.");
-		} finally {
-			setIsGeneratingLink(false);
-		}
-	};
 
 	const handleSubmit = async () => {
 		setIsSubmitting(true);
@@ -125,17 +91,7 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 
 				{paymentStatus === "ACCEPTED" && (
 					<div className="space-y-2">
-						<div className="flex items-center justify-between">
-							<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Stripe Payment Link</label>
-							<button
-								type="button"
-								onClick={handleGeneratePaymentLink}
-								disabled={isGeneratingLink || isSubmitting || !quotedPrice}
-								className="text-xs font-medium text-[#1B365D] hover:underline disabled:opacity-50"
-							>
-								{isGeneratingLink ? "Generating..." : "⚡ Auto-generate Link via Stripe"}
-							</button>
-						</div>
+						<label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Stripe Payment Link</label>
 						<div className="flex gap-2">
 							<input
 								type="url"
@@ -156,7 +112,7 @@ export function MandapInquiryPaymentControl({ inquiry, onUpdate }: Props) {
 							) : null}
 						</div>
 						<p className="text-xs text-slate-500">
-							When set, the buyer receives an email notification containing this link and a &quot;Pay Now&quot; button to confirm their order.
+							Paste your Stripe payment link here. The buyer will receive this link and a &quot;Pay Now&quot; button in their email notification.
 						</p>
 					</div>
 				)}

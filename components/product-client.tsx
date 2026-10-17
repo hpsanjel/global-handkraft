@@ -71,8 +71,6 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 		};
 	}, []);
 
-
-
 	const selectedVariant = useMemo(() => product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0], [product.variants, selectedVariantId]);
 
 	const availableColors = useMemo(() => {
@@ -374,7 +372,7 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 							<input required aria-required="true" type="email" value={mandapEmail} onChange={(event) => setMandapEmail(event.target.value)} placeholder="e.g. name@email.com" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 						<label className="space-y-2 text-sm text-stone-700">
-							<span className="font-medium text-stone-700">WhatsApp Number <span className="text-xs font-normal text-stone-500">(Optional)</span></span>
+							<span className="font-medium text-stone-700">WhatsApp Number</span>
 							<input value={mandapWhatsapp} onChange={(event) => setMandapWhatsapp(event.target.value)} placeholder="e.g. +47 00000000" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 					</div>
@@ -632,16 +630,12 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 										{qualifiesForFreeShipping ? (
 											<span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Free</span>
 										) : (
-											<span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-stone-700">NOK {standardShippingFee} (Free over NOK {FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")})</span>
+											<span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-stone-700">
+												NOK {standardShippingFee} (Free over NOK {FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")})
+											</span>
 										)}
 									</div>
-									<p className="mt-2 text-sm text-stone-700">
-										{selectedVariant?.shippingNote?.trim()
-											? selectedVariant.shippingNote
-											: product.shippingInfo
-												? `${product.shippingInfo} Free shipping on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")}.`
-												: `Free delivery on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")} (NOK ${NORWAY_SHIPPING_FEE_NOK} in Norway, NOK ${INTERNATIONAL_SHIPPING_FEE_NOK} international).`}
-									</p>
+									<p className="mt-2 text-sm text-stone-700">{selectedVariant?.shippingNote?.trim() ? selectedVariant.shippingNote : product.shippingInfo ? `${product.shippingInfo} Free shipping on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")}.` : `Free delivery on orders over NOK ${FREE_SHIPPING_THRESHOLD_NOK.toLocaleString("en-GB")} (NOK ${NORWAY_SHIPPING_FEE_NOK} in Norway, NOK ${INTERNATIONAL_SHIPPING_FEE_NOK} international).`}</p>
 								</>
 							);
 						})()}
