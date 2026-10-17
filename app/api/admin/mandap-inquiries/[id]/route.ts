@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hasAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMandapInquiryStatusUpdateEmail } from "@/lib/email";
 import { broadcastCustomRequestCount } from "@/lib/realtime-broadcast";
 
@@ -191,6 +192,116 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 		});
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unable to load request.";
+		return NextResponse.json({ error: message }, { status: 500 });
+	}
+}
+
+const MANDAP_INQUIRY_BUCKET = "mandap-inquiries";
+
+function extractStoragePath(url: string, bucket: string): string | null {
+	if (!url || typeof url !== "string") return null;
+	const marker = `/${bucket}/`;
+	const index = url.indexOf(marker);
+	if (index !== -1) {
+		const rawPath = url.slice(index + marker.length);
+		const cleanPath = rawPath.split("?")[0];
+		return decodeURIComponent(cleanPath);
+	}
+	if (!url.startsWith("http://") && !url.startsWith("https://")) {
+		return url.split("?")[0];
+	}
+	return null;
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+	try {
+		const adminError = await requireAdmin();
+		if (adminError) {
+			return adminError;
+		}
+
+		if (!process.env.DATABASE_URL) {
+			return NextResponse.json({ error: "Database not configured yet." }, { status: 503 });
+		}
+
+		const { id } = await params;
+		const inquiry = await prisma.mandapInquiry.findUnique({
+			where: { id },
+			include: {
+				messages: true,
+			},
+		});
+
+		if (!inquiry) {
+			return NextResponse.json({ error: "Custom request not found." }, { status: 404 });
+		}
+
+		// 1. Gather ONLY storage files belonging strictly to this inquiry ID
+		const filesToDelete = new Set<string>();
+
+		// Sample images uploaded specifically for this inquiry
+		for (const url of inquiry.sampleImages) {
+			const path = extractStoragePath(url, MANDAP_INQUIRY_BUCKET);
+			if (path) {
+				filesToDelete.add(path);
+			}
+		}
+
+		// Attachments in messages for this inquiry
+		for (const msg of inquiry.messages) {
+			for (const url of msg.attachments) {
+				const path = extractStoragePath(url, MANDAP_INQUIRY_BUCKET);
+				if (path) {
+					filesToDelete.add(path);
+				}
+			}
+		}
+
+		// Clean up files in this inquiry's isolated messages folder: messages/${id}
+		try {
+			const supabase = createAdminClient();
+			const { data: messageFiles } = await supabase.storage
+				.from(MANDAP_INQUIRY_BUCKET)
+				.list(`messages/${id}`);
+
+			if (messageFiles && messageFiles.length > 0) {
+				for (const file of messageFiles) {
+					if (file.name) {
+						filesToDelete.add(`messages/${id}/${file.name}`);
+					}
+				}
+			}
+
+			const filePathsArray = Array.from(filesToDelete);
+			if (filePathsArray.length > 0) {
+				const { error: storageError } = await supabase.storage
+					.from(MANDAP_INQUIRY_BUCKET)
+					.remove(filePathsArray);
+
+				if (storageError) {
+					console.error(`Failed to remove storage files for inquiry ${id}:`, storageError);
+				}
+			}
+		} catch (storageErr) {
+			console.error(`Storage cleanup exception for inquiry ${id}:`, storageErr);
+		}
+
+		// 2. Transactionally delete the messages and the inquiry
+		await prisma.$transaction([
+			prisma.mandapInquiryMessage.deleteMany({ where: { inquiryId: id } }),
+			prisma.mandapInquiry.delete({ where: { id } }),
+		]);
+
+		// 3. Broadcast updated count so admin sidebar badge updates in real time
+		try {
+			await broadcastCustomRequestCount();
+		} catch (broadcastErr) {
+			console.error("Unable to broadcast custom request count after delete:", broadcastErr);
+		}
+
+		return NextResponse.json({ success: true, id });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unable to delete custom request.";
 		return NextResponse.json({ error: message }, { status: 500 });
 	}
 }

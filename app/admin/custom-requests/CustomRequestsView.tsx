@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Landmark, MessageSquare, X } from "lucide-react";
+import { ChevronRight, Landmark, Loader2, MessageSquare, Trash2, X } from "lucide-react";
 import type { AdminMandapInquiry } from "@/lib/admin";
 import { MandapInquiryStatusBadge } from "@/components/mandap-inquiry-status-badge";
 import { MandapInquiryPaymentControl } from "@/components/admin/MandapInquiryPaymentControl";
@@ -32,7 +32,37 @@ function formatCurrency(amount: number) {
 export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquiry[] }) {
 	const router = useRouter();
 	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 	const selected = inquiries.find((inquiry) => inquiry.id === selectedId) ?? null;
+
+	const handleDelete = async (id: string, productName: string) => {
+		const confirmed = window.confirm(
+			`Are you sure you want to delete the custom request for "${productName}"?\n\nThis will permanently delete the inquiry, all attached conversation messages, and photos uploaded for this order only.`
+		);
+		if (!confirmed) return;
+
+		setDeletingId(id);
+		try {
+			const res = await fetch(`/api/admin/mandap-inquiries/${id}`, {
+				method: "DELETE",
+			});
+
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as { error?: string } | null;
+				throw new Error(body?.error || "Failed to delete request.");
+			}
+
+			if (selectedId === id) {
+				setSelectedId(null);
+			}
+			router.refresh();
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "Failed to delete custom request.";
+			alert(message);
+		} finally {
+			setDeletingId(null);
+		}
+	};
 
 	useEffect(() => {
 		if (!selected) return;
@@ -74,7 +104,7 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 								<th className="px-6 py-3 font-semibold">Status</th>
 								<th className="px-6 py-3 font-semibold">Messages</th>
 								<th className="px-6 py-3 font-semibold">Submitted</th>
-								<th className="w-10 px-3 py-3" aria-hidden="true" />
+								<th className="w-20 px-3 py-3" aria-hidden="true" />
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-slate-100">
@@ -123,7 +153,26 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 									</td>
 									<td className="whitespace-nowrap px-6 py-3.5 text-xs uppercase tracking-[0.15em] text-slate-600">{formatDate(inquiry.createdAt)}</td>
 									<td className="whitespace-nowrap px-3 py-3.5 text-right">
-										<ChevronRight className="ml-auto h-4 w-4 text-slate-300" />
+										<div className="flex items-center justify-end gap-1">
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													handleDelete(inquiry.id, inquiry.productName);
+												}}
+												disabled={deletingId === inquiry.id}
+												title="Delete request"
+												aria-label={`Delete custom request: ${inquiry.productName}`}
+												className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition disabled:opacity-50"
+											>
+												{deletingId === inquiry.id ? (
+													<Loader2 className="h-4 w-4 animate-spin text-red-600" />
+												) : (
+													<Trash2 className="h-4 w-4" />
+												)}
+											</button>
+											<ChevronRight className="h-4 w-4 text-slate-300" />
+										</div>
 									</td>
 								</tr>
 							))}
@@ -144,9 +193,25 @@ export function CustomRequestsView({ inquiries }: { inquiries: AdminMandapInquir
 								</div>
 								<p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-600">Submitted {formatDate(selected.createdAt)}</p>
 							</div>
-							<button type="button" onClick={() => setSelectedId(null)} className="shrink-0 rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
-								<X className="h-5 w-5" />
-							</button>
+							<div className="flex items-center gap-2 shrink-0">
+								<button
+									type="button"
+									onClick={() => handleDelete(selected.id, selected.productName)}
+									disabled={deletingId === selected.id}
+									className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+									aria-label="Delete custom request"
+								>
+									{deletingId === selected.id ? (
+										<Loader2 className="h-3.5 w-3.5 animate-spin" />
+									) : (
+										<Trash2 className="h-3.5 w-3.5" />
+									)}
+									<span>Delete</span>
+								</button>
+								<button type="button" onClick={() => setSelectedId(null)} className="shrink-0 rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
+									<X className="h-5 w-5" />
+								</button>
+							</div>
 						</div>
 
 						<div className="flex-1 overflow-y-auto px-6 py-6">
