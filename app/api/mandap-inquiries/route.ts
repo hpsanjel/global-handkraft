@@ -116,8 +116,13 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: "Please fill all required details before submitting." }, { status: 400 });
 		}
 
-		if (!whatsapp && !email) {
-			return NextResponse.json({ error: "Please provide WhatsApp number and/or email for follow-up." }, { status: 400 });
+		if (!email) {
+			return NextResponse.json({ error: "Email is required for custom requests." }, { status: 400 });
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(email)) {
+			return NextResponse.json({ error: "Please provide a valid email address." }, { status: 400 });
 		}
 
 		const imageFiles = formData

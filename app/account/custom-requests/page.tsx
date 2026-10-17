@@ -183,6 +183,13 @@ export default function AccountCustomRequestsPage() {
 								</div>
 							)}
 
+							{inquiry.paymentStatus === "PAID" && (
+								<div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-4">
+									<p className="text-sm font-semibold text-sky-900">Payment received & confirmed!</p>
+									<p className="mt-1 text-sm text-sky-700">Thank you for your order. Our master artisans are now handcrafting your custom piece.</p>
+								</div>
+							)}
+
 							{inquiry.paymentStatus === "DECLINED" && (
 								<div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
 									<p className="text-sm font-medium text-red-800">This request has been declined.</p>

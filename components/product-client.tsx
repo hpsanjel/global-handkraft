@@ -10,8 +10,7 @@ import { variantLabel } from "@/lib/product-transform";
 import { ProductPrice } from "@/components/product-price";
 import { usePriceZones } from "@/components/price-zones-provider";
 import { Ruler, Weight, PackageCheck, PackageX } from "lucide-react";
-import { resolveZoneMarkup, type PriceZoneWithCountries } from "@/lib/price-zones-shared";
-import { useDetectedCountry } from "@/hooks/use-detected-country";
+import type { PriceZoneWithCountries } from "@/lib/price-zones-shared";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Dialog, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ProductImage } from "@/components/ui/product-image";
@@ -249,8 +248,14 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 			return;
 		}
 
-		if (!trimmedWhatsapp && !trimmedEmail) {
-			setMandapFormError("Please provide WhatsApp number and/or email for follow-up.");
+		if (!trimmedEmail) {
+			setMandapFormError("Please enter your email address.");
+			return;
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(trimmedEmail)) {
+			setMandapFormError("Please enter a valid email address.");
 			return;
 		}
 
@@ -365,16 +370,16 @@ export function ProductClient({ product, priceZones }: { product: Product; price
 
 					<div className="mt-4 grid gap-4 sm:grid-cols-2">
 						<label className="space-y-2 text-sm text-stone-700">
-							<span className="font-medium text-stone-700">WhatsApp Number</span>
-							<input value={mandapWhatsapp} onChange={(event) => setMandapWhatsapp(event.target.value)} placeholder="e.g. +47 00000000" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<span className="font-medium text-stone-700">Email Address *</span>
+							<input required aria-required="true" type="email" value={mandapEmail} onChange={(event) => setMandapEmail(event.target.value)} placeholder="e.g. name@email.com" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 						<label className="space-y-2 text-sm text-stone-700">
-							<span className="font-medium text-stone-700">Email Address</span>
-							<input type="email" value={mandapEmail} onChange={(event) => setMandapEmail(event.target.value)} placeholder="e.g. name@email.com" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
+							<span className="font-medium text-stone-700">WhatsApp Number <span className="text-xs font-normal text-stone-500">(Optional)</span></span>
+							<input value={mandapWhatsapp} onChange={(event) => setMandapWhatsapp(event.target.value)} placeholder="e.g. +47 00000000" className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900" />
 						</label>
 					</div>
 
-					<p className="mt-2 text-xs text-stone-700">Provide WhatsApp and/or email so our admin team can contact you with design options and next steps.</p>
+					<p className="mt-2 text-xs text-stone-700">Your email is required so our artisan team can send design options, price quotes, and order confirmation.</p>
 
 					{mandapFormError ? (
 						<InlineAlert tone="error" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">

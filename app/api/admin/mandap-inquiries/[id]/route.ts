@@ -80,27 +80,87 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			updateData.stripePaymentLink = body.stripePaymentLink;
 		}
 
+		// If accepting and no payment link provided, attempt auto-generation if Stripe is configured
+		if (
+			body.paymentStatus === "ACCEPTED" &&
+			!body.stripePaymentLink &&
+			!inquiry.stripePaymentLink &&
+			(body.quotedPrice || inquiry.quotedPrice) &&
+			process.env.STRIPE_SECRET_KEY
+		) {
+			try {
+				const priceToUse = body.quotedPrice ?? inquiry.quotedPrice ?? 0;
+				if (priceToUse > 0) {
+					const { createMandapPaymentLink } = await import("@/lib/stripe");
+					const autoLink = await createMandapPaymentLink({
+						inquiryId: inquiry.id,
+						productName: inquiry.productName,
+						category: inquiry.category,
+						quotedPriceNok: priceToUse,
+					});
+					if (autoLink) {
+						updateData.stripePaymentLink = autoLink;
+					}
+				}
+			} catch (linkError) {
+				console.warn("Could not auto-generate Stripe payment link on accept:", linkError);
+			}
+		}
+
 		const updated = await prisma.mandapInquiry.update({
 			where: { id },
 			data: updateData,
 		});
 
-		// Send email notification to customer if status changed
-		if (body.paymentStatus && inquiry.email) {
+		const statusChanged = body.paymentStatus !== undefined && body.paymentStatus !== inquiry.paymentStatus;
+		const isAcceptance = body.paymentStatus === "ACCEPTED";
+		const linkOrPriceUpdatedOnAccepted =
+			updated.paymentStatus === "ACCEPTED" &&
+			((body.stripePaymentLink !== undefined && body.stripePaymentLink !== inquiry.stripePaymentLink) ||
+				(body.quotedPrice !== undefined && body.quotedPrice !== inquiry.quotedPrice));
+
+		// Send email notification to customer if status changed, order was accepted, or payment link/price updated
+		if ((statusChanged || isAcceptance || linkOrPriceUpdatedOnAccepted) && updated.email) {
 			sendMandapInquiryStatusUpdateEmail({
-				to: inquiry.email,
-				category: inquiry.category,
-				productName: inquiry.productName,
-				paymentStatus: body.paymentStatus,
-				adminNote: body.adminNote || "",
-				quotedPrice: body.quotedPrice,
-				stripePaymentLink: body.stripePaymentLink,
+				to: updated.email,
+				category: updated.category,
+				productName: updated.productName,
+				paymentStatus: updated.paymentStatus,
+				adminNote: updated.adminNote || "",
+				quotedPrice: updated.quotedPrice ?? undefined,
+				stripePaymentLink: updated.stripePaymentLink ?? undefined,
+				length: updated.length,
+				width: updated.width,
+				height: updated.height,
+				material: updated.material,
 			}).catch((error) => {
 				console.error("Unable to send status update email:", error);
 			});
 
 			broadcastCustomRequestCount().catch((error) => {
 				console.error("Unable to broadcast custom request count:", error);
+			});
+		}
+
+		// If marked as PAID by admin, also notify admins
+		if (body.paymentStatus === "PAID" && inquiry.paymentStatus !== "PAID") {
+			import("@/lib/email").then(({ sendCustomOrderPaymentAdminNotification }) => {
+				sendCustomOrderPaymentAdminNotification({
+					inquiryId: updated.id,
+					category: updated.category,
+					productName: updated.productName,
+					productSlug: updated.productSlug,
+					customerEmail: updated.email || "Not provided",
+					customerWhatsapp: updated.whatsapp,
+					amountPaid: updated.quotedPrice ?? 0,
+					currency: "NOK",
+					dimensions: `${updated.length} x ${updated.width} x ${updated.height}`,
+					material: updated.material,
+					description: updated.description,
+					stripeSessionId: "Admin Manual Update",
+				}).catch((error) => {
+					console.error("Unable to send payment admin notification on manual PAID:", error);
+				});
 			});
 		}
 

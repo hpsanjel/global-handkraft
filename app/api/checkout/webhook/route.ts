@@ -36,30 +36,91 @@ export async function POST(request: Request) {
 			const shippingProductId = typeof shippingRate === "object" && shippingRate ? (shippingRate.metadata?.bring_product_id ?? null) : null;
 
 			// Handle custom mandap/temple inquiry payment
-			if (session.metadata?.inquiryId) {
-				const inquiryId = session.metadata.inquiryId;
-				const inquiry = await prisma.mandapInquiry.findUnique({ where: { id: inquiryId } });
-				if (inquiry) {
-					await prisma.mandapInquiry.update({
-						where: { id: inquiryId },
-						data: { paymentStatus: "PAID", status: "PAID" },
+			let customInquiryId = session.metadata?.inquiryId;
+			if (!customInquiryId && session.payment_link) {
+				const plinkId = typeof session.payment_link === "string" ? session.payment_link : session.payment_link.id;
+				const matchedInquiry = await prisma.mandapInquiry.findFirst({
+					where: { stripePaymentLink: { contains: plinkId } },
+				});
+				if (matchedInquiry) {
+					customInquiryId = matchedInquiry.id;
+				}
+			}
+			if (!customInquiryId && (session.customer_details?.email || session.customer_email)) {
+				const email = session.customer_details?.email || session.customer_email;
+				if (email) {
+					const matchedInquiry = await prisma.mandapInquiry.findFirst({
+						where: {
+							email: { equals: email, mode: "insensitive" },
+							paymentStatus: "ACCEPTED",
+						},
+						orderBy: { updatedAt: "desc" },
 					});
+					if (matchedInquiry) {
+						customInquiryId = matchedInquiry.id;
+					}
+				}
+			}
+
+			if (customInquiryId) {
+				const inquiry = await prisma.mandapInquiry.findUnique({ where: { id: customInquiryId } });
+				if (inquiry) {
+					const updatedInquiry = await prisma.mandapInquiry.update({
+						where: { id: customInquiryId },
+						data: { paymentStatus: "PAID", status: "PAID", updatedAt: new Date() },
+					});
+
+					// Broadcast count to update admin sidebar badge in real-time
+					try {
+						const { broadcastCustomRequestCount } = await import("@/lib/realtime-broadcast");
+						await broadcastCustomRequestCount();
+					} catch (broadcastError) {
+						console.error("Failed to broadcast custom request count:", broadcastError);
+					}
 
 					// Send confirmation email to customer
 					try {
 						const { sendMandapInquiryStatusUpdateEmail } = await import("@/lib/email");
 						await sendMandapInquiryStatusUpdateEmail({
-							to: inquiry.email || session.customer_email || "",
-							category: inquiry.category,
-							productName: inquiry.productName,
+							to: updatedInquiry.email || session.customer_details?.email || session.customer_email || "",
+							category: updatedInquiry.category,
+							productName: updatedInquiry.productName,
 							paymentStatus: "PAID",
-							adminNote: "Payment received. Our team will start working on your custom order.",
+							adminNote: "Payment received. Our master artisans will now start handcrafting your custom order.",
+							quotedPrice: updatedInquiry.quotedPrice ?? (session.amount_total ? session.amount_total / 100 : undefined),
+							length: updatedInquiry.length,
+							width: updatedInquiry.width,
+							height: updatedInquiry.height,
+							material: updatedInquiry.material,
 						});
 					} catch (emailError) {
-						console.error("Failed to send mandap payment confirmation email:", emailError);
+						console.error("Failed to send mandap payment confirmation email to buyer:", emailError);
 					}
 
-					return NextResponse.json({ received: true, inquiryId });
+					// Send payment email notification to admin (Requirement 4)
+					try {
+						const { sendCustomOrderPaymentAdminNotification } = await import("@/lib/email");
+						const amountPaid = session.amount_total ? session.amount_total / 100 : (updatedInquiry.quotedPrice ?? 0);
+						const currency = (session.currency || "nok").toUpperCase();
+						await sendCustomOrderPaymentAdminNotification({
+							inquiryId: updatedInquiry.id,
+							category: updatedInquiry.category,
+							productName: updatedInquiry.productName,
+							productSlug: updatedInquiry.productSlug,
+							customerEmail: updatedInquiry.email || session.customer_details?.email || session.customer_email || "Not provided",
+							customerWhatsapp: updatedInquiry.whatsapp,
+							amountPaid,
+							currency,
+							dimensions: `${updatedInquiry.length} x ${updatedInquiry.width} x ${updatedInquiry.height}`,
+							material: updatedInquiry.material,
+							description: updatedInquiry.description,
+							stripeSessionId: session.id,
+						});
+					} catch (adminEmailError) {
+						console.error("Failed to send custom order payment admin notification email:", adminEmailError);
+					}
+
+					return NextResponse.json({ received: true, inquiryId: customInquiryId });
 				}
 			}
 
