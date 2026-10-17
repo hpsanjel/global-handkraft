@@ -82,7 +82,7 @@ export function CartClient({ priceZones }: { priceZones: PriceZoneWithCountries[
 		}, 0);
 	}, [items, products, priceZones, shippingCountry]);
 
-	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length), [subtotal, items.length]);
+	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length, shippingCountry), [subtotal, items.length, shippingCountry]);
 	const orderTotal = useMemo(() => subtotal + shippingFee, [subtotal, shippingFee]);
 
 	const recommendedProducts = useMemo(() => {

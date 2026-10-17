@@ -64,7 +64,7 @@ const faqCategories: FaqCategory[] = [
 			{
 				id: "ship-cost",
 				question: "How much does shipping cost?",
-				answer: "Shipping is free for all orders of NOK 1,500 or more. For orders under NOK 1,500, a standard shipping fee of NOK 76 applies.",
+				answer: "Shipping is free for all orders of NOK 1,500 or more. For orders under NOK 1,500, delivery within Norway is NOK 76, and international shipping across Europe is NOK 200.",
 			},
 			{
 				id: "ship-time",

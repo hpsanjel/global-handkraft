@@ -19,9 +19,10 @@ export type ShippingQuote = {
 };
 
 /**
- * Resolves shipping quotes based on cart subtotal:
+ * Resolves shipping quotes based on destination country and cart subtotal:
  * - Free shipping for orders >= 1500 NOK
- * - 76 NOK standard shipping for orders < 1500 NOK
+ * - 76 NOK standard shipping within Norway for orders < 1500 NOK
+ * - 200 NOK international shipping outside Norway for orders < 1500 NOK
  */
 export async function getShippingQuotes(
 	shippingAddress?: SavedShippingAddress,
@@ -29,11 +30,10 @@ export async function getShippingQuotes(
 	subtotal = 0,
 	selectedShippingId?: string | null
 ): Promise<ShippingQuote[]> {
-	void shippingAddress;
 	void selectedShippingId;
 
 	const itemCount = pricedItems?.reduce((sum, item) => sum + item.quantity, 0) ?? (subtotal > 0 ? 1 : 0);
-	const shippingFeeNok = calculateShippingFee(subtotal, itemCount);
+	const shippingFeeNok = calculateShippingFee(subtotal, itemCount, shippingAddress?.country);
 
 	if (shippingFeeNok === 0) {
 		return [
@@ -47,13 +47,15 @@ export async function getShippingQuotes(
 		];
 	}
 
+	const isNorway = !shippingAddress?.country || shippingAddress.country.trim().toUpperCase() === "NO";
+
 	return [
 		{
-			id: "STANDARD_SHIPPING",
-			displayName: "Standard shipping",
+			id: isNorway ? "STANDARD_SHIPPING_NO" : "STANDARD_SHIPPING_INTL",
+			displayName: isNorway ? "Standard shipping" : "International shipping",
 			amountCents: Math.round(shippingFeeNok * 100),
 			deliveryType: "HOME",
-			deliveryEstimateDays: { min: 3, max: 10 },
+			deliveryEstimateDays: isNorway ? { min: 2, max: 5 } : { min: 4, max: 10 },
 		},
 	];
 }

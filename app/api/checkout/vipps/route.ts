@@ -39,7 +39,11 @@ export async function POST(request: Request) {
 		// Vipps' WEB_REDIRECT flow has no hosted "choose your shipping option"
 		// screen the way Stripe Checkout does — the buyer only approves a fixed
 		// amount, so the shipping method must already be locked in from the cart.
-		const shippingQuotes = await getShippingQuotes(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId);
+		const effectiveShippingAddress = {
+			...body.shippingAddress,
+			country: countryCode || body.shippingAddress?.country,
+		};
+		const shippingQuotes = await getShippingQuotes(effectiveShippingAddress, pricedItems, subtotal, body.selectedShippingId);
 		const chosenQuote = shippingQuotes.find((quote) => quote.id === body.selectedShippingId) ?? shippingQuotes[0];
 		const shippingCents = chosenQuote?.amountCents ?? 0;
 

@@ -150,8 +150,12 @@ export async function POST(request: Request) {
 
 		const subtotal = pricedItems.reduce((sum, item) => sum + item.lineSubtotal, 0);
 
-		// Build shipping options - uses static DB shipping rates
-		const shippingQuotes = await getShippingQuotes(body.shippingAddress, pricedItems, subtotal, body.selectedShippingId);
+		// Build shipping options - uses country-based rates (76 NOK Norway, 200 NOK intl, free >= 1500 NOK)
+		const effectiveShippingAddress = {
+			...body.shippingAddress,
+			country: countryCode || body.shippingAddress?.country,
+		};
+		const shippingQuotes = await getShippingQuotes(effectiveShippingAddress, pricedItems, subtotal, body.selectedShippingId);
 		const shippingOptions = shippingQuotes.map((quote) => toStripeShippingOption(quote, currencyCode, rate));
 
 		let customer: Stripe.Customer | undefined;

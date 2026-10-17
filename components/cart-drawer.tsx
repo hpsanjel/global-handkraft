@@ -92,7 +92,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 		}, 0);
 	}, [items, products, shippingCountry, priceZones]);
 	const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
-	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length), [subtotal, items.length]);
+	const shippingFee = useMemo(() => calculateShippingFee(subtotal, items.length, shippingCountry), [subtotal, items.length, shippingCountry]);
 	const orderTotal = useMemo(() => subtotal + shippingFee, [subtotal, shippingFee]);
 
 	const handleQuantityChange = (item: CartItem, delta: number) => {
