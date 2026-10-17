@@ -76,7 +76,7 @@ export function SiteFooter() {
 							<span className="text-xs font-medium text-stone-700">Secure payments via Stripe</span>
 						</div>
 						<div className="flex items-center gap-1.5">
-							{["Visa", "Mastercard", "Amex"].map((brand) => (
+							{["VIPPS", "Visa", "Mastercard", "Amex"].map((brand) => (
 								<span key={brand} className="rounded-md border border-stone-200 bg-white px-2 py-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
 									{brand}
 								</span>
