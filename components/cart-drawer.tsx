@@ -37,6 +37,7 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	const [checkoutError, setCheckoutError] = useState("");
 	const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "VIPPS">("STRIPE");
 	const [shippingCountry, setShippingCountry] = useState(() => detectedCountry || "NO");
+	const [customsAgreed, setCustomsAgreed] = useState(false);
 
 	useEffect(() => {
 		if (detectedCountry) {
@@ -130,6 +131,9 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 	};
 
 	const handleCheckout = async () => {
+		if (!customsAgreed) {
+			return;
+		}
 		setIsCheckingOut(true);
 		setCheckoutError("");
 
@@ -352,7 +356,20 @@ export function CartDrawer({ isOpen, onClose, priceZones }: CartDrawerProps) {
 							</div>
 						) : null}
 
-						<button type="button" onClick={handleCheckout} disabled={isCheckingOut} className="mt-4 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60">
+						<div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-3">
+							<label htmlFor="drawer-customs-agreement" className="flex cursor-pointer items-start gap-2.5 text-xs leading-5 text-stone-700 select-none">
+								<input
+									id="drawer-customs-agreement"
+									type="checkbox"
+									checked={customsAgreed}
+									onChange={(e) => setCustomsAgreed(e.target.checked)}
+									className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 accent-stone-900 focus:ring-stone-500"
+								/>
+								<span>I agree to pay any applicable customs clearance fees, import duties and import taxes myself.</span>
+							</label>
+						</div>
+
+						<button type="button" onClick={handleCheckout} disabled={isCheckingOut || !customsAgreed} className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50">
 							{isCheckingOut ? "Preparing checkout..." : paymentMethod === "VIPPS" ? "Checkout with Vipps" : "Checkout with Stripe"}
 						</button>
 						{checkoutError ? (

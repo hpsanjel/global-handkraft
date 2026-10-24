@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
 	images: {
 		// Enable automatic image optimization
 		unoptimized: false,
+		qualities: [20, 75],
 		// Product/category/review photos are served from Supabase Storage's public
 		// object URLs, which next/image otherwise refuses to optimize as an
 		// unconfigured remote host.

@@ -174,6 +174,7 @@ export async function POST(request: Request) {
 				allowed_countries: (countryCode && SHIPPING_COUNTRY_CODES.includes(countryCode) ? [countryCode] : SHIPPING_COUNTRY_CODES) as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
 			},
 			shipping_options: shippingOptions,
+
 			phone_number_collection: {
 				enabled: true,
 			},
