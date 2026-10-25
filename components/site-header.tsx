@@ -35,35 +35,106 @@ export function SiteHeader() {
 		[categories],
 	);
 
-	const organizationSchema = useMemo(
+	const structuredData = useMemo(
 		() => ({
 			"@context": "https://schema.org",
-			"@type": "Organization",
-			name: siteConfig.name,
-			url: siteConfig.url,
-			logo: `${siteConfig.url}/images/globalhandicraft-logo.png`,
-			contactPoint: {
-				"@type": "ContactPoint",
-				email: "contact@handcraftsglobal.com",
-				telephone: "+47-91267612",
-				contactType: "customer service",
-			},
-			address: {
-				"@type": "PostalAddress",
-				streetAddress: "Belsetveien 80",
-				addressLocality: "Rykkinn",
-				postalCode: "1348",
-				addressCountry: "NO",
-			},
-			sameAs: ["https://wa.me/4791267612"],
+			"@graph": [
+				{
+					"@type": "Organization",
+					"@id": `${siteConfig.url}/#organization`,
+					name: siteConfig.name,
+					url: siteConfig.url,
+					logo: `${siteConfig.url}/images/globalhandicraft-logo.png`,
+					contactPoint: {
+						"@type": "ContactPoint",
+						email: "contact@handcraftsglobal.com",
+						telephone: "+47-91267612",
+						contactType: "customer service",
+					},
+					address: {
+						"@type": "PostalAddress",
+						streetAddress: "Belsetveien 80",
+						addressLocality: "Rykkinn",
+						postalCode: "1348",
+						addressCountry: "NO",
+					},
+					sameAs: ["https://wa.me/4791267612"],
+				},
+				{
+					"@type": "WebSite",
+					"@id": `${siteConfig.url}/#website`,
+					url: siteConfig.url,
+					name: siteConfig.name,
+					description: siteConfig.description,
+					publisher: {
+						"@id": `${siteConfig.url}/#organization`,
+					},
+					potentialAction: {
+						"@type": "SearchAction",
+						target: {
+							"@type": "EntryPoint",
+							urlTemplate: `${siteConfig.url}/shop?q={search_term_string}`,
+						},
+						"query-input": "required name=search_term_string",
+					},
+				},
+				{
+					"@type": "ItemList",
+					name: "Site Navigation",
+					itemListElement: [
+						{
+							"@type": "SiteNavigationElement",
+							position: 1,
+							name: "Shop",
+							description: "Browse authentic handcrafted products and collections",
+							url: `${siteConfig.url}/shop`,
+						},
+						{
+							"@type": "SiteNavigationElement",
+							position: 2,
+							name: "Categories",
+							description: "Explore collections by category",
+							url: `${siteConfig.url}/categories`,
+						},
+						{
+							"@type": "SiteNavigationElement",
+							position: 3,
+							name: "About Us",
+							description: "Learn about Global Handcrafts AS and artisan heritage",
+							url: `${siteConfig.url}/about`,
+						},
+						{
+							"@type": "SiteNavigationElement",
+							position: 4,
+							name: "FAQ",
+							description: "Frequently asked questions about ordering, shipping, and custom builds",
+							url: `${siteConfig.url}/faq`,
+						},
+						{
+							"@type": "SiteNavigationElement",
+							position: 5,
+							name: "Contact",
+							description: "Contact us for custom orders, consultations, and support",
+							url: `${siteConfig.url}/contact`,
+						},
+						{
+							"@type": "SiteNavigationElement",
+							position: 6,
+							name: "Shipping Policy",
+							description: "Shipping rates and delivery estimates across Norway and Europe",
+							url: `${siteConfig.url}/shipping`,
+						},
+					],
+				},
+			],
 		}),
 		[],
 	);
 
 	return (
 		<header className="sticky top-0 z-30 border-b border-stone-200/70 bg-white/90 backdrop-blur">
-			{/* JSON-LD structured data for the organization */}
-			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+			{/* JSON-LD structured data for Google search and sitelinks */}
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
 			<div className="mx-auto flex max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-4">
 				<div className="flex items-center gap-1">
 					<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden sm:h-24 sm:w-24">

@@ -20,6 +20,9 @@ export const metadata: Metadata = {
 	},
 	description: siteConfig.description,
 	metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || siteConfig.url),
+	alternates: {
+		canonical: "/",
+	},
 	robots: {
 		index: true,
 		follow: true,

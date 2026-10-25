@@ -33,8 +33,15 @@ export function ShopClient({ initialProducts, initialCategories }: ShopClientPro
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
+	const qParam = searchParams.get("q") || searchParams.get("search") || "";
 	const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-	const [searchQuery, setSearchQuery] = useState("");
+	const [searchQuery, setSearchQuery] = useState(() => qParam);
+
+	useEffect(() => {
+		if (qParam) {
+			setSearchQuery(qParam);
+		}
+	}, [qParam]);
 	const [selectedCategorySlug, setSelectedCategorySlug] = useState("All");
 	const [selectedMaterial, setSelectedMaterial] = useState("All");
 	const [selectedWoodType, setSelectedWoodType] = useState("All");
